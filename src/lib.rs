@@ -1,46 +1,45 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-extern crate serial;
+extern crate serialport;
 
-use std::env;
-use std::io;
+use std::io::{self, Write};
 use std::time::Duration;
 
-use std::io::prelude::*;
-use serial::prelude::*;
+use serialport::prelude::*;
 
 
 
 pub fn read_serial_port() {
+
     let port_name = "/dev/serial0";
-    let mut port = serial::open(port_name).unwrap();
-    interact(&mut port).unwrap();
+    let baud_rate = "9600";
 
+    let mut settings: SerialPortSettings = Default::default();
+    settings.timeout = Duration::from_millis(1000);
 
-}
+    if let Ok(rate) = baud_rate.parse::<u32>() {
+        settings.baud_rate = rate.into();
+    } else {
+        eprintln!("Error: Invalid baud rate '{}' specified", baud_rate);
+        ::std::process::exit(1);
+    }
 
-fn interact<T: SerialPort>(port: &mut T) -> io::Result<()> {
-    (port.reconfigure(&|settings| {
-        (settings.set_baud_rate(serial::Baud9600));
-        settings.set_char_size(serial::Bits8);
-        settings.set_parity(serial::ParityNone);
-        settings.set_stop_bits(serial::Stop1);
-        settings.set_flow_control(serial::FlowNone);
-        Ok(())
-    }));
-
-    port.set_timeout(Duration::from_millis(1000));
-
-    let mut buf: Vec<u8> = (0..255).collect();
-
-    port.write(&buf[..]);
-    port.read(&mut buf[..]);
-    println!("{:?}", buf);
-    Ok(())
-
-}
-
-fn main() {
-    read_serial_port()
+    match serialport::open_with_settings(&port_name, &settings) {
+        Ok(mut port) => {
+            let mut serial_buf: Vec<u8> = vec![0; 1000];
+            println!("Receiving data on {} at {} baud:", &port_name, &baud_rate);
+            loop {
+                match port.read(serial_buf.as_mut_slice()) {
+                    Ok(t) => io::stdout().write_all(&serial_buf[..t]).unwrap(),
+                    Err(ref e) if e.kind() == io::ErrorKind::TimedOut => (),
+                    Err(e) => eprintln!("{:?}", e),
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to open \"{}\". Error: {}", port_name, e);
+            ::std::process::exit(1);
+        }
+    }
 }

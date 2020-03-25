@@ -16,3 +16,4 @@ path = "src/bin.rs"
 
 [dependencies]
 serial = "0.4.0"
+serialport = "3.3.0"

@@ -12,7 +12,7 @@ use serial::prelude::*;
 
 
 
-fn read_serial_port() {
+pub fn read_serial_port() {
     let port_name = "/dev/serial0";
     let mut port = serial::open(port_name).unwrap();
     interact(&mut port).unwrap();

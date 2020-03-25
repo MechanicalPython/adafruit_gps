@@ -40,3 +40,7 @@ fn interact<T: SerialPort>(port: &mut T) -> io::Result<()> {
     Ok(())
 
 }
+
+fn main() {
+    read_serial_port()
+}

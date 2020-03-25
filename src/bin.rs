@@ -2,5 +2,6 @@
 use mylib;
 
 pub fn main() {
-    mylib::read_serial_port();
+    let line = mylib::read_serial_port();
+    println!("{:?}", line);
 }

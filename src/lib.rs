@@ -21,7 +21,18 @@ pub fn read_serial_port() {
         timeout: Duration::from_millis(1000),
     };
 
-    let line = serialport::open_with_settings(port_name, &settings);
-    line.unwrap();
+    match serialport::open_with_settings(&port_name, &settings) {
+        Ok(mut port) => { // Port is now open.
+            let mut serial_buf: Vec<u8> = vec![0; 1000];
+            port.read(serial_buf.as_mut_slice());
+            println!("{:?}", serial_buf);
+
+        }
+        Err(e) => {
+            eprintln!("Failed to open \"{}\". Error: {}", port_name, e);
+            ::std::process::exit(1);
+        }
+    }
+
 
 }

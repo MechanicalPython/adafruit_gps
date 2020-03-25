@@ -22,10 +22,6 @@ pub fn read_serial_port() {
     };
 
     let line = serialport::open_with_settings(port_name, &settings);
-
-
-
-
-
+    line.unwrap();
 
 }

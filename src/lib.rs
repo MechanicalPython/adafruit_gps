@@ -21,9 +21,11 @@ pub fn read_serial_port() {
         Ok(mut port) => {
             let mut serial_buf: Vec<u8> = vec![0; 1000];
             loop {
-                let a = port.read(serial_buf.as_mut_slice());
-                println!("a: {:?}", a);
-
+                match port.read(serial_buf.as_mut_slice()) {
+                    Ok(t) => io::stdout().write_all(&serial_buf[..t]).unwrap(),
+                    Err(ref e) if e.kind() == io::ErrorKind::TimedOut => (),
+                    Err(e) => eprintln!("{:?}", e),
+                }
             }
         }
         Err(e) => {

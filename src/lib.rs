@@ -11,28 +11,21 @@ use serialport::prelude::*;
 
 pub fn read_serial_port() {
     let port_name = "/dev/serial0";
-    let baud_rate:u32 = 9600;
 
-    let mut settings: SerialPortSettings = Default::default();
-    settings.timeout = Duration::from_millis(1000);
-    settings.baud_rate = baud_rate;
+    let settings = SerialPortSettings {
+        baud_rate: 9600,
+        data_bits: DataBits::Eight,
+        flow_control: FlowControl::None,
+        parity: Parity::None,
+        stop_bits: StopBits::One,
+        timeout: Duration::from_millis(1000),
+    };
 
-    match serialport::open_with_settings(&port_name, &settings) {
-        Ok(mut port) => {
-            let mut serial_buf: Vec<u8> = vec![0; 1000];
-            loop {
-                match port.read(serial_buf.as_mut_slice()) {
-                    Ok(t) => io::stdout().write_all(&serial_buf[..t]).unwrap(),
-                    Err(ref e) if e.kind() == io::ErrorKind::TimedOut => (),
-                    Err(e) => eprintln!("{:?}", e),
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to open \"{}\". Error: {}", port_name, e);
-            ::std::process::exit(1);
-        }
-    }
+    let line = serialport::open_with_settings(port_name, &settings);
+
+
+
+
 
 
 }

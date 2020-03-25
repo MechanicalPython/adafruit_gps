@@ -17,9 +17,20 @@ pub fn read_serial_port() {
     settings.timeout = Duration::from_millis(1000);
     settings.baud_rate = baud_rate;
 
-    let port = serialport::open_with_settings(&port_name, &settings);
-    let mut serial_buf: Vec<u8> = vec![0; 1000];
-    port.read(serial_buf.as_mut_slice());
-    println!("{}", port);
+    match serialport::open_with_settings(&port_name, &settings) {
+        Ok(mut port) => {
+            let mut serial_buf: Vec<u8> = vec![0; 1000];
+            loop {
+                let a = port.read(serial_buf.as_mut_slice());
+                println!("a: {:?}", a);
+
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to open \"{}\". Error: {}", port_name, e);
+            ::std::process::exit(1);
+        }
+    }
+
 
 }

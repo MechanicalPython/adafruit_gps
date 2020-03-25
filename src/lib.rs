@@ -40,5 +40,5 @@ pub fn read_serial_port() {
             ::std::process::exit(1);
         }
     }
-    return
+
 }

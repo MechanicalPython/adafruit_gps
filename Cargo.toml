@@ -6,7 +6,7 @@ edition = "2018"
 
 [lib]
 name = "mylib"
-path = "/src/lib.rs"
+path = "src/lib.rs"
 
 [[bin]]
 name = "mybin"

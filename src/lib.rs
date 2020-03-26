@@ -27,9 +27,9 @@ pub fn read_serial_port() {
             loop {
                 match port.read(buffer.as_mut_slice()) {
                     Ok(t) =>
-                        println!("{:?}", t),
+                        println!("{:?}\n", t),
 
-                    Err(e) => (eprint!("{:?}", e)),
+                    Err(e) => (eprint!("{:?}\n", e)),
                 }
             }
         }

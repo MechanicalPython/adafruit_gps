@@ -3,6 +3,7 @@
 
 extern crate serialport;
 
+use std::str;
 use std::io::{self, Write, Read};
 use std::time::{SystemTime, Duration};
 

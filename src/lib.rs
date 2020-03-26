@@ -4,7 +4,7 @@
 extern crate serialport;
 
 use std::io::{self, Write};
-use std::time::Duration;
+use std::time::{SystemTime, Duration};
 
 use serialport::prelude::*;
 use std::thread::sleep;
@@ -21,26 +21,36 @@ pub fn read_serial_port() {
         stop_bits: StopBits::One,
         timeout: Duration::from_millis(1000),
     };
+    let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
+    let mut buffer: Vec<u8> = vec![0;1000];
+    let s = SystemTime::now();
 
-    match serialport::open_with_settings(&port_name, &settings) {
-        Ok(mut port) => { // Port is now open.
-            let mut buffer: Vec<u8> = vec![0;1000];
-            loop {
-                match port.read(buffer.as_mut_slice()) {
-                    Ok(_t) => {// t is a 0. Probably to mean that it has results.
-                        sleep(Duration::from_secs(1));
-                        println!("{:?} -- {:?}\n", buffer, _t);}
-                    ,
-
-                    Err(e) => (eprint!("{:?}\n", e)),
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to open \"{}\". Error: {}", port_name, e);
-            ::std::process::exit(1);
-        }
+    while s.elapsed().unwrap() < Duration::from_secs(1) {
+        let _t = port.read(buffer.as_mut_slice());
     }
+    println!("{:?}", buffer);
 
-
+    // match serialport::open_with_settings(&port_name, &settings) {
+    //     Ok(mut port) => { // Port is now open.
+    //         let mut buffer: Vec<u8> = vec![0;1000];
+    //         loop {
+    //             // So create a massive vector. The port.read() method then changes the values
+    //             // in that vector and returns t, the number of valid bytes (non 0).
+    //             match port.read(buffer.as_mut_slice()) {
+    //                 Ok(_t) => {
+    //                     println!("{:?} -- {:?}\n", &buffer[..t], _t);
+    //
+    //                 }
+    //
+    //                 ,
+    //
+    //                 Err(e) => (eprint!("{:?}\n", e)),
+    //             }
+    //         }
+    //     }
+    //     Err(e) => {
+    //         eprintln!("Failed to open \"{}\". Error: {}", port_name, e);
+    //         ::std::process::exit(1);
+    //     }
+    // }
 }

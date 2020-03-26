@@ -7,6 +7,7 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use serialport::prelude::*;
+use std::thread::sleep;
 
 
 pub fn read_serial_port() {
@@ -26,8 +27,10 @@ pub fn read_serial_port() {
             let mut buffer: Vec<u8> = vec![0;20];
             loop {
                 match port.read(buffer.as_mut_slice()) {
-                    Ok(_t) => // t is a 0. Probably to mean that it has results.
-                        println!("{:?} -- {:?}\n", buffer, _t),
+                    Ok(_t) => {// t is a 0. Probably to mean that it has results.
+                        sleep(Duration::from_secs(1));
+                        println!("{:?} -- {:?}\n", buffer, _t);}
+                    ,
 
                     Err(e) => (eprint!("{:?}\n", e)),
                 }

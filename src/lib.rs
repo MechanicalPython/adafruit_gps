@@ -27,7 +27,7 @@ pub fn read_serial_port() {
 
     while s.elapsed().unwrap() < Duration::from_secs(1) {
         match port.read(buffer.as_mut_slice()) {
-            Ok(_t) => (),
+            Ok(_t) => println!("{:?} -- {:?}\n", &buffer[.._t], _t),
             Err(e) => (eprint!("{:?}\n", e)),
         }
     }

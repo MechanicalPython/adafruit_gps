@@ -23,8 +23,15 @@ pub fn read_serial_port() {
 
     match serialport::open_with_settings(&port_name, &settings) {
         Ok(mut port) => { // Port is now open.
-            let data = port.bytes_to_read();
-            println!("{:?}", data);
+            let mut buffer: Vec<u8> = Vec::new();
+            loop {
+                match port.read(buffer.as_mut_slice()) {
+                    Ok(t) =>
+                        println!("{:?}", t),
+
+                    Err(e) => (eprint!("{:?}", e)),
+                }
+            }
         }
         Err(e) => {
             eprintln!("Failed to open \"{}\". Error: {}", port_name, e);

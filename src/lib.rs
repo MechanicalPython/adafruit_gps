@@ -35,12 +35,12 @@ pub fn read_serial_port() {
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
                 sentence.push(buffer[_t]);
-                println!("{:?} -- {:?}\n", buffer[_t], _t);
+                //println!("{:?} -- {:?}\n", buffer[_t], _t);
             },
             Err(e) => (eprint!("{:?}\n", e)),
         }
     }
-    println!("{:?}", buffer);
+    println!("{:?}", sentence);
 
     // match serialport::open_with_settings(&port_name, &settings) {
     //     Ok(mut port) => { // Port is now open.

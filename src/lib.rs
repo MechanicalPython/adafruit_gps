@@ -34,7 +34,7 @@ pub fn read_serial_port() {
     while s.elapsed().unwrap() < Duration::from_secs(1) {
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
-                sentence.push(buffer[_t].to_ascii_lowercase());
+                sentence.push(buffer[_t]);
                 println!("{:?}\n", buffer[_t]);
             },
             Err(e) => (eprint!("{:?}\n", e)),

@@ -27,15 +27,15 @@ pub fn read_serial_port() {
         timeout: Duration::from_millis(1000),
     };
     let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
-    let mut buffer: Vec<u8> = vec![0;1000];
+    let mut buffer:Vec<u8> = Vec::new();
     let mut sentence:Vec<u8> = Vec::new();
 
     let s = SystemTime::now();
     while s.elapsed().unwrap() < Duration::from_secs(1) {
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
-                sentence.push(buffer[_t]);
-                println!("{:?}\n", buffer[_t]);
+                // sentence.push(buffer[.._t]);
+                println!("{:?}\n", buffer[.._t]);
             },
             Err(e) => (eprint!("{:?}\n", e)),
         }

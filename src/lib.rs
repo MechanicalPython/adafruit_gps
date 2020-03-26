@@ -2,15 +2,14 @@
 #![allow(unused_imports)]
 
 extern crate serialport;
-use std::str;
 
-use std::io::{self, Read, Write};
-use std::thread::sleep;
-use std::time::{Duration};
+use std::io::{self, Write, Read};
+use std::time::{SystemTime, Duration};
 
 use serialport::prelude::*;
+use std::thread::sleep;
 
-fn vec_to_str(v: Vec<u8>) {
+fn vec_to_str(v:Vec<u8>) {
     let s = str::from_utf8(&v).unwrap();
     println!("{}", s);
 }
@@ -27,17 +26,19 @@ pub fn read_serial_port() {
         timeout: Duration::from_millis(1000),
     };
     let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
-    let mut buffer: Vec<u8> = vec![0; 1000];
-    // let mut sentence:Vec<u8> = Vec::new();
+    let mut buffer: Vec<u8> = vec![0;1000];
+    let mut sentence:Vec<u8> = Vec::new();
 
-    match port.read(buffer.as_mut_slice()) {
-        Ok(_t) => {
-            sleep(Duration::from_secs(1));
-            println!("{:?} -- {:?}\n", buffer, _t)
+    let s = SystemTime::now();
+    while s.elapsed().unwrap() < Duration::from_secs(1) {
+        match port.read(buffer.as_mut_slice()) {
+            Ok(_t) => {
+                sentence.push(buffer[_t]);
+                //println!("{:?} -- {:?}\n", buffer[_t], _t)
+            },
+            Err(e) => (eprint!("{:?}\n", e)),
         }
-        Err(e) => (eprint!("{:?}\n", e)),
     }
-
     println!("{:?}", buffer);
 
     // match serialport::open_with_settings(&port_name, &settings) {

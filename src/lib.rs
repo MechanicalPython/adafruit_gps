@@ -40,7 +40,7 @@ pub fn read_serial_port() {
             Err(e) => (eprint!("{:?}\n", e)),
         }
     }
-    println!("{:?}", sentence);
+    println!("{:?}", vec_to_str(sentence));
 
     // match serialport::open_with_settings(&port_name, &settings) {
     //     Ok(mut port) => { // Port is now open.

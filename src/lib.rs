@@ -23,7 +23,7 @@ pub fn read_serial_port() {
 
     match serialport::open_with_settings(&port_name, &settings) {
         Ok(mut port) => { // Port is now open.
-            let mut buffer: Vec<u8> = vec![0;1000];
+            let mut buffer: Vec<u8> = vec![0;20];
             loop {
                 match port.read(buffer.as_mut_slice()) {
                     Ok(_t) => // t is a 0. Probably to mean that it has results.

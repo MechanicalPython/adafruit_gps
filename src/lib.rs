@@ -35,6 +35,7 @@ pub fn read_serial_port() {
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
                 sentence.extend_from_slice(&buffer[.._t]);
+                println!("{:?}", buffer)
             },
             Err(e) => (eprint!("{:?}\n", e)),
         }

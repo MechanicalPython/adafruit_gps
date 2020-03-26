@@ -2,10 +2,11 @@
 #![allow(unused_imports)]
 
 extern crate serialport;
+use std::str;
 
 use std::io::{self, Read, Write};
 use std::thread::sleep;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration};
 
 use serialport::prelude::*;
 
@@ -29,7 +30,6 @@ pub fn read_serial_port() {
     let mut buffer: Vec<u8> = vec![0; 1000];
     // let mut sentence:Vec<u8> = Vec::new();
 
-    let s = SystemTime::now();
     match port.read(buffer.as_mut_slice()) {
         Ok(_t) => {
             sleep(Duration::from_secs(1));

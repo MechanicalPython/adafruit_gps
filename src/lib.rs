@@ -26,8 +26,8 @@ pub fn read_serial_port() {
             let mut buffer: Vec<u8> = vec![0;1000];
             loop {
                 match port.read(buffer.as_mut_slice()) {
-                    Ok(t) => // t is a 0. Probably to mean that it has results.
-                        println!("{:?}\n", &buffer[..t]),
+                    Ok(_t) => // t is a 0. Probably to mean that it has results.
+                        println!("{:?}\n", buffer),
 
                     Err(e) => (eprint!("{:?}\n", e)),
                 }

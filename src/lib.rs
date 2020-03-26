@@ -3,7 +3,7 @@
 
 extern crate serialport;
 
-use std::io::{self, Write};
+use std::io::{self, Write, Read};
 use std::time::{SystemTime, Duration};
 
 use serialport::prelude::*;
@@ -27,7 +27,7 @@ pub fn read_serial_port() {
 
     while s.elapsed().unwrap() < Duration::from_secs(1) {
         match port.read(buffer.as_mut_slice()) {
-            Ok(_t) => println!("{:?} -- {:?}\n", &buffer[.._t], _t),
+            Ok(_t) => println!("{:?} -- {:?}\n", &buffer, _t),
             Err(e) => (eprint!("{:?}\n", e)),
         }
     }

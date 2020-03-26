@@ -31,11 +31,11 @@ pub fn read_serial_port() {
     let mut sentence:Vec<u8> = Vec::new();
 
     let s = SystemTime::now();
-    while s.elapsed().unwrap() < Duration::from_millis(100) {
+    while s.elapsed().unwrap() < Duration::from_secs(1) {
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
                 sentence.extend_from_slice(&buffer[.._t]);
-                println!("{:?}", buffer)
+                // println!("{:?}", buffer)
             },
             Err(e) => (eprint!("{:?}\n", e)),
         }

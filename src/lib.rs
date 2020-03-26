@@ -31,7 +31,7 @@ pub fn read_serial_port() {
     let mut sentence:Vec<u8> = Vec::new();
 
     let s = SystemTime::now();
-    while s.elapsed().unwrap() < Duration::from_millis(10) {
+    while s.elapsed().unwrap() < Duration::from_millis(100) {
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
                 sentence.extend_from_slice(&buffer[.._t]);

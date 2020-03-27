@@ -30,11 +30,13 @@ pub fn read_serial_port(port_name: &str) -> Vec<u8> {
     let mut buffer: Vec<u8> = vec![0; 1000];
     let mut output: Vec<u8> = Vec::new();
 
-    let s = SystemTime::now();
-    while s.elapsed().unwrap() < Duration::from_secs(1) {
+    // let s = SystemTime::now();
+    // while s.elapsed().unwrap() < Duration::from_secs(1) {
+    loop{
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
                 output.extend_from_slice(&buffer[.._t]);
+                println!("{:?}", buffer);
             }
             Err(_e) => (),
         }

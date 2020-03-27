@@ -8,9 +8,9 @@ use mylib;
 
 fn main() {
     let gps = mylib::read_serial_port("/dev/serial0");
-    let string = mylib::port_vec_to_string(gps);
+    // let string = mylib::port_vec_to_string(gps);
 
-    println!("{}", string);
+    println!("{}", gps);
 
 
 

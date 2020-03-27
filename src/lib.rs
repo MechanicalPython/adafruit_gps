@@ -17,6 +17,7 @@ use std::time::{Duration, SystemTime};
 use serialport::prelude::*;
 
 pub fn read_serial_port(port_name: &str) -> Vec<u8> {
+    // Maximum port buffer size is 4095.
     let settings = SerialPortSettings {
         baud_rate: 9600,
         data_bits: DataBits::Eight,

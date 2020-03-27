@@ -36,7 +36,8 @@ pub fn read_serial_port(port_name: &str) -> Vec<u8> {
         match port.read(buffer.as_mut_slice()) {
             Ok(_t) => {
                 output.extend_from_slice(&buffer[.._t]);
-                println!("{:?}", buffer);
+
+                println!("{:?}", port_vec_to_string(&buffer));
             }
             Err(_e) => (),
         }
@@ -44,7 +45,7 @@ pub fn read_serial_port(port_name: &str) -> Vec<u8> {
     return output;
 }
 
-pub fn port_vec_to_string(vector:Vec<u8>) -> String {
+pub fn port_vec_to_string(vector:&Vec<u8>) -> String {
     let string = str::from_utf8(&vector).unwrap().to_string();
     return string;
 }

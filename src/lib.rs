@@ -29,6 +29,7 @@ pub fn read_serial_port(port_name: &str) -> Vec<u8> {
     let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
     let mut buffer: Vec<u8> = vec![0; 1000];
     let mut output: Vec<u8> = Vec::new();
+    sleep(Duration::from_secs(1));
     println!("{:?}", port.bytes_to_read());
     let s = SystemTime::now();
     while s.elapsed().unwrap() < Duration::from_secs(1) {

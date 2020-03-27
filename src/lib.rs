@@ -17,8 +17,6 @@ use std::time::{Duration, SystemTime};
 use serialport::prelude::*;
 
 pub fn read_serial_port(port_name: &str) -> Vec<u8> {
-    // let port_name = "/dev/serial0";
-
     let settings = SerialPortSettings {
         baud_rate: 9600,
         data_bits: DataBits::Eight,
@@ -42,4 +40,9 @@ pub fn read_serial_port(port_name: &str) -> Vec<u8> {
         }
     }
     return output;
+}
+
+pub fn port_vec_to_string(vector:Vec<u8>) -> String {
+    let string = str::from_utf8(&vector).unwrap().to_string();
+    return string;
 }

@@ -16,33 +16,67 @@ use std::time::{Duration, SystemTime};
 
 use serialport::prelude::*;
 
-pub fn read_serial_port(port_name: &str) -> Vec<u8> {
-    // Maximum port buffer size is 4095.
-    let settings = SerialPortSettings {
-        baud_rate: 9600,
-        data_bits: DataBits::Eight,
-        flow_control: FlowControl::None,
-        parity: Parity::None,
-        stop_bits: StopBits::One,
-        timeout: Duration::from_millis(1000),
-    };
-
-    let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
-    let mut buffer: Vec<u8> = vec![0; 1000];
-    let mut output: Vec<u8> = Vec::new();
-    sleep(Duration::from_secs(60));
-    println!("{:?}", port.bytes_to_read());
-    let s = SystemTime::now();
-    match port.read(buffer.as_mut_slice()) {
-        Ok(_t) => {
-            output.extend_from_slice(&buffer[.._t]);
+pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
+        let settings = SerialPortSettings {
+            baud_rate: 9600,
+            data_bits: DataBits::Eight,
+            flow_control: FlowControl::None,
+            parity: Parity::None,
+            stop_bits: StopBits::One,
+            timeout: Duration::from_millis(1000),
+        };
+        match serialport::open_with_settings(&port_name, &settings) {
+            Ok(port) => return port,
+            Err(_e) => panic!("Port not found."),
         }
-        Err(_e) => (),
     }
-    return output;
+
+pub struct Gps {
+    pub port: Box<dyn SerialPort>,
 }
 
-pub fn port_vec_to_string(vector: Vec<u8>) -> String {
-    let string = str::from_utf8(&vector).unwrap().to_string();
-    return string;
+impl Gps {
+    pub fn read_port(&mut self) -> Vec<u8> {
+        let mut buffer: Vec<u8> = vec![0; 1000];
+        let mut output: Vec<u8> = Vec::new();
+        let p = &mut self.port;
+
+        while p.bytes_to_read().unwrap() < 32 {
+            sleep(Duration::from_millis(30));
+        }
+
+        match p.read(buffer.as_mut_slice()) {
+            Ok(_t) => {
+                output.extend_from_slice(&buffer[.._t]);
+            }
+            Err(_e) => (),
+        }
+        // println!("{:?}", buffer);
+        println!("{:?}", output);
+        return output;
+    }
 }
+//
+// pub fn read_port(&port: Box<dyn SerialPort>) -> Vec<u8> {
+//     // Maximum port buffer size is 4095, or 1000 numbers.
+//
+//     let mut buffer: Vec<u8> = vec![0; 1000];
+//     let mut output: Vec<u8> = Vec::new();
+//     if port.bytes_to_read() < 32 {
+//         sleep(Duration::from_millis(30));
+//     }
+//     match port.read(buffer.as_mut_slice()) {
+//         Ok(_t) => {
+//             output.extend_from_slice(&buffer[.._t]);
+//         }
+//         Err(_e) => (),
+//     }
+//     println!("{:?}", buffer);
+//     println!("{:?}", output);
+//     return output;
+// }
+//
+// pub fn port_vec_to_string(vector: Vec<u8>) -> String {
+//     let string = str::from_utf8(&vector).unwrap().to_string();
+//     return string;
+// }

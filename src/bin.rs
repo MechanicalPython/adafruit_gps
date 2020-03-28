@@ -12,7 +12,7 @@ fn main() {
     let mut gps = Gps{
         port: mylib::open_port("/dev/serial0"),
     };
-    loop {
+    {
         &gps.parse_sentence();
         sleep(Duration::from_millis(10));
     }

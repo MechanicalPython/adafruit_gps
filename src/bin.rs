@@ -11,12 +11,10 @@ use mylib::Gps;
 
 fn main() {
 
-    let mut gps = Gps::default();
-    // gps.port = mylib::open_port("/dev/serial0");
+    let mut gps = Gps{port: mylib::open_port("/dev/serial0"), ..Default::default()};
 
     loop {
         &gps.update();
-        &gps.timestamp;
         sleep(Duration::from_secs(1));
     }
 

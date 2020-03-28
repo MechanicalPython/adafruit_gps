@@ -34,25 +34,25 @@ pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
 pub struct Gps {
     pub port: Box<dyn SerialPort>,
     pub timestamp: Instant,
-    latitude: f32,
-    longitude: f32,
-    fix_quality: i8, // if A, fix quality is 1.
-    fix_quality_3d: i8,
-    satellites: i8,
-    horizontal_dilution: f32,
-    altitude_m: f32,
-    height_geoid: f32,
-    speed_knots: f32,
-    track_angle_deg: f32,
-    sats: i8,
-    isactivedata: bool,
-    sat_prns: i8,
-    sel_mode: i8, // Selection mode. data[0] for parse gpgsa.
-    pdop: f32, // PODP, dilution of precision
-    hdop: f32, // HDOP, hosizontal of precision
-    vdop: f32, // vertical dilution of precision
-    total_mess_num: i32, // total number of messages. _parse_gpgsv
-    mess_num: i32, // message number. _parse_gpgsv
+    pub latitude: f32,
+    pub longitude: f32,
+    pub fix_quality: i8, // if A, fix quality is 1.
+    pub fix_quality_3d: i8,
+    pub satellites: i8,
+    pub horizontal_dilution: f32,
+    pub altitude_m: f32,
+    pub height_geoid: f32,
+    pub speed_knots: f32,
+    pub track_angle_deg: f32,
+    pub sats: i8,
+    pub isactivedata: bool,
+    pub sat_prns: i8,
+    pub sel_mode: i8, // Selection mode. data[0] for parse gpgsa.
+    pub pdop: f32, // PODP, dilution of precision
+    pub hdop: f32, // HDOP, hosizontal of precision
+    pub vdop: f32, // vertical dilution of precision
+    pub total_mess_num: i32, // total number of messages. _parse_gpgsv
+    pub mess_num: i32, // message number. _parse_gpgsv
 }
 
 impl Default for Gps {

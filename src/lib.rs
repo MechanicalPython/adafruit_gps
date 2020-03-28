@@ -52,8 +52,6 @@ impl Gps {
             }
             Err(_e) => (),
         }
-        // println!("{:?}", buffer);
-        println!("{:?}", output);
         return output;
     }
     pub fn parse_sentence(&mut self) -> (){

@@ -37,6 +37,7 @@ pub struct Gps {
 
 impl Gps {
     pub fn read_port(&mut self) -> Vec<u8> {
+        // Maximum port buffer size is 4095, or 1000 numbers.
         let mut buffer: Vec<u8> = vec![0; 1000];
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
@@ -55,28 +56,9 @@ impl Gps {
         println!("{:?}", output);
         return output;
     }
+    pub fn parse_sentence(&mut self) -> (){
+        let port_reading = self.read_port();
+        let string = str::from_utf8(&port_reading).unwrap();
+        println!("{:?}", string);
+    }
 }
-//
-// pub fn read_port(&port: Box<dyn SerialPort>) -> Vec<u8> {
-//     // Maximum port buffer size is 4095, or 1000 numbers.
-//
-//     let mut buffer: Vec<u8> = vec![0; 1000];
-//     let mut output: Vec<u8> = Vec::new();
-//     if port.bytes_to_read() < 32 {
-//         sleep(Duration::from_millis(30));
-//     }
-//     match port.read(buffer.as_mut_slice()) {
-//         Ok(_t) => {
-//             output.extend_from_slice(&buffer[.._t]);
-//         }
-//         Err(_e) => (),
-//     }
-//     println!("{:?}", buffer);
-//     println!("{:?}", output);
-//     return output;
-// }
-//
-// pub fn port_vec_to_string(vector: Vec<u8>) -> String {
-//     let string = str::from_utf8(&vector).unwrap().to_string();
-//     return string;
-// }

@@ -13,7 +13,7 @@ fn main() {
         port: mylib::open_port("/dev/serial0"),
     };
     loop {
-        &gps.read_port();
+        &gps.parse_sentence();
         sleep(Duration::from_secs(1));
     }
 

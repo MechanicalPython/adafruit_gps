@@ -3,9 +3,7 @@
 /// General structure
 /// GPS enum has all the items that are needed.
 ///
-///
-///
-///
+
 extern crate serialport;
 
 use std::i64;
@@ -37,10 +35,10 @@ pub struct Gps {
 
 impl Gps {
     pub fn read_port(&mut self) -> Vec<u8> {
-        // Maximum port buffer size is 4095, or 1000 numbers.
+        // Maximum port buffer size is 4095.
         // Returns whatever is in the port.
         // Start of a line is $ and end is \n. So
-        let mut buffer: Vec<u8> = vec![0; 100];
+        let mut buffer: Vec<u8> = vec![0; 4095+100];  // Reads what is in the buffer.
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
 

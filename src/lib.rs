@@ -38,10 +38,11 @@ pub struct Gps {
 impl Gps {
     pub fn read_port(&mut self) -> Vec<u8> {
         // Maximum port buffer size is 4095, or 1000 numbers.
+        // Returns whatever is in the port.
         let mut buffer: Vec<u8> = vec![0; 1000];
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
-
+        p.flush();
         while p.bytes_to_read().unwrap() < 32 {
             sleep(Duration::from_millis(30));
         }

@@ -42,7 +42,6 @@ impl Gps {
         let mut buffer: Vec<u8> = vec![0; 1000];
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
-        p.flush();
         while p.bytes_to_read().unwrap() < 32 {
             sleep(Duration::from_millis(30));
         }

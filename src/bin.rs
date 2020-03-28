@@ -14,7 +14,7 @@ fn main() {
     };
     loop {
         &gps.parse_sentence();
-        sleep(Duration::from_secs(1));
+        sleep(Duration::from_secs(3));
     }
 
 }

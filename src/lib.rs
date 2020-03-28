@@ -27,7 +27,7 @@ pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
     };
     match serialport::open_with_settings(&port_name, &settings) {
         Ok(port) => return port,
-        Err(_e) => panic!("Port not found."),
+        Err(_e) => panic!("Port not found: {}", port_name),
     }
 }
 

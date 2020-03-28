@@ -12,7 +12,7 @@ use std::i64;
 use std::io::{self, Read, Write};
 use std::str;
 use std::thread::sleep;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant};
 
 use serialport::prelude::*;
 
@@ -33,6 +33,54 @@ pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
 
 pub struct Gps {
     pub port: Box<dyn SerialPort>,
+    pub timestamp: Instant,
+    latitude: f32,
+    longitude: f32,
+    fix_quality: i8, // if A, fix quality is 1.
+    fix_quality_3d: i8,
+    satellites: i8,
+    horizontal_dilution: f32,
+    altitude_m: f32,
+    height_geoid: f32,
+    speed_knots: f32,
+    track_angle_deg: f32,
+    sats: i8,
+    isactivedata: bool,
+    sat_prns: i8,
+    sel_mode: i8, // Selection mode. data[0] for parse gpgsa.
+    pdop: f32, // PODP, dilution of precision
+    hdop: f32, // HDOP, hosizontal of precision
+    vdop: f32, // vertical dilution of precision
+    total_mess_num: i32, // total number of messages. _parse_gpgsv
+    mess_num: i32, // message number. _parse_gpgsv
+}
+
+impl Default for Gps {
+    fn default() -> Self {
+        Gps {
+            port: open_port("/dev/serial0"),
+            timestamp: Instant::now(),
+            latitude: 0.0,
+            longitude: 0.0,
+            fix_quality: 0,
+            fix_quality_3d: 0,
+            satellites: 0,
+            horizontal_dilution: 0.0,
+            altitude_m: 0.0,
+            height_geoid: 0.0,
+            speed_knots: 0.0,
+            track_angle_deg: 0.0,
+            sats: 0,
+            isactivedata: false,
+            sat_prns: 0,
+            sel_mode: 0,
+            pdop: 0.0,
+            hdop: 0.0,
+            vdop: 0.0,
+            total_mess_num: 0,
+            mess_num: 0,
+        }
+    }
 }
 
 impl Gps {
@@ -65,12 +113,19 @@ impl Gps {
         return output;
     }
 
-    pub fn update(self) {}
+    pub fn update(&mut self) {
+        self.parse_sentence();
+    }
 
-    pub fn parse_sentence(&mut self) -> () {
+    fn parse_sentence(&mut self) -> () {
         // Return only the last valid line.
         let port_reading = self.read_line();
-        let string = str::from_utf8(&port_reading).unwrap();
+        let string = str::from_utf8(&port_reading).unwrap().split("\n");
         println!("{:?}", string);
+        // for sentence in string {
+        //     // checksum(sentence);
+        //     println!("{:?}", sentence);
+        // }
     }
+    // fn checksum(String)
 }

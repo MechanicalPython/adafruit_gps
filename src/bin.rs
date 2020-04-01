@@ -28,7 +28,7 @@ fn main() {
     // gps.send_command("PMTK220,500");
     let mut last_print = SystemTime::now();
     loop {
-        // &gps.update();
+        &gps.update();
 
         if last_print.elapsed().unwrap().as_secs() >= 1 {
             last_print = SystemTime::now();

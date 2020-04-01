@@ -6,20 +6,6 @@
 //!
 //! According the the GPS specs, it can give 1Hz or 10Hz outputs.
 //!
-//! # Examples
-//! This example will open the port and print
-//! ```
-//! use std::thread::sleep;
-//! use std::time::Duration;
-//! use mylib::{Gps, open_port};
-//! let mut gps = Gps{port: open_port("/dev/serial0")};
-//!
-//! loop {
-//!     &gps.update();
-//!     sleep(Duration::from_secs(1));
-//! }
-//! ```
-//!
 //! GPS enum has all the items that are needed.
 //! The way it works. Constantly call gps.update(). This will update the variables with the
 //! most up to date items (each type of prefix indicates a different level of importance)
@@ -177,6 +163,9 @@ impl Gps {
     fn checksum(s: &str) -> bool {
         // String should be: $..., *XY
         println!("{}", &s);
+        if &s[0..1] != "$" {
+            return false
+        }
         let star = &s[s.len() - 3..s.len() - 2];
         let checksum = &s[s.len() - 2..s.len()];
         let body = &s[0..s.len() - 3];
@@ -428,6 +417,7 @@ mod gps_test {
     #[test]
     fn checksum() {
         assert_eq!(Gps::checksum("$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,*6A"), true);
+        assert_eq!(Gps::checksum("54,N,00005.9230,W,1,11,0.83,1.1,M,47.0,M,,*66"), false);
     }
 
     fn _parse_gpgll() {}

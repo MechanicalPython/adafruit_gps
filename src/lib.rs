@@ -135,16 +135,13 @@ impl Gps {
         for sentence in string {
             match Gps::parse_sentence(sentence) {
                 Some((data_type, args)) => {
-                    println!("{:?} {:?}", data_type, args);
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
                         let values = Gps::_parse_gpgll(args, gps_values);
                         values
                     } else if (data_type == "GPRMC".to_string()) |  (data_type == "GNRMC".to_string()) {
-                        println!("RMC here");
                         let values = Gps::_parse_gprmc(args, gps_values);
                         values
                     } else if (data_type == "GPGGA".to_string()) |  (data_type == "GNGGA".to_string()) {
-                        println!("GGA here");
                         let values = Gps::_parse_gpgga(args, gps_values);
                         values
                     } else {  // If all else fails, return default values.

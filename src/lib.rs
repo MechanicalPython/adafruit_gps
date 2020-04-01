@@ -100,11 +100,7 @@ impl Gps {
             match p.read(buffer.as_mut_slice()) {
                 Ok(buffer_size) => {
                     output.extend_from_slice(&buffer[..buffer_size]);
-                    if output.len() > 1 {
-                        while output.get(0).unwrap() != &36u8 {  // Remove all characters before $
-                            output.remove(0);
-                        }
-                    }
+
                     if buffer[..buffer_size].contains(&10u8) {
                         cont = false;
                         while output.get(output.len() - 1).unwrap() != &10u8 {

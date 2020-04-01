@@ -142,9 +142,11 @@ impl Gps {
                         let values = Gps::_parse_gpgll(args);
                         values
                     } else if (data_type == "GPRMC".to_string()) |  (data_type == "GNRMC".to_string()) {
+                        println!("RMC here");
                         let values = Gps::_parse_gprmc(args);
                         values
                     } else if (data_type == "GPGGA".to_string()) |  (data_type == "GNGGA".to_string()) {
+                        println!("GGA here");
                         let values = Gps::_parse_gpgga(args);
                         values
                     } else {  // If all else fails, return default values.

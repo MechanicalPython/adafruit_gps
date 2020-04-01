@@ -162,7 +162,9 @@ impl Gps {
 
     fn checksum(s: &str) -> bool {
         // String should be: $..., *XY
-        println!("{}", &s);
+        if s.len() < 10 {
+            return false
+        }
         if &s[0..1] != "$" {
             return false
         }
@@ -418,6 +420,7 @@ mod gps_test {
     fn checksum() {
         assert_eq!(Gps::checksum("$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,*6A"), true);
         assert_eq!(Gps::checksum("54,N,00005.9230,W,1,11,0.83,1.1,M,47.0,M,,*66"), false);
+        assert_eq!(Gps::checksum("005.9234,W,1,12,0.77,4.4,M,47.0,M,,*62"), false);
     }
 
     fn _parse_gpgll() {}

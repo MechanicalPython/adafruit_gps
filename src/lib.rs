@@ -113,6 +113,7 @@ impl Gps {
                 Err(_e) => (),
             }
         }
+        println!("Readline: {:?}", output);
         return output;
     }
 

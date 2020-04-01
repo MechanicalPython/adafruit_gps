@@ -130,7 +130,7 @@ impl Gps {
         self.port.write(byte_cmd);
     }
 
-    pub fn update(&mut self) -> GpsArgValues {
+    pub fn update(&mut self, gps_values: GpsArgValues) -> GpsArgValues{
         let port_reading = self.read_line();
 
         let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
@@ -139,15 +139,15 @@ impl Gps {
                 Some((data_type, args)) => {
                     println!("{:?} {:?}", data_type, args);
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-                        let values = Gps::_parse_gpgll(args);
+                        let values = Gps::_parse_gpgll(args, gps_values);
                         values
                     } else if (data_type == "GPRMC".to_string()) |  (data_type == "GNRMC".to_string()) {
                         println!("RMC here");
-                        let values = Gps::_parse_gprmc(args);
+                        let values = Gps::_parse_gprmc(args, gps_values);
                         values
                     } else if (data_type == "GPGGA".to_string()) |  (data_type == "GNGGA".to_string()) {
                         println!("GGA here");
-                        let values = Gps::_parse_gpgga(args);
+                        let values = Gps::_parse_gpgga(args, gps_values);
                         values
                     } else {  // If all else fails, return default values.
                         GpsArgValues::default()
@@ -205,7 +205,7 @@ impl Gps {
         }
     }
 
-    fn _parse_gpgll(args: String) -> GpsArgValues {
+    fn _parse_gpgll(args: String, mut gps_values: GpsArgValues) -> GpsArgValues {
         // Format for the gpgll data string:
         // [0] Latitude(as hhmm.mmm),
         // [1] Latitude North or South,
@@ -216,7 +216,6 @@ impl Gps {
 
         // Assumes to have $GPGLL and *AB removed.
         // Untested with data.
-        let mut gps_values = GpsArgValues::default();
         let data: Vec<&str> = args.split(",").collect();
 
         // Parse Latitude.
@@ -246,11 +245,11 @@ impl Gps {
 
         // No idea what the point of this data point is.
         gps_values.isactivedata = Some(data[5].to_string());
-
         return gps_values
+
     }
 
-    fn _parse_gprmc(args: String) -> GpsArgValues {
+    fn _parse_gprmc(args: String, mut gps_values: GpsArgValues) -> GpsArgValues {
         //Data string format:
         // [0] Time (as hhmmss) -> parse to hh:mm:ss,
         // [1] fix_quality (a = good fix),
@@ -262,7 +261,6 @@ impl Gps {
         // [7] track angle degrees,
         // [8] time (as ddmmyy) -> parse to yy-mm-dd
 
-        let mut gps_values = GpsArgValues::default();
         let data:Vec<&str> = args.split(",").collect();
         if data.len() < 11 {
             return gps_values  // Unexpected number of params
@@ -310,7 +308,7 @@ impl Gps {
 
     }
 
-    fn _parse_gpgga(args:String) -> GpsArgValues {
+    fn _parse_gpgga(args:String, mut gps_values: GpsArgValues) -> GpsArgValues {
         // Format for data:
         // [0] time (as hhmmss),
         // [1] latitude (as hhmm.mmm),
@@ -324,7 +322,6 @@ impl Gps {
         // [9] Unknown,
         // [10] height geoid,
 
-        let mut gps_values = GpsArgValues::default();
         let data:Vec<&str> = args.split(",").collect();
         if data.len() != 14 {
             return gps_values  // Unexpected number of params.

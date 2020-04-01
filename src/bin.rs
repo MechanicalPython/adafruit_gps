@@ -36,7 +36,7 @@ fn main() {
                 println!("Waiting for fix...");
                 continue;
             } else {
-                println!("=" * 40);
+                println!("=========================================");
                 println!("{:?}", gps_values.timestamp);
                 println!("Latitude ----{:?} degrees", gps_values.latitude);
                 println!("Longitude ---{:?} degrees", gps_values.longitude);

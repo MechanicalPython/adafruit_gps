@@ -176,6 +176,7 @@ impl Gps {
 
     fn checksum(s: &str) -> bool {
         // String should be: $..., *XY
+        println!("{}", &s);
         let star = &s[s.len() - 3..s.len() - 2];
         let checksum = &s[s.len() - 2..s.len()];
         let body = &s[0..s.len() - 3];

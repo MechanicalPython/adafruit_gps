@@ -36,7 +36,17 @@ fn main() {
                 println!("Waiting for fix...");
                 continue;
             } else {
-                println!("{:?}", gps_values);
+                println!("=" * 40);
+                println!("{:?}", gps_values.timestamp);
+                println!("Latitude ----{:?} degrees", gps_values.latitude);
+                println!("Longitude ---{:?} degrees", gps_values.longitude);
+                println!("Fix quality -{:?}", gps_values.fix_quality);
+                println!("Satellites --{:?}", gps_values.satellites);
+                println!("Altitude (m) {:?}", gps_values.altitude_m);
+                println!("Speed (knots){:?}", gps_values.speed_knots);
+                println!("Track angle  {:?}", gps_values.track_angle_deg);
+                println!("HODP --------{:?}", gps_values.horizontal_dilution);
+                println!("Geod height -{:?}", gps_values.height_geoid);
             }
         }
     }

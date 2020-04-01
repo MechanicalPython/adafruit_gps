@@ -137,6 +137,7 @@ impl Gps {
         for sentence in string {
             match Gps::parse_sentence(sentence) {
                 Some((data_type, args)) => {
+                    println!("{:?} {:?}", data_type, args);
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
                         let values = Gps::_parse_gpgll(args);
                         values

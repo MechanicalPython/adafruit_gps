@@ -32,7 +32,6 @@ fn main() {
 
         if last_print.elapsed().unwrap().as_secs() >= 1 {
             last_print = SystemTime::now();
-            println!("{:?}", gps_values);
             if (gps_values.fix_quality < Some(1)) | (gps_values.fix_quality == None) {
                 println!("Waiting for fix...");
                 continue;

@@ -144,6 +144,9 @@ impl Gps {
     fn parse_sentence(sentence: &str) -> Option<(String, String)> {
         // Split sentence into data type (what kind of data there is) and args (the actual data)
         let sentence: String = sentence.split_whitespace().collect();
+        if (&sentence[0..1] != "$") | (sentence.len() < 5) {
+            return None;
+        }
         let sentence: &str = sentence.chars().as_str();
 
         if Gps::checksum(sentence) == false {
@@ -163,12 +166,7 @@ impl Gps {
 
     fn checksum(s: &str) -> bool {
         // String should be: $..., *XY
-        if s.len() < 10 {
-            return false
-        }
-        if &s[0..1] != "$" {
-            return false
-        }
+
         let star = &s[s.len() - 3..s.len() - 2];
         let checksum = &s[s.len() - 2..s.len()];
         let body = &s[0..s.len() - 3];

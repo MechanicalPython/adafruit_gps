@@ -37,7 +37,6 @@ pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
     }
 }
 
-#[derive(PartialEq)]  // For testing.
 #[derive(Debug)]
 #[derive(Default)]
 pub struct GpsArgValues {
@@ -75,6 +74,32 @@ pub struct Gps {
 }
 
 impl Gps {
+    pub fn update(&mut self, gps_values: GpsArgValues) -> GpsArgValues{
+        let port_reading = self.read_line();
+
+        let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
+        for sentence in string {
+            match Gps::parse_sentence(sentence) {
+                Some((data_type, args)) => {
+                    return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
+                        let values = Gps::parse_gpgll(args, gps_values);
+                        values
+                    } else if (data_type == "GPRMC".to_string()) |  (data_type == "GNRMC".to_string()) {
+                        let values = Gps::parse_gprmc(args, gps_values);
+                        values
+                    } else if (data_type == "GPGGA".to_string()) |  (data_type == "GNGGA".to_string()) {
+                        let values = Gps::parse_gpgga(args, gps_values);
+                        values
+                    } else {  // If all else fails, return default values.
+                        GpsArgValues::default()
+                    }
+                }
+                None => (),
+            }
+        }
+        return GpsArgValues::default();
+    }
+
     fn read_line(&mut self) -> Vec<u8> {
         // Maximum port buffer size is 4095.
         // Returns whatever is in the port.
@@ -116,87 +141,7 @@ impl Gps {
         self.port.write(byte_cmd);
     }
 
-    pub fn update(&mut self, gps_values: GpsArgValues) -> GpsArgValues{
-        let port_reading = self.read_line();
-
-        let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
-        for sentence in string {
-            match Gps::parse_sentence(sentence) {
-                Some((data_type, args)) => {
-                    return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-                        let values = Gps::_parse_gpgll(args, gps_values);
-                        values
-                    } else if (data_type == "GPRMC".to_string()) |  (data_type == "GNRMC".to_string()) {
-                        let values = Gps::_parse_gprmc(args, gps_values);
-                        values
-                    } else if (data_type == "GPGGA".to_string()) |  (data_type == "GNGGA".to_string()) {
-                        let values = Gps::_parse_gpgga(args, gps_values);
-                        values
-                    } else {  // If all else fails, return default values.
-                        GpsArgValues::default()
-                    }
-                }
-                None => (),
-            }
-        }
-        return GpsArgValues::default();
-    }
-
-    fn parse_sentence(sentence: &str) -> Option<(String, String)> {
-        // Split sentence into data type (what kind of data there is) and args (the actual data)
-        if sentence.is_empty() {
-            return None;
-        }
-        let sentence: String = sentence.split_whitespace().collect();
-        println!("{}", sentence);
-        if (&sentence[0..1] != "$") | (sentence.len() < 5) {
-            return None;
-        }
-        let sentence: &str = sentence.chars().as_str();
-
-        if Gps::checksum(sentence) == false {
-            return None;
-        }
-        let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
-        match sentence.find(",") {
-            Some(delimiter) => {
-                let datatype: String = sentence[1..delimiter].to_string();
-                let args: String = sentence[delimiter + 1..].to_string();
-
-                return Some((datatype, args));
-            }
-            None => return None,
-        }
-    }
-
-    fn checksum(s: &str) -> bool {
-        // String should be: $..., *XY
-
-        let star = &s[s.len() - 3..s.len() - 2];
-        let checksum = &s[s.len() - 2..s.len()];
-        let body = &s[0..s.len() - 3];
-
-        if star != "*" {  // Check third last item is a *
-            return false;
-        }
-
-        match u8::from_str_radix(&checksum, 16) {  // Convert to base 16.
-            Ok(expected_checksum) => {
-                let mut actual: u8 = 0;
-                for i in body[1..].as_bytes() {  // Skip $ sign. bitwise xor for each i in body
-                    actual ^= *i;
-                }
-                if actual == expected_checksum {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            Err(_e) => return false,
-        }
-    }
-
-    fn _parse_gpgll(args: String, mut gps_values: GpsArgValues) -> GpsArgValues {
+    fn parse_gpgll(args: String, mut gps_values: GpsArgValues) -> GpsArgValues {
         // Format for the gpgll data string:
         // [0] Latitude(as hhmm.mmm),
         // [1] Latitude North or South,
@@ -246,7 +191,7 @@ impl Gps {
 
     }
 
-    fn _parse_gprmc(args: String, mut gps_values: GpsArgValues) -> GpsArgValues {
+    fn parse_gprmc(args: String, mut gps_values: GpsArgValues) -> GpsArgValues {
         //Data string format:
         // [0] Time (as hhmmss) -> parse to hh:mm:ss,
         // [1] fix_quality (a = good fix),
@@ -308,7 +253,7 @@ impl Gps {
 
     }
 
-    fn _parse_gpgga(args:String, mut gps_values: GpsArgValues) -> GpsArgValues {
+    fn parse_gpgga(args:String, mut gps_values: GpsArgValues) -> GpsArgValues {
         // Format for data:
         // [0] time (as hhmmss),
         // [1] latitude (as hhmm.mmm),
@@ -389,6 +334,60 @@ impl Gps {
         return gps_values
     }
 
+    fn parse_sentence(sentence: &str) -> Option<(String, String)> {
+        // Split sentence into data type (what kind of data there is) and args (the actual data)
+        if sentence.is_empty() {
+            return None;
+        }
+        let sentence: String = sentence.split_whitespace().collect();
+        println!("{}", sentence);
+        if (&sentence[0..1] != "$") | (sentence.len() < 5) {
+            return None;
+        }
+        let sentence: &str = sentence.chars().as_str();
+
+        if Gps::checksum(sentence) == false {
+            return None;
+        }
+        let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
+        match sentence.find(",") {
+            Some(delimiter) => {
+                let datatype: String = sentence[1..delimiter].to_string();
+                let args: String = sentence[delimiter + 1..].to_string();
+
+                return Some((datatype, args));
+            }
+            None => return None,
+        }
+    }
+
+    fn checksum(s: &str) -> bool {
+        // String should be: $..., *XY
+
+        let star = &s[s.len() - 3..s.len() - 2];
+        let checksum = &s[s.len() - 2..s.len()];
+        let body = &s[0..s.len() - 3];
+
+        if star != "*" {  // Check third last item is a *
+            return false;
+        }
+
+        match u8::from_str_radix(&checksum, 16) {  // Convert to base 16.
+            Ok(expected_checksum) => {
+                let mut actual: u8 = 0;
+                for i in body[1..].as_bytes() {  // Skip $ sign. bitwise xor for each i in body
+                    actual ^= *i;
+                }
+                if actual == expected_checksum {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            Err(_e) => return false,
+        }
+    }
+
     fn _parse_degrees(nmea_data: String) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
         // ddd is degrees, mm.mmmm is minutes
@@ -456,13 +455,13 @@ mod gps_test {
                 Some((data_type, args)) => {
                     println!("{:?}", sentence);
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-                        let values = Gps::_parse_gpgll(args, gps_values);
+                        let values = Gps::parse_gpgll(args, gps_values);
                         values
                     } else if (data_type == "GPRMC".to_string()) |  (data_type == "GNRMC".to_string()) {
-                        let values = Gps::_parse_gprmc(args, gps_values);
+                        let values = Gps::parse_gprmc(args, gps_values);
                         values
                     } else if (data_type == "GPGGA".to_string()) |  (data_type == "GNGGA".to_string()) {
-                        let values = Gps::_parse_gpgga(args, gps_values);
+                        let values = Gps::parse_gpgga(args, gps_values);
                         values
                     } else {  // If all else fails, return default values.
                         GpsArgValues::default()
@@ -505,6 +504,7 @@ mod gps_test {
             return (r.timestamp, r.latitude, r.longitude, r.fix_quality, r.satellites, r.horizontal_dilution, r.altitude_m, r.height_geoid);
         }
 
+        #[test]
         fn test_parse_gpgga_1() {
             let s1 = "$GNGGA,110942.000,5132.7394,N,00005.9165,W,1,8,1.38,50.9,M,47.0,M,,*60\r\n";
             assert_eq!(test_gpgga_string(&s1),

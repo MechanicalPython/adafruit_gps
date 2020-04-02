@@ -1,6 +1,6 @@
 use std::time::{SystemTime};
 
-use mylib::{Gps, GpsArgValues, open_port};
+use adafruit_gps::{Gps, GpsArgValues, open_port};
 
 fn main() {
 

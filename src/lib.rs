@@ -10,6 +10,9 @@
 //! The way it works. Constantly call gps.update(). This will update the variables with the
 //! most up to date items (each type of prefix indicates a different level of importance)
 //! And then every second print the most up to date info.
+//!
+//! More info on the GPS module at https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf
+//!
 
 extern crate serialport;
 
@@ -34,6 +37,7 @@ pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
     }
 }
 
+#[derive(PartialEq)]  // For testing.
 #[derive(Debug)]
 #[derive(Default)]
 pub struct GpsArgValues {
@@ -71,8 +75,6 @@ pub struct Gps {
 }
 
 impl Gps {
-    // todo - regex to ensure that the strings passed to each _parse_xyz is correct.
-
     fn read_line(&mut self) -> Vec<u8> {
         // Maximum port buffer size is 4095.
         // Returns whatever is in the port.
@@ -121,7 +123,6 @@ impl Gps {
         for sentence in string {
             match Gps::parse_sentence(sentence) {
                 Some((data_type, args)) => {
-                    println!("{:?}", sentence);
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
                         let values = Gps::_parse_gpgll(args, gps_values);
                         values
@@ -143,7 +144,11 @@ impl Gps {
 
     fn parse_sentence(sentence: &str) -> Option<(String, String)> {
         // Split sentence into data type (what kind of data there is) and args (the actual data)
+        if sentence.is_empty() {
+            return None;
+        }
         let sentence: String = sentence.split_whitespace().collect();
+        println!("{}", sentence);
         if (&sentence[0..1] != "$") | (sentence.len() < 5) {
             return None;
         }
@@ -202,8 +207,14 @@ impl Gps {
 
         // Assumes to have $GPGLL and *AB removed.
         // Untested with data.
-        let data: Vec<&str> = args.split(",").collect();
+        if args.is_empty() {
+            return gps_values
+        }
 
+        let data: Vec<&str> = args.split(",").collect();
+        if data.len() != 6 {
+            return gps_values
+        }
         // Parse Latitude.
         match Gps::_parse_degrees(data[0].to_string()) {
             Some(mut latitude) => {
@@ -246,6 +257,9 @@ impl Gps {
         // [6] speed in knots,
         // [7] track angle degrees,
         // [8] time (as ddmmyy) -> parse to yy-mm-dd
+        if args.is_empty() {
+            return gps_values
+        }
 
         let data:Vec<&str> = args.split(",").collect();
         if data.len() < 11 {
@@ -273,13 +287,13 @@ impl Gps {
             None => gps_values.latitude = None,
         }
         match Gps::_parse_degrees(data[4].to_string()) {
-            Some(mut latitude) => {
+            Some(mut longitude) => {
                 if data[5].to_ascii_lowercase() == "w".to_ascii_lowercase() {
-                    latitude *= -1 as f32;
+                    longitude *= -1 as f32;
                 }
-                gps_values.latitude = Some(latitude);
+                gps_values.longitude = Some(longitude);
             }
-            None => gps_values.latitude = None,
+            None => gps_values.longitude = None,
         }
         match data[6].parse::<f32>() {
             Ok(speed_knots) => gps_values.speed_knots = Some(speed_knots),
@@ -305,8 +319,17 @@ impl Gps {
         // [6] satellites being tracked,
         // [7] horizontal dilution,
         // [8] altitude in metres,
-        // [9] Unknown,
+        // [9] altitude units (should always be metres (M)
         // [10] height geoid,
+        // [11] geoid units (always metres)
+        // [12] Age of differential GPS data, time in seconds since last SC104 type 1 or 9 update,
+        //      null field when DGPS is not used
+        // [13] Differential reference station ID, 0000 - 1023. Whatever that means.
+        // [14] Checksum
+
+        if args.is_empty() {
+            return gps_values
+        }
 
         let data:Vec<&str> = args.split(",").collect();
         if data.len() != 14 {
@@ -367,8 +390,9 @@ impl Gps {
     }
 
     fn _parse_degrees(nmea_data: String) -> Option<f32> {
-        // Parse NMEA lat/long data pair ddmm.mmmm into pure degrees value.
-        // dd is degrees, mm.mmmm is minutes
+        // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
+        // ddd is degrees, mm.mmmm is minutes
+        // Formula is->
         let nmea_data = nmea_data.as_str();
 
         let deg:f32 = (&nmea_data[0..2]).parse::<f32>().unwrap();
@@ -422,10 +446,92 @@ mod gps_test {
         assert_eq!(Gps::checksum("005.9234,W,1,12,0.77,4.4,M,47.0,M,,*62"), false);
     }
 
+    fn spoof_update(test_reading: Vec<u8>) -> GpsArgValues {
+        let port_reading = test_reading;
+        let gps_values = GpsArgValues::default();
+
+        let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
+        for sentence in string {
+            match Gps::parse_sentence(sentence) {
+                Some((data_type, args)) => {
+                    println!("{:?}", sentence);
+                    return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
+                        let values = Gps::_parse_gpgll(args, gps_values);
+                        values
+                    } else if (data_type == "GPRMC".to_string()) |  (data_type == "GNRMC".to_string()) {
+                        let values = Gps::_parse_gprmc(args, gps_values);
+                        values
+                    } else if (data_type == "GPGGA".to_string()) |  (data_type == "GNGGA".to_string()) {
+                        let values = Gps::_parse_gpgga(args, gps_values);
+                        values
+                    } else {  // If all else fails, return default values.
+                        GpsArgValues::default()
+                    }
+                }
+                None => (),
+            }
+        }
+        return GpsArgValues::default();
+    }
+
     fn _parse_gpgll() {}
 
-    fn _parse_gprmc() {}
+    #[cfg(test)]
+    mod rmc_tests {
+        use super::*;
+        fn test_rmc_string(s: &str) -> (Option<String>, Option<i32>, Option<f32>, Option<f32>, Option<f32>, Option<f32>) {
+            let s = s.as_bytes().to_vec();  // Process str to what read_lines gives.
+            let r = spoof_update(s);
+            return (r.timestamp, r.fix_quality, r.latitude, r.longitude, r.speed_knots, r.track_angle_deg);
+        }
 
-    fn _parse_gpgga() {}
+        #[test]
+        fn test_parse_gprmc_1() {
+            let s = "$GNRMC,110942.000,A,5132.7394,N,00005.9165,W,0.36,193.42,020420,,,A*63\r\n";
+            assert_eq!(test_rmc_string(&s), (Some("2020-04-02 11:09:42".to_string()), Some(1),
+                                             Some(51.54566), Some(-0.098608) , Some(0.36), Some(193.42)));
+        }
+    }
+
+
+    // GGA tests
+    #[cfg(test)]
+    mod gga_tests {
+        use super::*;
+        fn test_gpgga_string(s: &str) -> (Option<String>, Option<f32>, Option<f32>, Option<i32>,
+                                          Option<i32>, Option<f32>, Option<f32>, Option<f32>) {
+            let s = s.as_bytes().to_vec();  // Process str to what read_lines gives.
+            let r = spoof_update(s);
+            return (r.timestamp, r.latitude, r.longitude, r.fix_quality, r.satellites, r.horizontal_dilution, r.altitude_m, r.height_geoid);
+        }
+
+        fn test_parse_gpgga_1() {
+            let s1 = "$GNGGA,110942.000,5132.7394,N,00005.9165,W,1,8,1.38,50.9,M,47.0,M,,*60\r\n";
+            assert_eq!(test_gpgga_string(&s1),
+                       (Some("11:09:42".to_string()), Some(51.54566), Some(-0.098608),
+                        Some(1), Some(8), Some(1.38), Some(50.9), Some(47.0)));
+        }
+
+        #[test]
+        fn test_parse_gpgga_2() {
+            let s2 = "$GNGGA,131714.000,5132.7319,N,00005.9117,W,1,12,0.85,35.9,M,47.0,M,,*51\r\n";
+            assert_eq!(test_gpgga_string(&s2),
+                       (Some("13:17:14".to_string()), Some(51.545532), Some(-0.098528),
+                        Some(1), Some(12), Some(0.85), Some(35.9), Some(47.0)));
+        }
+
+        #[test]
+        fn test_parse_gpgga_3() {
+            let s3 = "$HFJHS,,,,,,";
+            assert_eq!(test_gpgga_string(&s3), (None, None, None, None, None, None, None, None));
+        }
+
+        #[test]
+        fn test_parse_gpgga_4() {
+            let s4 = "";
+            assert_eq!(test_gpgga_string(&s4), (None, None, None, None, None, None, None, None));
+        }
+
+    }
 }
 

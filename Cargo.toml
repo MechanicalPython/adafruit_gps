@@ -6,7 +6,10 @@ edition = "2018"
 licence = "MIT"
 description = "Port of the adafruit python libary for their Ultimate GPS or Adafruit Mini GPS PA1010D."
 readme = "README.md"
-repository =
+repository = "https://github.com/MechanicalPython/adafruit_gps"
+keywords = ["GPS", "adafruit"]
+
+
 [lib]
 name = "adafruit_gps"
 path = "src/lib.rs"

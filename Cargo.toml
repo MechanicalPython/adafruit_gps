@@ -5,7 +5,8 @@ authors = ["Matt Barson <matt.barson@gmail.com>"]
 edition = "2018"
 licence = "MIT"
 description = "Port of the adafruit python libary for their Ultimate GPS or Adafruit Mini GPS PA1010D."
-
+readme = "README.md"
+repository =
 [lib]
 name = "adafruit_gps"
 path = "src/lib.rs"

@@ -280,7 +280,6 @@ impl Gps {
         if data.len() != 14 {
             return gps_values  // Unexpected number of params.
         }
-        println!("{:?}", data);
 
         // Parse time
         gps_values.timestamp = Some(Gps::_format_hhmmss(data[0]));
@@ -341,7 +340,6 @@ impl Gps {
             return None;
         }
         let sentence: String = sentence.split_whitespace().collect();
-        println!("{}", sentence);
         if (&sentence[0..1] != "$") | (sentence.len() < 5) {
             return None;
         }

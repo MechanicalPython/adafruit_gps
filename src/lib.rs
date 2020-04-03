@@ -280,6 +280,7 @@ impl Gps {
         if data.len() != 14 {
             return gps_values  // Unexpected number of params.
         }
+        println!("{:?}", data);
 
         // Parse time
         gps_values.timestamp = Some(Gps::_format_hhmmss(data[0]));
@@ -392,6 +393,9 @@ impl Gps {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
         // ddd is degrees, mm.mmmm is minutes
         // Formula is->
+        if nmea_data.len() < 9 {
+            return None;
+        }
         let nmea_data = nmea_data.as_str();
 
         let deg:f32 = (&nmea_data[0..2]).parse::<f32>().unwrap();
@@ -406,6 +410,9 @@ impl Gps {
 
     fn _format_hhmmss(time:&str) ->  String {
         // Take in a string of hhmmss and return it as a formatted hh-mm-ss
+        if time.len() < 6 {
+            return "".to_string();
+        }
         let hours = &time[0..2];
         let mins = &time[2..4];
         let secs = &time[4..6];
@@ -413,6 +420,9 @@ impl Gps {
     }
 
     fn _format_ddmmyy(time:&str) -> String {
+        if time.len() < 6 {
+            return "".to_string();
+        }
         let days = &time[0..2];
         let months = &time[2..4];
         let years = format!("20{}", &time[4..6]);  // Only works till year 3000.
@@ -532,6 +542,11 @@ mod gps_test {
             assert_eq!(test_gpgga_string(&s4), (None, None, None, None, None, None, None, None));
         }
 
+        #[test]
+        fn test_parse_gpgga_5() {
+            let s5 = "$GNGGA,000400.100,,,,,0,0,,,M,,M,,*53\r";
+            assert_eq!(test_gpgga_string(&s5), (Some("00:04:00".to_string()), None, None, Some(0), Some(0), None, None, None));
+        }
     }
 }
 

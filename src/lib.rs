@@ -340,6 +340,10 @@ impl Gps {
             return None;
         }
         let sentence: String = sentence.split_whitespace().collect();
+        if sentence.is_empty() {  // In case the string is all whitespace.
+            return None;
+        }
+
         if (&sentence[0..1] != "$") | (sentence.len() < 5) {
             return None;
         }

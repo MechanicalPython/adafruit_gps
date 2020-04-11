@@ -21,7 +21,7 @@
 
 extern crate serialport;
 
-use std::io::{Read, Write};
+use std::io::{Read};
 use std::str;
 use std::time::Duration;
 
@@ -54,8 +54,8 @@ pub struct Gps {
 }
 
 pub trait GetData {
-    fn update(&self) -> GpsArgValues;
-    fn read_line(&self) -> Vec<u8>;
+    fn update(&mut self) -> GpsArgValues;
+    fn read_line(&mut self) -> Vec<u8>;
     fn parse_gpgll(args:String) -> GpsArgValues;
     fn parse_gprmc(args:String) -> GpsArgValues;
     fn parse_gpgga(args:String) -> GpsArgValues;
@@ -97,12 +97,10 @@ impl GetData for Gps {
     fn read_line(&mut self) -> Vec<u8> {
         // Maximum port buffer size is 4095.
         // Returns whatever is in the port.
-        // Start of a line is $ (36) and end is \n (10). So if
-        // The correct line length is 70 (probably).
-
-        // Some notes. Python readline() reads from the top down, and doesn't lose data somehow.
-
-        let mut buffer: Vec<u8> = vec![0; 4095];  // Reads what is in the buffer, be it nothing or max.
+        // Start of a line is $ (36) and end is \n (10).
+        // The serial buffer reads from bottom to top. New data is added to the top. The amount read
+        // from the serial buffer is the size of the buffer vec.
+        let mut buffer: Vec<u8> = vec![0; 1];  // Reads what is in the buffer, be it nothing or max.
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
         let mut cont = true;
@@ -111,11 +109,8 @@ impl GetData for Gps {
                 Ok(buffer_size) => {
                     output.extend_from_slice(&buffer[..buffer_size]);
 
-                    if buffer[..buffer_size].contains(&10u8) {
+                    if output.get(output.len() -1).unwrap() == &10u8 {
                         cont = false;
-                        while output.get(output.len() - 1).unwrap() != &10u8 {
-                            output.remove(output.len() - 1);
-                        }
                     }
                 }
                 Err(_e) => (),
@@ -488,13 +483,13 @@ mod gps_test {
                 Some((data_type, args)) => {
                     println!("{:?}", sentence);
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-                        let values = Gps::parse_gpgll(args, gps_values);
+                        let values = Gps::parse_gpgll(args);
                         values
                     } else if (data_type == "GPRMC".to_string()) | (data_type == "GNRMC".to_string()) {
-                        let values = Gps::parse_gprmc(args, gps_values);
+                        let values = Gps::parse_gprmc(args);
                         values
                     } else if (data_type == "GPGGA".to_string()) | (data_type == "GNGGA".to_string()) {
-                        let values = Gps::parse_gpgga(args, gps_values);
+                        let values = Gps::parse_gpgga(args);
                         values
                     } else {  // If all else fails, return default values.
                         GpsArgValues::default()

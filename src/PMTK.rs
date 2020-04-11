@@ -12,8 +12,7 @@ enum Pmtk {
 }
 
 pub trait SendPmtk {
-    fn send_command(&self, cmd:&str);  // Just send it
-    fn ack_command(&self) -> bool;
+    fn send_command(&mut self, cmd:&str) -> bool;  // Just send it. bool for ack. true if not wanting ack.
     fn add_checksum(&self, sentence:String) -> String;
     fn pmtk_010_sys_msg(&self, msg:&str);
     fn pmtk_011_txt_msg(&self, );
@@ -59,10 +58,12 @@ pub trait SendPmtk {
 
 impl SendPmtk for Gps {
     #[allow(unused_must_use)]  // self.port.write is not used at the end.
-    fn send_command(&mut self, cmd: &str) {  // Take the full sentence, convert to
+    fn send_command(&mut self, cmd: &str) -> bool {  // Take the full sentence, convert to
         let byte_cmd = cmd.as_bytes();
         self.port.write(byte_cmd);
-        self.read_line()
+        self.read_line();
+
+        return true;
     }
 
     fn add_checksum(&self, sentence: String) -> String {
@@ -76,16 +77,12 @@ impl SendPmtk for Gps {
     }
 
     fn pmtk_010_sys_msg(&self, msg:&str) {
-        struct SysMessages {
-            Unknown
 
-        }
-        format!("$PMTK010")
     }
     fn pmtk_011_txt_msg(&self, ) {
-        let mut sentence = format!("$PMTK001,{},{}", cmd, flag);
-        sentence = self.add_checksum(sentence);
-        self.send_command(sentence.as_str());
+        // let mut sentence = format!("$PMTK001,{},{}", cmd, flag);
+        // sentence = self.add_checksum(sentence);
+        // self.send_command(sentence.as_str());
     }
 
     fn pmtk_101_cmd_hot_start(&self) {

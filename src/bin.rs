@@ -12,8 +12,7 @@ fn main() {
     let mut gps = Gps { port: open_port("/dev/serial0") };
 
 
-    thread::sleep(Duration::from_secs(2));
-    gps.port.clear();
+    // thread::sleep(Duration::from_secs(2));
     gps.send_command("PMTK010,001");
     println!("Sent");
     for _i in 0..20 {

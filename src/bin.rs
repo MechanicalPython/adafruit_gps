@@ -16,8 +16,10 @@ fn main() {
     let mut output: Vec<u8> = Vec::new();
 
     let mut gps = Gps { port: open_port("/dev/serial0") };
-    thread::sleep(Duration::from_secs(1));
     gps.send_command("PMTK010,001");
+
+    thread::sleep(Duration::from_secs(1));
+
     let bytes_to_read = gps.port.bytes_to_read();
     println!("{:?}", bytes_to_read);
 

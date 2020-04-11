@@ -13,6 +13,7 @@ fn main() {
 
 
     // thread::sleep(Duration::from_secs(2));
+    println!("{}", gps.port.bytes_to_read());
     gps.send_command("PMTK010,001");
     println!("Sent");
     for _i in 0..20 {

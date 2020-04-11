@@ -103,8 +103,9 @@ impl Gps {
     pub fn read_line(&mut self) -> Vec<u8> {
         // Maximum port buffer size is 4095.
         // Returns whatever is in the port.
-        // Start of a line is $ (36) and end is \n (10). So if
-        // The correct line length is 70 (probably).
+        // Start of a line is $ (36) and end is \n (10).
+        // The serial buffer reads from bottom to top. New data is added to the top. The amount read
+        // from the serial buffer is the size of the buffer vec.
         let mut buffer: Vec<u8> = vec![0; 1];  // Reads what is in the buffer, be it nothing or max.
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
@@ -116,9 +117,6 @@ impl Gps {
 
                     if output.get(output.len() -1).unwrap() == &10u8 {
                         cont = false;
-                        // while output.get(output.len() - 1).unwrap() != &10u8 {
-                        //     output.remove(output.len() - 1);
-                        // }
                     }
                 }
                 Err(_e) => (),

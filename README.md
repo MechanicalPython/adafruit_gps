@@ -62,7 +62,7 @@ let mut gps = Gps { port: open_port("/dev/serial0") };
     }
 ```
 
-Note: Sending multiple PMTK314 packets with gps.send_command() will not work unless there is a substantial amount of 
+Note: Sending multiple PMTK314 Packets with gps.send_command() will not work unless there is a substantial amount of 
 time in-between each time gps.send_command() is called. A time.sleep() of 1 second or more should fix this.
 
 # NMEA data
@@ -120,6 +120,7 @@ the error on those satellites. Meaning: 1 is ideal, 20 is very poor. [See here f
 
 [Info about NMEA taken from here](https://www.tronico.fi/OH6NT/docs/NMEA0183.pdf)
 
+[Information on the PMTK commands you can send to the GPS](https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf)
 # Notes on the code and contributing
 This crate library has mostly been made as a personal challenge and to fill a narrow gap so all contributions are welcome.
 That said, this code is likely to need improvement, all of which is welcome. 

@@ -99,6 +99,9 @@ impl GetData for Gps {
         // Returns whatever is in the port.
         // Start of a line is $ (36) and end is \n (10). So if
         // The correct line length is 70 (probably).
+
+        // Some notes. Python readline() reads from the top down, and doesn't lose data somehow.
+
         let mut buffer: Vec<u8> = vec![0; 4095];  // Reads what is in the buffer, be it nothing or max.
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;

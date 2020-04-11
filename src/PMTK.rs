@@ -2,11 +2,19 @@
 use super::Gps;
 use serialport::SerialPort;
 use std::fmt::Error;
+use crate::GetData;
+
+enum Pmtk {
+    Invalid {f: u8},
+    Unsupported {f: u8},
+    Failed {f: u8},
+    Success {f: u8},
+}
 
 pub trait SendPmtk {
     fn send_command(&self, cmd:&str);  // Just send it
+    fn ack_command(&self) -> bool;
     fn add_checksum(&self, sentence:String) -> String;
-    fn pmtk_001_ack(&self, cmd:&str, flag:&str);
     fn pmtk_010_sys_msg(&self, msg:&str);
     fn pmtk_011_txt_msg(&self, );
     fn pmtk_101_cmd_hot_start(&self, );
@@ -54,6 +62,7 @@ impl SendPmtk for Gps {
     fn send_command(&mut self, cmd: &str) {  // Take the full sentence, convert to
         let byte_cmd = cmd.as_bytes();
         self.port.write(byte_cmd);
+        self.read_line()
     }
 
     fn add_checksum(&self, sentence: String) -> String {
@@ -64,13 +73,6 @@ impl SendPmtk for Gps {
         let checksum = format!("{:X}", checksum);  //Format as hexidecimal.
         let checksumed_sentence = format!("{}*{}\r\n", sentence, checksum).as_str().to_ascii_uppercase();
         return checksumed_sentence;
-    }
-
-    fn pmtk_001_ack(&mut self, cmd:&str, flag:&str) {
-        //! Output system message.
-        let mut sentence = format!("$PMTK001,{},{}", cmd, flag);
-        sentence = self.add_checksum(sentence);
-        self.send_command(sentence.as_str());
     }
 
     fn pmtk_010_sys_msg(&self, msg:&str) {

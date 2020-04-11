@@ -105,7 +105,7 @@ impl Gps {
         // Returns whatever is in the port.
         // Start of a line is $ (36) and end is \n (10). So if
         // The correct line length is 70 (probably).
-        let mut buffer: Vec<u8> = vec![0; 4095];  // Reads what is in the buffer, be it nothing or max.
+        let mut buffer: Vec<u8> = vec![0; 1];  // Reads what is in the buffer, be it nothing or max.
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
         let mut cont = true;
@@ -114,7 +114,7 @@ impl Gps {
                 Ok(buffer_size) => {
                     output.extend_from_slice(&buffer[..buffer_size]);
 
-                    if output.len() > 200 {
+                    if output.get(output.len()) == &10u8 {
                         cont = false;
                         // while output.get(output.len() - 1).unwrap() != &10u8 {
                         //     output.remove(output.len() - 1);

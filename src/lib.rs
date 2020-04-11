@@ -114,7 +114,7 @@ impl Gps {
                 Ok(buffer_size) => {
                     output.extend_from_slice(&buffer[..buffer_size]);
 
-                    if buffer[..buffer_size].contains(&10u8) {
+                    if buffer[..buffer_size].len() > 200 {
                         cont = false;
                         // while output.get(output.len() - 1).unwrap() != &10u8 {
                         //     output.remove(output.len() - 1);

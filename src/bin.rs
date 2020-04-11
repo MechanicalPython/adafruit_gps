@@ -1,4 +1,3 @@
-use std::time::{Duration};
 use std::thread;
 use std::str;
 use std::env;
@@ -15,7 +14,6 @@ fn main() {
     gps.send_command(cmd);
     let line:Vec <u8> = gps.read_line();
     let line: Vec <&str> = str::from_utf8(&line).unwrap().split("\n").collect();
-    thread::sleep(Duration::from_secs(2));
     println!("{:?}", line);
 
 }

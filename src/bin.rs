@@ -14,7 +14,7 @@ fn main() {
 
     thread::sleep(Duration::from_secs(2));
     gps.send_command("PMTK010,001");
-    for _i in 0..5 {
+    for _i in 0..50 {
 
         let lines = gps.read_line();
         let string: Vec<&str> = str::from_utf8(&lines).unwrap().split("\n").collect();

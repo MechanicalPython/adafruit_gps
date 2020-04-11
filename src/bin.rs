@@ -5,6 +5,9 @@ use std::time::Duration;
 use adafruit_gps::{Gps, open_port};
 
 fn main() {
+    // user led? So it can demand a reply where it will read through the buffer till it find what
+    // it wants, to a point, or just don't ask. So if you are initing the gps, you don't care about the
+    // results you may lose.
 
     // What cannot fit into the buffer is not read. Reads from the top down. Least recent to most recent.
     // Always read from the top down
@@ -13,7 +16,6 @@ fn main() {
 
 
     // thread::sleep(Duration::from_secs(2));
-    println!("{}", gps.port.bytes_to_read());
     gps.send_command("PMTK010,001");
     println!("Sent");
     for _i in 0..20 {

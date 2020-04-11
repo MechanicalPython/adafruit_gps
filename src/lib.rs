@@ -114,7 +114,7 @@ impl Gps {
                 Ok(buffer_size) => {
                     output.extend_from_slice(&buffer[..buffer_size]);
 
-                    if output.get(output.len()) == &10u8 {
+                    if output.get(output.len()).unwrap() == &10u8 {
                         cont = false;
                         // while output.get(output.len() - 1).unwrap() != &10u8 {
                         //     output.remove(output.len() - 1);

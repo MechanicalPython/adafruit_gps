@@ -8,8 +8,8 @@ use std::time::Duration;
 use adafruit_gps::{Gps, open_port};
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let cmd: &usize = &args[1].parse::<usize>().unwrap();
+    // let args: Vec<String> = env::args().collect();
+    // let cmd: &usize = &args[1].parse::<usize>().unwrap();
 
     // What cannot fit into the buffer is not read. Reads from the top down. Least recent to most recent.
     // Always read from the top down

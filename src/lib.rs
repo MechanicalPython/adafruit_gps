@@ -116,9 +116,9 @@ impl Gps {
 
                     if buffer[..buffer_size].contains(&10u8) {
                         cont = false;
-                        while output.get(output.len() - 1).unwrap() != &10u8 {
-                            output.remove(output.len() - 1);
-                        }
+                        // while output.get(output.len() - 1).unwrap() != &10u8 {
+                        //     output.remove(output.len() - 1);
+                        // }
                     }
                 }
                 Err(_e) => (),

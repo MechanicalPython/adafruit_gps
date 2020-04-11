@@ -3,19 +3,21 @@ use std::str;
 // use std::env;
 use std::thread;
 use std::time::Duration;
+use std::env;
 
 use adafruit_gps::{Gps, open_port};
 
 fn main() {
-    // let args: Vec <String> = env::args().collect();
-    // let cmd = &args[1];
+    let args: Vec <String> = env::args().collect();
+    let cmd: &usize = &args[1].parse::<usize>().unwrap();
 
-    let mut buffer: Vec<u8> = vec![0; 100];  // Reads what is in the buffer, be it nothing or max.
+    // What cannot fit into the buffer is not read.
+    let mut buffer: Vec<u8> = vec![0; *cmd];  // Reads what is in the buffer, be it nothing or max.
     let mut output: Vec<u8> = Vec::new();
 
     let mut gps = Gps { port: open_port("/dev/serial0") };
     thread::sleep(Duration::from_secs(1));
-
+    gps.send_command("PMTK010,001");
     let bytes_to_read = gps.port.bytes_to_read();
     println!("{:?}", bytes_to_read);
 

@@ -10,7 +10,7 @@ fn main() {
     // let args: Vec <String> = env::args().collect();
     // let cmd = &args[1];
 
-    let mut buffer: Vec<u8> = vec![0; 4095];  // Reads what is in the buffer, be it nothing or max.
+    let mut buffer: Vec<u8> = vec![0; 100];  // Reads what is in the buffer, be it nothing or max.
     let mut output: Vec<u8> = Vec::new();
 
     let mut gps = Gps { port: open_port("/dev/serial0") };

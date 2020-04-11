@@ -15,22 +15,12 @@ fn main() {
     // Always read from the top down
 
     let mut gps = Gps { port: open_port("/dev/serial0") };
+
+
+    thread::sleep(Duration::from_secs(5));
     gps.send_command("PMTK010,001");
+    for _i in 0..50 {
 
-    // thread::sleep(Duration::from_secs(10));
-
-    for _i in 0..10 {
-        // let mut buffer: Vec<u8> = vec![0; *cmd];  // Reads what is in the buffer, be it nothing or max.
-        // let mut output: Vec<u8> = Vec::new();
-        // let bytes_to_read = gps.port.bytes_to_read();
-        // println!("{:?}", bytes_to_read);
-        //
-        // match gps.port.read(buffer.as_mut_slice()) {
-        //     Ok(buffer_size) => {
-        //         output.extend_from_slice(&buffer[..buffer_size]);
-        //     }
-        //     Err(_e) => (),
-        // }
         let lines = gps.read_line();
         let string: Vec<&str> = str::from_utf8(&lines).unwrap().split("\n").collect();
         println!("{:?}", string);

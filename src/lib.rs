@@ -100,7 +100,7 @@ impl Gps {
         return GpsArgValues::default();
     }
 
-    fn read_line(&mut self) -> Vec<u8> {
+    pub fn read_line(&mut self) -> Vec<u8> {
         // Maximum port buffer size is 4095.
         // Returns whatever is in the port.
         // Start of a line is $ (36) and end is \n (10). So if

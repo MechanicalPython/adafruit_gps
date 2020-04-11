@@ -11,13 +11,13 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let cmd: &usize = &args[1].parse::<usize>().unwrap();
 
-    // What cannot fit into the buffer is not read.
-    // Always read from the top down?
+    // What cannot fit into the buffer is not read. Reads from the top down. Least recent to most recent.
+    // Always read from the top down
 
     let mut gps = Gps { port: open_port("/dev/serial0") };
     gps.send_command("PMTK010,001");
 
-    thread::sleep(Duration::from_secs(10));
+    // thread::sleep(Duration::from_secs(10));
 
     for _i in 0..10 {
         let mut buffer: Vec<u8> = vec![0; *cmd];  // Reads what is in the buffer, be it nothing or max.

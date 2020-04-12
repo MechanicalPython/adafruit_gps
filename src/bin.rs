@@ -8,7 +8,7 @@ use adafruit_gps::{Gps, GpsArgValues, open_port, SendPmtk};
 fn main() {
     let mut port = open_port("/dev/serial0");
     let mut gps = Gps{port, gps_type: "MT3339" };
-    gps.send_command("$PMTK301,1", true);
+    gps.send_command("$PMTK220,1000", true);
 
 
 }

@@ -1,3 +1,9 @@
+//! PMTK commands are ways of setting the gps.
+//!
+//! The PMTK001 command is the response given when there is a valid command given.
+//!     It's format is $PMTK001,Command it was given, Flag response (0-3), value passed to it*checksum
+
+
 use std::fmt::Error;
 use std::str;
 use std::thread::sleep;

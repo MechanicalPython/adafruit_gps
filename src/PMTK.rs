@@ -1,6 +1,7 @@
 use std::fmt::Error;
-use std::hint::unreachable_unchecked;
 use std::str;
+use std::thread::sleep;
+use std::time::Duration;
 
 use serialport::SerialPort;
 
@@ -74,6 +75,7 @@ impl SendPmtk for Gps {
         if acknowledge {  // Clear buffer, write and then read.
             // self.port.clear(serialport::ClearBuffer::Input);
             dbg!(self.port.bytes_to_read());
+            sleep(Duration::from_secs(1));
             self.port.write(byte_cmd);
             loop {
                 let line = self.read_line();

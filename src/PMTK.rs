@@ -78,9 +78,7 @@ impl SendPmtk for Gps {
             loop {
                 let line = self.read_line();
                 dbg!(&line);
-                if &line[0..5] != "$PMTK" {
-                    continue;
-                } else {
+                if &line[0..5] == "$PMTK" {
                     let args: Vec<&str> = line.split(",").collect();
                     let flag: &str = args.get(2).unwrap();
                     if flag == "0" {
@@ -94,6 +92,8 @@ impl SendPmtk for Gps {
                     } else {
                         panic!("No valid flag output")
                     }
+                } else {
+                    continue
                 }
             }
         } else {

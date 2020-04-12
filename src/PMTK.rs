@@ -71,7 +71,7 @@ fn add_checksum(sentence: String) -> String {
         checksum ^= *char;
     }
     let checksum = format!("{:X}", checksum);  //Format as hexidecimal.
-    let checksumed_sentence = format!("{}*{}\r\n", sentence, checksum).as_str().to_ascii_uppercase();
+    let checksumed_sentence = format!("${}*{}\r\n", sentence, checksum).as_str().to_ascii_uppercase();
     return checksumed_sentence;
 }
 
@@ -91,7 +91,7 @@ impl SendPmtk for Gps {
             loop {
                 let line = self.read_line();
                 dbg!(&line);
-                if &line[0..5] == "$PMTK" {
+                if &line[0..5] == "PMTK" {
                     let args: Vec<&str> = line.split(",").collect();
                     let flag: &str = args.get(2).unwrap();
                     if flag == "0" {
@@ -125,32 +125,32 @@ impl SendPmtk for Gps {
 
     fn pmtk_101_cmd_hot_start(&mut self, acknowledge: bool) -> PmtkAck {
         //! Hot restart gps: use all data in NV store
-        self.send_command("$PMTK101", acknowledge)
+        self.send_command("PMTK101", acknowledge)
     }
 
     fn pmtk_102_cmd_warm_start(&mut self, acknowledge: bool) -> PmtkAck {
         //! Warm restart gps: Dont use Ephemeris at re-start.
-        self.send_command("$PMTK102", acknowledge)
+        self.send_command("PMTK102", acknowledge)
     }
 
     fn pmtk_103_cmd_cold_start(&mut self, acknowledge: bool) -> PmtkAck {
         //! Cold restart gps: Don't use time, position, almanacs or Ephemeris data to restart.
-        self.send_command("$PMTK103", acknowledge)
+        self.send_command("PMTK103", acknowledge)
     }
 
     fn pmtk_104_cmd_full_cold_start(&mut self, acknowledge: bool) -> PmtkAck {
         //! Full restart gps: All systems, configs are reset. Basically factory reset.
-        self.send_command("$PMTK104", acknowledge)
+        self.send_command("PMTK104", acknowledge)
     }
 
     fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: i32, acknowledge: bool) -> PmtkAck {
         //! Set NMEA port update rate. Range is 100 to 10_000 miliseconds.
         if (update_rate <= 100) | (update_rate >= 10000) {
             eprintln!("update rate outside of range 100-10000. Setting to 1000 default");
-            self.send_command("$PMTK220,1000", acknowledge)
+            self.send_command("PMTK220,1000", acknowledge)
         } else {
             let update_rate = update_rate.to_string();
-            self.send_command(format!("$PMTK220,{}", update_rate).as_str(), acknowledge)
+            self.send_command(format!("PMTK220,{}", update_rate).as_str(), acknowledge)
         }
     }
 
@@ -159,10 +159,10 @@ impl SendPmtk for Gps {
         if (baud_rate != 4800) | (baud_rate != 9600) | (baud_rate != 14400) | (baud_rate != 19200) |
             (baud_rate != 38400) | (baud_rate != 57600) | (baud_rate != 115200) {
             eprint!("Invalid baudrate given. Setting to default.");
-            self.send_command("$PMTK251,0", acknowledge)  // 0 makes it defualt.
+            self.send_command("PMTK251,0", acknowledge)  // 0 makes it defualt.
         } else {
             let baud_rate = baud_rate.to_string();
-            self.send_command(format!("$PMTK251,{}", baud_rate).as_str(), acknowledge)
+            self.send_command(format!("PMTK251,{}", baud_rate).as_str(), acknowledge)
         }
     }
 
@@ -171,10 +171,10 @@ impl SendPmtk for Gps {
         //! Note: If you wish to set DGPS mode to RTCM, please use PMTK250 first to
         //! set RTCM baud rate before using this command.
         if (mode > 2) | (mode < 0) {
-            self.send_command("$PMTK301,0", acknowledge)
+            self.send_command("PMTK301,0", acknowledge)
         } else {
             let mode = mode.to_string();
-            self.send_command(format!("$PMTK301,{}", mode).as_str(), acknowledge)
+            self.send_command(format!("PMTK301,{}", mode).as_str(), acknowledge)
         }
     }
 
@@ -308,8 +308,7 @@ mod pmtktests {
     use super::add_checksum;
     #[test]
     fn checksum() {
-        assert_eq!(add_checksum("$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,".to_string()), "$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,*6A\r\n".to_string());
-        assert_eq!(add_checksum("54,N,00005.9230,W,1,11,0.83,1.1,M,47.0,M,,".to_string()), "54,N,00005.9230,W,1,11,0.83,1.1,M,47.0,M,,*66\r\n".to_string());
-        assert_eq!(add_checksum("005.9234,W,1,12,0.77,4.4,M,47.0,M,,".to_string()), "005.9234,W,1,12,0.77,4.4,M,47.0,M,,*62\r\n".to_string());
+        assert_eq!(add_checksum("GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,".to_string()), "$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,*6A\r\n".to_string());
+        assert_eq!(add_checksum("PMTK103".to_string()), "$PMTK103*30\r\n")
     }
 }

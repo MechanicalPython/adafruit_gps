@@ -75,20 +75,25 @@ impl SendPmtk for Gps {
             self.port.clear(serialport::ClearBuffer::Input);
             dbg!(self.port.bytes_to_read());
             self.port.write(byte_cmd);
-            let line = self.read_line();  // Assumes next read line is the one we want.
-            dbg!(&line);
-            let args: Vec<&str> = line.split(",").collect();
-            let flag: &str = args.get(2).unwrap();
-            if flag == "0" {
-                return PmtkAck::Invalid;
-            } else if flag == "1" {
-                return PmtkAck::Unsupported;
-            } else if flag == "2" {
-                return PmtkAck::Failed;
-            } else if flag == "3" {
-                return PmtkAck::Success;
-            } else {
-                panic!("No valid flag output")
+            loop {
+                let line = self.read_line();
+                if &line[0..5] != "$PMTK" {
+                    continue;
+                } else {
+                    let args: Vec<&str> = line.split(",").collect();
+                    let flag: &str = args.get(2).unwrap();
+                    if flag == "0" {
+                        return PmtkAck::Invalid;
+                    } else if flag == "1" {
+                        return PmtkAck::Unsupported;
+                    } else if flag == "2" {
+                        return PmtkAck::Failed;
+                    } else if flag == "3" {
+                        return PmtkAck::Success;
+                    } else {
+                        panic!("No valid flag output")
+                    }
+                }
             }
         } else {
             self.port.write(byte_cmd);
@@ -140,7 +145,6 @@ impl SendPmtk for Gps {
             eprintln!("update rate outside of range 100-10000. Setting to 1000 default");
             self.send_command("$PMTK220,1000", acknowledge)
         } else {
-
             let update_rate = update_rate.to_string();
             self.send_command(format!("$PMTK220,{}", update_rate).as_str(), acknowledge)
         }

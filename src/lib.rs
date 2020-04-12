@@ -466,13 +466,6 @@ mod gps_test {
         assert_eq!(Gps::_parse_degrees("6447.5086".to_string()).unwrap(), 64.79181);
     }
 
-    #[test]
-    fn checksum() {
-        assert_eq!(Gps::checksum("$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,*6A"), true);
-        assert_eq!(Gps::checksum("54,N,00005.9230,W,1,11,0.83,1.1,M,47.0,M,,*66"), false);
-        assert_eq!(Gps::checksum("005.9234,W,1,12,0.77,4.4,M,47.0,M,,*62"), false);
-    }
-
     fn spoof_update(test_reading: Vec<u8>) -> GpsArgValues {
         let port_reading = test_reading;
         let gps_values = GpsArgValues::default();

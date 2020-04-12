@@ -12,7 +12,6 @@ use super::Gps;
 pub trait SendPmtk {
     fn send_command(&mut self, cmd: &str, acknowledge: bool) -> PmtkAck;
     // Just send it. bool for ack. true if not wanting ack.
-    fn add_checksum(&mut self, sentence: String) -> String;
     fn pmtk_010_sys_msg(&mut self, msg: &str) -> PmtkAck;
     fn pmtk_011_txt_msg(&mut self, acknowledge: bool) -> PmtkAck;
     fn pmtk_101_cmd_hot_start(&mut self, acknowledge: bool) -> PmtkAck;
@@ -66,10 +65,21 @@ pub enum PmtkAck {
     Success,  //flag: 3
 }
 
+fn add_checksum(sentence: String) -> String {
+    let mut checksum = 0;
+    for char in sentence.as_bytes() {
+        checksum ^= *char;
+    }
+    let checksum = format!("{:X}", checksum);  //Format as hexidecimal.
+    let checksumed_sentence = format!("{}*{}\r\n", sentence, checksum).as_str().to_ascii_uppercase();
+    return checksumed_sentence;
+}
+
+
 impl SendPmtk for Gps {
     #[allow(unused_must_use)]  // self.port.write is not used
     fn send_command(&mut self, cmd: &str, acknowledge: bool) -> PmtkAck {
-        let cmd = self.add_checksum(cmd.to_string());
+        let cmd = add_checksum(cmd.to_string());
         dbg!(&cmd);
         let byte_cmd = cmd.as_bytes();
         dbg!(&byte_cmd);
@@ -96,23 +106,13 @@ impl SendPmtk for Gps {
                         panic!("No valid flag output")
                     }
                 } else {
-                    continue
+                    continue;
                 }
             }
         } else {
             self.port.write(byte_cmd);
             return PmtkAck::Success;
         }
-    }
-
-    fn add_checksum(&mut self, sentence: String) -> String {
-        let mut checksum = 0;
-        for char in sentence.as_bytes() {
-            checksum ^= *char;
-        }
-        let checksum = format!("{:X}", checksum);  //Format as hexidecimal.
-        let checksumed_sentence = format!("{}*{}\r\n", sentence, checksum).as_str().to_ascii_uppercase();
-        return checksumed_sentence;
     }
 
     fn pmtk_010_sys_msg(&mut self, msg: &str) -> PmtkAck {
@@ -303,4 +303,13 @@ impl SendPmtk for Gps {
     }
 }
 
-
+#[cfg(test)]
+mod pmtktests {
+    use super::add_checksum;
+    #[test]
+    fn checksum() {
+        assert_eq!(add_checksum("$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,".to_string()), "$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,*6A\r\n".to_string());
+        assert_eq!(add_checksum("54,N,00005.9230,W,1,11,0.83,1.1,M,47.0,M,,".to_string()), "54,N,00005.9230,W,1,11,0.83,1.1,M,47.0,M,,*66\r\n".to_string());
+        assert_eq!(add_checksum("005.9234,W,1,12,0.77,4.4,M,47.0,M,,".to_string()), "005.9234,W,1,12,0.77,4.4,M,47.0,M,,*62\r\n".to_string());
+    }
+}

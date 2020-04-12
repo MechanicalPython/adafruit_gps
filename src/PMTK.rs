@@ -77,6 +77,7 @@ impl SendPmtk for Gps {
             self.port.write(byte_cmd);
             loop {
                 let line = self.read_line();
+                dbg!(&line);
                 if &line[0..5] != "$PMTK" {
                     continue;
                 } else {

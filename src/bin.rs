@@ -8,12 +8,12 @@ use adafruit_gps::{Gps, GpsArgValues, open_port, SendPmtk};
 
 
 fn main() {
-    let args = env::args();
-    let cmd = args.get(1).expect("No command given.");
+    let args:Vec<String> = env::args().collect();
+    let cmd:&String = args.get(1).expect("No command given.");
     let mut port = open_port("/dev/serial0");
     let mut gps = Gps{port, gps_type: "MT3339" };
     thread::sleep(Duration::from_secs(1));
-    gps.send_command(cmd, true);
+    gps.send_command(cmd.as_str(), true);
 
 
 }

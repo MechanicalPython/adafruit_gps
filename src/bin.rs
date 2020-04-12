@@ -14,7 +14,7 @@ fn main() {
     let mut port = open_port("/dev/serial0");
     let mut gps = Gps{port, gps_type: "MT3339" };
     thread::sleep(Duration::from_secs(1));
-    gps.send_command(cmd.as_str(), true);
+    gps.send_command(format!("${}", cmd).as_str(), true);
 
 
 }

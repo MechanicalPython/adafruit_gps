@@ -99,6 +99,8 @@ impl GetData for Gps {
         // Start of a line is $ (36) and end is \n (10).
         // The serial buffer reads from bottom to top. New data is added to the top. The amount read
         // from the serial buffer is the size of the buffer vec.
+
+        // 127 is the maximum valid utf8 number.
         let mut buffer: Vec<u8> = vec![0; 1];  // Reads what is in the buffer, be it nothing or max.
         let mut output: Vec<u8> = Vec::new();
         let p = &mut self.port;
@@ -115,8 +117,7 @@ impl GetData for Gps {
                 Err(_e) => (),
             }
         }
-        dbg!(&output);
-        let string: String = str::from_utf8(&output).unwrap().to_string();
+        let string: String = str::from_utf8(&output).unwrap_or(" ").to_string();
         return string;
     }
 

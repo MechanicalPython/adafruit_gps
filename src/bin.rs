@@ -1,11 +1,9 @@
+use std::env;
 use std::str;
 use std::thread;
 use std::time::Duration;
 
-use std::env;
-
 use adafruit_gps::{Gps, GpsArgValues, open_port, SendPmtk};
-
 
 fn main() {
     let args:Vec<String> = env::args().collect();

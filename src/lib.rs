@@ -115,6 +115,7 @@ impl GetData for Gps {
                 Err(_e) => (),
             }
         }
+        dbg!(&output);
         let string: String = str::from_utf8(&output).unwrap().to_string();
         return string;
     }

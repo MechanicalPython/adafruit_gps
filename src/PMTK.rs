@@ -72,7 +72,7 @@ impl SendPmtk for Gps {
         let byte_cmd = cmd.as_bytes();
 
         if acknowledge {  // Clear buffer, write and then read.
-            self.port.clear(serialport::ClearBuffer::Input);
+            // self.port.clear(serialport::ClearBuffer::Input);
             dbg!(self.port.bytes_to_read());
             self.port.write(byte_cmd);
             loop {

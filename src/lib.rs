@@ -55,7 +55,7 @@ pub struct Gps {
 
 pub trait GetData {
     fn update(&mut self) -> GpsArgValues;
-    fn read_line(&mut self) -> Vec<u8>;
+    fn read_line(&mut self) -> String;
     fn parse_gpgll(args:String) -> GpsArgValues;
     fn parse_gprmc(args:String) -> GpsArgValues;
     fn parse_gpgga(args:String) -> GpsArgValues;
@@ -69,11 +69,10 @@ pub trait GetData {
 
 impl GetData for Gps {
     fn update(&mut self) -> GpsArgValues {
-        let port_reading = self.read_line();
+        let line = self.read_line();
+        let line = line.as_str();
 
-        let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
-        for sentence in string {
-            match Gps::parse_sentence(sentence) {
+        match Gps::parse_sentence(line) {
                 Some((data_type, args)) => {
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
                         let values = Gps::parse_gpgll(args);
@@ -90,11 +89,11 @@ impl GetData for Gps {
                 }
                 None => (),
             }
-        }
+
         return GpsArgValues::default();
     }
 
-    fn read_line(&mut self) -> Vec<u8> {
+    fn read_line(&mut self) -> String {
         // Maximum port buffer size is 4095.
         // Returns whatever is in the port.
         // Start of a line is $ (36) and end is \n (10).
@@ -116,7 +115,8 @@ impl GetData for Gps {
                 Err(_e) => (),
             }
         }
-        return output;
+        let string: String = str::from_utf8(&output).unwrap().to_string();
+        return string;
     }
 
     fn parse_gpgll(args: String) -> GpsArgValues {

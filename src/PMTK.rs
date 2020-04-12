@@ -94,6 +94,9 @@ impl SendPmtk for Gps {
             loop {
                 let line = self.read_line();
                 dbg!(&line);
+                if line.len() < 5 {
+                    return PmtkAck::Invalid;
+                }
                 if &line[0..5] == "$PMTK" {
                     let args: Vec<&str> = line.split(",").collect();
                     let flag: &str = args.get(2).unwrap();

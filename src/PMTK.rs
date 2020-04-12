@@ -70,7 +70,9 @@ impl SendPmtk for Gps {
     #[allow(unused_must_use)]  // self.port.write is not used
     fn send_command(&mut self, cmd: &str, acknowledge: bool) -> PmtkAck {
         let cmd = self.add_checksum(cmd.to_string());
+        dbg!(&cmd);
         let byte_cmd = cmd.as_bytes();
+        dbg!(&byte_cmd);
 
         if acknowledge {  // Clear buffer, write and then read.
             self.port.clear(serialport::ClearBuffer::Input);

@@ -134,6 +134,7 @@ impl SendPmtk for Gps {
         //! Hot restart gps: use all data in NV store
         //!
         //! $PMTK011,MTKGPS*08\r\n" -> response.
+        //! "$CDACK,7,0*49\r\n"
         self.send_command("PMTK101", acknowledge)
     }
 

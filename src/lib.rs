@@ -347,6 +347,13 @@ impl GetData for Gps {
     }
 
     fn checksum(s: &str) -> bool {
+        let mut string = String::new();
+        for char in s.chars() {
+            if char.is_whitespace() == false {
+                string.push(char);
+            }
+        }
+        let s = string.as_str();
         // String should be: $..., *XY
 
         let star = &s[s.len() - 3..s.len() - 2];

@@ -17,7 +17,7 @@ fn main() {
         gps.send_command(format!("{}", cmd).as_str(), true);
         for i in 0..5 {
             let l = gps.read_line();
-            println!("{}", l)
+            dbg!(l);
         }
     } else {
         let l = gps.read_line();

@@ -1,3 +1,5 @@
+#![allow(warnings)]
+
 use std::env;
 use std::str;
 use std::thread;

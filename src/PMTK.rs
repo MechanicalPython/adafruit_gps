@@ -3,6 +3,7 @@
 //! The PMTK001 command is the response given when there is a valid command given.
 //!     It's format is $PMTK001,Command it was given, Flag response (0-3), value passed to it*checksum
 
+#![allow(warnings)]
 
 use std::fmt::Error;
 use std::str;
@@ -99,7 +100,7 @@ impl SendPmtk for Gps {
                 }
                 if &line[0..5] == "$PMTK" {
                     let args: Vec<&str> = line.split(",").collect();
-                    let flag: &str = args.get(2).unwrap();
+                    let flag: &str = args.get(2).unwrap_or(&"0");
                     if flag == "0" {
                         return PmtkAck::Invalid;
                     } else if flag == "1" {
@@ -131,6 +132,8 @@ impl SendPmtk for Gps {
 
     fn pmtk_101_cmd_hot_start(&mut self, acknowledge: bool) -> PmtkAck {
         //! Hot restart gps: use all data in NV store
+        //!
+        //! $PMTK011,MTKGPS*08\r\n" -> response.
         self.send_command("PMTK101", acknowledge)
     }
 

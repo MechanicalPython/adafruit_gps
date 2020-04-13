@@ -470,7 +470,6 @@ mod gps_test {
 
     fn spoof_update(test_reading: Vec<u8>) -> GpsArgValues {
         let port_reading = test_reading;
-        let gps_values = GpsArgValues::default();
 
         let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
         for sentence in string {

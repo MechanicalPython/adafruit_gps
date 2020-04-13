@@ -70,6 +70,7 @@ pub enum PmtkAck {
     Failed,
     //flag: 2
     Success,  //flag: 3
+    NoPacket,
 }
 
 fn add_checksum(sentence: String) -> String {
@@ -92,13 +93,17 @@ impl SendPmtk for Gps {
         if acknowledge {  // Clear buffer, write and then read.
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);
-            loop {
+            for i in 0..10 {   //Check 10 lines before giving up.
                 let line = self.read_line();
                 dbg!(&line);
                 if line.len() < 5 {
                     return PmtkAck::Invalid;
                 }
-                if &line[0..5] == "$PMTK" {
+                if (&line[0..5] == "$PMTK") && (Gps::checksum(&line)) {
+                    // Check its a valid PMTK line.
+                    let line:Vec<&str> = line.split("*").collect();
+                    let line:&str = line.get(0).unwrap();
+                    // Remove checksum.
                     let args: Vec<&str> = line.split(",").collect();
                     let flag: &str = args.get(2).unwrap_or(&"0");
                     if flag == "0" {
@@ -110,12 +115,13 @@ impl SendPmtk for Gps {
                     } else if flag == "3" {
                         return PmtkAck::Success;
                     } else {
-                        panic!("No valid flag output")
+                        return PmtkAck::NoPacket;
                     }
                 } else {
                     continue;
                 }
             }
+            return PmtkAck::NoPacket;
         } else {
             self.port.write(byte_cmd);
             return PmtkAck::Success;
@@ -133,8 +139,13 @@ impl SendPmtk for Gps {
     fn pmtk_101_cmd_hot_start(&mut self, acknowledge: bool) -> PmtkAck {
         //! Hot restart gps: use all data in NV store
         //!
-        //! $PMTK011,MTKGPS*08\r\n" -> response.
-        //! "$CDACK,7,0*49\r\n"
+        //! 101, 102, 103, 104 all get similar messages.
+        //! $CDACK,7,0*49\r\n  -> Unknown what this is.
+        //! $PMTK011,MTKGPS*08\r\n -> Output sys message.
+        //! $PMTK010,001*2E\r\n -> Sys message, 001 Startup.
+        //! $PMTK011,MTKGPS*08\r\n -> 001 txt message, output system message.
+        //! $PMTK010,002*2D\r\n -> Sys msg, 002 = Notification, aiding EPO.
+        //! Normal GPS commands.
         self.send_command("PMTK101", acknowledge)
     }
 
@@ -155,6 +166,8 @@ impl SendPmtk for Gps {
 
     fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: i32, acknowledge: bool) -> PmtkAck {
         //! Set NMEA port update rate. Range is 100 to 10_000 miliseconds.
+        //!
+        //! Gets standard 001 response.
         if (update_rate <= 100) | (update_rate >= 10000) {
             eprintln!("update rate outside of range 100-10000. Setting to 1000 default");
             self.send_command("PMTK220,1000", acknowledge)
@@ -166,6 +179,8 @@ impl SendPmtk for Gps {
 
     fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: u32, acknowledge: bool) -> PmtkAck {
         //! Set NMEA port baud rate: Setting are: 4800,9600,14400,19200,38400,57600,115200
+        //!
+        //! Unknown response.
         if (baud_rate != 4800) | (baud_rate != 9600) | (baud_rate != 14400) | (baud_rate != 19200) |
             (baud_rate != 38400) | (baud_rate != 57600) | (baud_rate != 115200) {
             eprint!("Invalid baudrate given. Setting to default.");

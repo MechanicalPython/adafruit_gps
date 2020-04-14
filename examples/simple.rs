@@ -11,7 +11,7 @@ fn main() {
     let mut gps = Gps{port, gps_type: "MT3339" };
 
     if args.len() == 2 {
-        let cmd:&String = args.get(1).expect("No command given.");
+        let _cmd:&String = args.get(1).expect("No command given.");
 
         for _i in 0..50 {
             let l = gps.read_line();

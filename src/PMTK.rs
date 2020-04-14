@@ -22,6 +22,8 @@ pub mod send_pmtk {
 
     use crate::gps::{GetGpsData, Gps, is_valid_checksum};
 
+    #[derive(Debug)]
+    #[derive(PartialEq)]
     pub enum Pmtk001Ack {
         // format: $PMTK001,cmd,flag*checksum\r\n
         //flag: 0
@@ -39,6 +41,8 @@ pub mod send_pmtk {
         NoPacket,
     }
 
+    #[derive(Debug)]
+    #[derive(PartialEq)]
     pub enum DgpsMode {
         NoDgps,
         RTCM,
@@ -46,18 +50,24 @@ pub mod send_pmtk {
         Unknown,
     }
 
+    #[derive(Debug)]
+    #[derive(PartialEq)]
     pub enum Sbas {
         Enabled,
         Disabled,
         Unknown,
     }
 
+    #[derive(Debug)]
+    #[derive(PartialEq)]
     pub enum SbasMode {
         Testing,
         Integrity,
         Unknown,
     }
 
+    #[derive(Debug)]
+    #[derive(PartialEq)]
     pub struct NmeaOutput {
         pub gll: i8,
         pub rmc: i8,
@@ -65,8 +75,11 @@ pub mod send_pmtk {
         pub gga: i8,
         pub gsa: i8,
         pub gsv: i8,
+        pub pmtkchn_interval: i8,
     }
 
+    #[derive(Debug)]
+    #[derive(PartialEq)]
     pub struct EpoData {
         pub set: i8,
         pub fwn_ftow_week_number: i8,
@@ -104,16 +117,16 @@ pub mod send_pmtk {
         fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: &str) -> Pmtk001Ack;
         fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) -> Pmtk001Ack;
 
-        fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: &str) -> Pmtk001Ack;
+        fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: DgpsMode) -> Pmtk001Ack;
         fn pmtk_401_api_q_dgps_mode(&mut self) -> DgpsMode;
 
-        fn pmtk_313_api_set_sbas_enabled(&mut self, sbas: &str) -> Pmtk001Ack;
+        fn pmtk_313_api_set_sbas_enabled(&mut self, sbas: Sbas) -> Pmtk001Ack;
         fn pmtk_413_api_q_sbas_enabled(&mut self) -> Sbas;
 
         fn pmtk_314_api_set_nmea_output(&mut self, gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8) -> Pmtk001Ack;
         fn pmtk_414_api_q_nmea_output(&mut self) -> NmeaOutput;
 
-        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: &str) -> bool;
+        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: SbasMode) -> Pmtk001Ack;
         fn pmtk_419_api_q_sbas_mode(&mut self) -> SbasMode;
 
         fn pmtk_605_q_release(&mut self) -> String;
@@ -155,7 +168,7 @@ pub mod send_pmtk {
 
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack {
             //! Format for this is $pmtk{cmd},{flag},{value}*{checksum}
-    //! Value isn't always present.
+            //! Value isn't always present.
             for _i in 0..search_depth {   // Check 10 lines before giving up.
                 let line = self.read_line();
                 if (&line[0..8] == "$PMTK001") && (is_valid_checksum(&line)) {
@@ -190,7 +203,7 @@ pub mod send_pmtk {
 
         fn pmtk_500(&mut self) -> Option<String> {
             //! 500 reply format if $PMTK500,arg,arg,arg.
-    //! Return the string without checksum.
+            //! Return the string without checksum.
             for _i in 0..10 {   // Check 10 lines before giving up.
                 let line = self.read_line();
                 if (&line[0..5] == "$PMTK") && (is_valid_checksum(&line)) {
@@ -236,38 +249,46 @@ pub mod send_pmtk {
 
         fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: &str) -> Pmtk001Ack {
             //! Set NMEA port update rate. Range is 100 to 10_000 miliseconds.
-    //!
-    //! Gets standard 001 response.
+            //! Good default is 1000 (1Hz)
+            //! Standard 001 response.
             self.send_command(format!("PMTK220,{}", update_rate).as_str());
             self.pmtk_001(10)
         }
 
         fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) -> Pmtk001Ack {
             //! Set NMEA port baud rate: Setting are: 4800,9600,14400,19200,38400,57600,115200
-    //!
-    //! Probably 001 response.
+            //! 9600 seems to be a good default.
+            //! Probably 001 response.
             self.send_command(format!("PMTK251,{}", baud_rate).as_str());
             self.pmtk_001(10)
         }
 
-        fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: &str) -> Pmtk001Ack {
+        fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: DgpsMode) -> Pmtk001Ack {
             //! Query DGPS mode.
-    //! DGPS - Differential GPS.
-    //! WAAS: Wide area augmentation system. Only avaliable in North America. Improved GPS
-    //! accuracy by using a correction station.
-    //!
-    //! If you wish to set DGPS to RTCM, first set baud rate (pmtk_220_set_nmea_updaterate).
-    //! RTCM: Not sure what this is.
-    //!
-    //! 001 reply.
-            self.send_command(format!("PMTK301,{}", dgps_mode).as_str());
+            //! 0 = No DGPS setting  -> Default.
+            //! 1 = RTCM
+            //! 2 = WAAS: Wide area augmentation system. Only avaliable in North America. Improved GPS
+            //! accuracy by using a correction station.
+            //!
+            //! If you wish to set DGPS to RTCM, first set baud rate (pmtk_220_set_nmea_updaterate).
+            //! RTCM: Not sure what this is.
+            //!
+            //! Standard 001 reply.
+
+            match dgps_mode {
+                DgpsMode::NoDgps => self.send_command("PMTK301,0"),
+                DgpsMode::RTCM => self.send_command("PMTK301,1"),
+                DgpsMode::WAAS => self.send_command("PMTK301,2"),
+                DgpsMode::Unknown => (),
+            }
+
             self.pmtk_001(10)
         }
 
         fn pmtk_401_api_q_dgps_mode(&mut self) -> DgpsMode {
             //! Query what the DGPS setting is.
-    //! Response is 501,{0,1,2} for {No DGPS, RTCM, WAAS}.
-    //! Fn return: Option String 0, 1 or 2.
+            //! Response is 501,{0,1,2} for {No DGPS, RTCM, WAAS}.
+            //! Fn return: Option String 0, 1 or 2.
 
             self.send_command("PMTK401");
 
@@ -293,9 +314,18 @@ pub mod send_pmtk {
             };
         }
 
-        fn pmtk_313_api_set_sbas_enabled(&mut self, sbas: &str) -> Pmtk001Ack {
+        fn pmtk_313_api_set_sbas_enabled(&mut self, sbas: Sbas) -> Pmtk001Ack {
+            //! Enable to search a SBAS satellite or not.
+            //! Enable = 1  // Default.
+            //! Disabled = 0
+            //! SBAS (Satellite-based augmentation systems) uses ground stations broadcasting
+            //! satellite messages to aid in navigation and accuracy.
             //! Standard 001 response.
-            self.send_command(format!("PMTK313,{}", sbas).as_str());
+            match sbas {
+                Sbas::Enabled => self.send_command("PMTK313,1"),
+                Sbas::Disabled => self.send_command("PMTK313,0"),
+                Sbas::Unknown => ()
+            }
             self.pmtk_001(10)
         }
 
@@ -323,11 +353,11 @@ pub mod send_pmtk {
 
         fn pmtk_314_api_set_nmea_output(&mut self, gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8) -> Pmtk001Ack {
             //! 19 fields can be parsed to this one.
-    //! $PMTK314,{GPGLL},{GPRMC},{GPTVG},{GPGGA},{GPGAS},{GPGSV},{R}..6-17,{PMTKCHN interval}
-    //! For each field, frequency setting is given: 0-5, 0-> Disabled,
-    //! 1-> Output once everty one position fix, 2-> every second... every 5th.
-    //! pmtk response is standard PMTK001
-            // todo -- default is PMTK4314,-1*
+            //! $PMTK314,{GPGLL},{GPRMC},{GPTVG},{GPGGA},{GPGAS},{GPGSV},{R}..6-17,{PMTKCHN interval}
+            //! For each field, frequency setting is given: 0-5, 0-> Disabled,
+            //! 1-> Output once everty one position fix, 2-> every second... every 5th.
+            //! pmtk response is standard PMTK001
+            //! Default is PMTK4314,-1*
             self.send_command(format!("PMTK314,{},{},{},{},{},{},0,0,0,0,0,0,0,{}",
                                       gll, rmc, vtg, gga, gsa, gsv, pmtkchn_interval).as_str());
             self.pmtk_001(10)
@@ -335,7 +365,7 @@ pub mod send_pmtk {
 
         fn pmtk_414_api_q_nmea_output(&mut self) -> NmeaOutput {
             //! Return 514: PMTK514, the nmea outputs that are valid (see pmtk_314_api_set_nmea_output
-    //! for the fields).
+            //! for the fields).
             self.send_command("PMTK414");
             return match self.pmtk_500() {
                 Some(args) => {
@@ -346,6 +376,7 @@ pub mod send_pmtk {
                     let gga: &str = args.get(4).unwrap_or(&"-1");
                     let gsa: &str = args.get(5).unwrap_or(&"-1");
                     let gsv: &str = args.get(6).unwrap_or(&"-1");
+                    let pmtkchn_interval: &str = args.get(18).unwrap_or(&"-1");
 
                     NmeaOutput {
                         gll: gll.parse::<i8>().unwrap(),
@@ -354,6 +385,7 @@ pub mod send_pmtk {
                         gga: gga.parse::<i8>().unwrap(),
                         gsa: gsa.parse::<i8>().unwrap(),
                         gsv: gsv.parse::<i8>().unwrap(),
+                        pmtkchn_interval: pmtkchn_interval.parse::<i8>().unwrap(),
                     }
                 }
                 None => NmeaOutput {
@@ -363,22 +395,27 @@ pub mod send_pmtk {
                     gga: -1,
                     gsa: -1,
                     gsv: -1,
+                    pmtkchn_interval: -1,
                 }
             };
         }
 
-        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: &str) -> bool {
+        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: SbasMode) -> Pmtk001Ack {
             //! Set sbas mode. 0=testing mode and 1=integrity mode.
-    //!
-    //! Reboots itself.
-            self.send_command(format!("PMTK391,{}", sbas_mode).as_str());
-            self.pmtk_startup()
+            //! Integrity mode is default.
+            //! Standard 001 reply.
+            match sbas_mode {
+                SbasMode::Integrity => self.send_command("PMTK391,1"),
+                SbasMode::Testing => self.send_command("PMTK391,0"),
+                SbasMode::Unknown => (),
+            }
+            self.pmtk_001(10)
         }
 
         fn pmtk_419_api_q_sbas_mode(&mut self) -> SbasMode {
             //! 519 response, PMTK519,{0,1} for {testing mode, integrity mode}, set by 319.
-    //! false is testing mode, true is integrity mode.
-    //!
+            //! false is testing mode, true is integrity mode.
+            //!
             self.send_command("PMTK419");
             return match self.pmtk_500() {
                 Some(args) => {
@@ -398,9 +435,9 @@ pub mod send_pmtk {
 
         fn pmtk_605_q_release(&mut self) -> String {
             //! $PMTK705,AXN_5.1.7_3333_19020118,0027,PA1010D,1.0*76
-    //! Get firmware release info.
-    //!
-    //! Return blank string if no info found.
+            //! Get firmware release info.
+            //!
+            //! Return blank string if no info found.
             self.send_command("PMTK605");
             return match self.pmtk_500() {
                 Some(args) => {
@@ -412,16 +449,16 @@ pub mod send_pmtk {
 
         fn pmtk_607_q_epo_info(&mut self) -> EpoData {
             //! $PMTK707,0,0,0,0,0,0,0,0,0*2E
-    //! Get EPO data status
-    //! 0 Set: Total number sets of EPO data stored in the GPS chip
-    //! 1 FWN & FTOW : GPS week number
-    //! 2 FWN & FTOW : TOW of the first set of EPO data stored in chip respectively
-    //! 3 LWN & LTOW : GPS week number
-    //! 4 LWN & LTOW : TOW of the last set of EPO data stored in chip respectively
-    //! 5 FCWN & FCTOW : GPS week number
-    //! 6 FCWN & FCTOW : TOW of the first set of EPO data that are currently used respectively
-    //! 7 LCWN & LCTOW : GPS week number
-    //! 8 LCWN & LCTOW : TOW of the last set of EPO data that are currently used respectively
+            //! Get EPO data status
+            //! 0 Set: Total number sets of EPO data stored in the GPS chip
+            //! 1 FWN & FTOW : GPS week number
+            //! 2 FWN & FTOW : TOW of the first set of EPO data stored in chip respectively
+            //! 3 LWN & LTOW : GPS week number
+            //! 4 LWN & LTOW : TOW of the last set of EPO data stored in chip respectively
+            //! 5 FCWN & FCTOW : GPS week number
+            //! 6 FCWN & FCTOW : TOW of the first set of EPO data that are currently used respectively
+            //! 7 LCWN & LCTOW : GPS week number
+            //! 8 LCWN & LCTOW : TOW of the last set of EPO data that are currently used respectively
 
             let args = self.pmtk_500().unwrap();
             let args: Vec<&str> = args.split(",").collect();
@@ -447,31 +484,31 @@ pub mod send_pmtk {
 
         fn pmtk_397_set_nav_speed_threshold(&mut self, nav_threshold: f32) -> Pmtk001Ack {
             //! Set nav speed threshold. If the speed calculated is lower than this threshold, outputed
-    //! position is frozen.
-    //! Nav Speed threshold: 0/ 0.2/ 0.4/ 0.6/ 0.8/ 1.0/1.5/2.0 (m/s)
-    //! Disable:Nav Speed threshold is set to 0 m/sec.
-    //! Standard 001 response.
-    //!
-    //! For MT3318 and MT3329 chips.
+            //! position is frozen.
+            //! Nav Speed threshold: 0/ 0.2/ 0.4/ 0.6/ 0.8/ 1.0/1.5/2.0 (m/s)
+            //! Disable:Nav Speed threshold is set to 0 m/sec.
+            //! Standard 001 response.
+            //!
+            //! For MT3318 and MT3329 chips.
             self.send_command(format!("PMTK397,{:.1}", nav_threshold).as_str());
             self.pmtk_001(10)
         }
 
         fn pmtk_386_set_nav_speed_threshold(&mut self, nav_threshold: f32) -> Pmtk001Ack {
             //! Set nav speed threshold. If the speed calculated is lower than this threshold, outputed
-    //! position is frozen.
-    //! Nav Speed threshold: 0/ 0.2/ 0.4/ 0.6/ 0.8/ 1.0/1.5/2.0 (m/s)
-    //! Disable:Nav Speed threshold is set to 0 m/sec.
-    //! Standard 001 response.
-    //!
-    //! For MT3339 chips.
+            //! position is frozen.
+            //! Nav Speed threshold: 0/ 0.2/ 0.4/ 0.6/ 0.8/ 1.0/1.5/2.0 (m/s)
+            //! Disable:Nav Speed threshold is set to 0 m/sec.
+            //! Standard 001 response.
+            //!
+            //! For MT3339 chips.
             self.send_command(format!("PMTK397,{:.1}", nav_threshold).as_str());
             self.pmtk_001(10)
         }
 
         fn pmtk_447_q_nav_threshold(&mut self) -> f32 {
             //! $PMTK527,0.40*04
-    //! Gives current nav threshold. The range is 0/ 0.2/ 0.4/ 0.6/ 0.8/ 1.0/1.5/2.0 (m/s)
+            //! Gives current nav threshold. The range is 0/ 0.2/ 0.4/ 0.6/ 0.8/ 1.0/1.5/2.0 (m/s)
             self.send_command("PMTK447");
             return match self.pmtk_500() {
                 Some(args) => {
@@ -485,26 +522,26 @@ pub mod send_pmtk {
 
         fn pmtk_161_cmd_standby_mode(&mut self) -> Pmtk001Ack {
             //! Puts the gps to sleep PMTK161,0. Send anything to wake it back up.
-    //! Standard 001 response.
+            //! Standard 001 response.
             self.send_command("PMTK161,0");
             self.pmtk_001(10)
         }
 
         fn pmtk_223_set_al_dee_cfg(&mut self, sv: i8, snr: i8, ext_threshold: i32, ext_gap: i32) -> Pmtk001Ack {
             //! Should be used with the PMTK225 command to set periodic mode.
-    //!
-    //! SV: Default 1, range 1-4. Increases the time to receive more ephemeris data while the
-    //! number of satellites without ephemeris data is less than the SV value.
-    //!
-    //! SNR: Fedault 30, range 25-30. Enable receiving ephemeris data while the SNR of satellite
-    //! is more than the value.
-    //!
-    //! Extention threshold (millisecond): default 180_000, range 40_000-180_000. The extension time
-    //! for ephemeris data receiving.
-    //!
-    //! Extention gap: Default 60000, range 0-3_600_000
-    //!
-    //! Standard 001 response.
+            //!
+            //! SV: Default 1, range 1-4. Increases the time to receive more ephemeris data while the
+            //! number of satellites without ephemeris data is less than the SV value.
+            //!
+            //! SNR: Fedault 30, range 25-30. Enable receiving ephemeris data while the SNR of satellite
+            //! is more than the value.
+            //!
+            //! Extention threshold (millisecond): default 180_000, range 40_000-180_000. The extension time
+            //! for ephemeris data receiving.
+            //!
+            //! Extention gap: Default 60000, range 0-3_600_000
+            //!
+            //! Standard 001 response.
             self.send_command(format!("PMTK223,{},{},{},{}", sv, snr, ext_threshold, ext_gap).as_str());
             self.pmtk_001(10)
         }
@@ -512,41 +549,41 @@ pub mod send_pmtk {
         fn pmtk_225_cmd_periodic_mode(&mut self, run_type: u8, run_time: u32, sleep_time: u32,
                                       second_run_time: u32, second_sleep_time: u32) -> Pmtk001Ack {
             //! Enter standby or backup mode for power saving.
-    //! PMTK225,Type,Run time,Sleep time, Second run time,Second sleep time
-    //! run_type: operation mode
-    //!     ‘0’ = go back to normal mode
-    //!     ‘1’ = Periodic backup mode
-    //!     ‘2’ = Periodic standby mode
-    //!     ‘4’ = Perpetual backup mode
-    //!     ‘8’ = AlwaysLocateTM standby mode
-    //!     ‘9’ = AlwaysLocateTM backup mode
-    //! Run time (millisecond): Duration to fix for (or attempt to fix for) before switching
-    //! from running modeback to a minimum power sleep mode.
-    //!     '0’: disable
-    //!     >=’1,000’: enable Range: 1,000~518400000
-    //! Sleep time (millisecond):Interval to come out of a minimum power sleep mode and start
-    //! running in order to get a new position fix.
-    //!     ‘0’: disable
-    //!     >=’1,000’: enable Range: 1,000~518400000
-    //! Second run time (millisecond): Duration to fix for (or attempt to fix for) before
-    //! switching from running mode back to a minimum power sleep mode.
-    //!     ‘0’: disable
-    //!     >=’1,000’: enable Range: 1,000~518400000
-    //! Second sleep time (millisecond): Interval to come out of a minimum power sleep mode and
-    //! start running in order to get a new position fix.
-    //!     ‘0’: disable
-    //!     >=’1,000’: enable Range: 1,000~518400000
-    //!
-    //! Note：1.The second run time should larger than first run time when non-zero value.
-    //! 2.The purpose of second run time and sleep time can let module to catch more satellite
-    //!     ephemeris data in cold boot condition. The value of them can be null. Then it will
-    //!     use the first run time and sleep time for ephemeris data receiving.
-    //! 3.AlwaysLocateTM is an intelligent controller of MT3339 power saving mode. Depending on
-    //!     the environment and motion conditions, MT3339 can adaptive adjust the on/off time
-    //!     to achieve balance of positioning accuracy and power consumption.
-    //! 4.This command needs to work normal with some hardware circuits.
-    //!
-    //! Reboot response then standard 001 reply.
+            //! PMTK225,Type,Run time,Sleep time, Second run time,Second sleep time
+            //! run_type: operation mode
+            //!     ‘0’ = go back to normal mode
+            //!     ‘1’ = Periodic backup mode
+            //!     ‘2’ = Periodic standby mode
+            //!     ‘4’ = Perpetual backup mode
+            //!     ‘8’ = AlwaysLocateTM standby mode
+            //!     ‘9’ = AlwaysLocateTM backup mode
+            //! Run time (millisecond): Duration to fix for (or attempt to fix for) before switching
+            //! from running modeback to a minimum power sleep mode.
+            //!     '0’: disable
+            //!     >=’1,000’: enable Range: 1,000~518400000
+            //! Sleep time (millisecond):Interval to come out of a minimum power sleep mode and start
+            //! running in order to get a new position fix.
+            //!     ‘0’: disable
+            //!     >=’1,000’: enable Range: 1,000~518400000
+            //! Second run time (millisecond): Duration to fix for (or attempt to fix for) before
+            //! switching from running mode back to a minimum power sleep mode.
+            //!     ‘0’: disable
+            //!     >=’1,000’: enable Range: 1,000~518400000
+            //! Second sleep time (millisecond): Interval to come out of a minimum power sleep mode and
+            //! start running in order to get a new position fix.
+            //!     ‘0’: disable
+            //!     >=’1,000’: enable Range: 1,000~518400000
+            //!
+            //! Note：1.The second run time should larger than first run time when non-zero value.
+            //! 2.The purpose of second run time and sleep time can let module to catch more satellite
+            //!     ephemeris data in cold boot condition. The value of them can be null. Then it will
+            //!     use the first run time and sleep time for ephemeris data receiving.
+            //! 3.AlwaysLocateTM is an intelligent controller of MT3339 power saving mode. Depending on
+            //!     the environment and motion conditions, MT3339 can adaptive adjust the on/off time
+            //!     to achieve balance of positioning accuracy and power consumption.
+            //! 4.This command needs to work normal with some hardware circuits.
+            //!
+            //! Reboot response then standard 001 reply.
 
             self.send_command(format!("PMTK223,{},{},{},{},{}",
                                       run_type, run_time, sleep_time, second_run_time, second_sleep_time).as_str());
@@ -555,10 +592,10 @@ pub mod send_pmtk {
 
         fn pmtk_286_cmd_aic_mode(&mut self, aic: bool) -> Pmtk001Ack {
             //! Active Interference Cancellation provides effective narrow-band interference and
-    //! jamming elimination.
-    //!
-    //! aic: true is enable, false is disable.
-    //! Standard 001 response.
+            //! jamming elimination.
+            //!
+            //! aic: true is enable, false is disable.
+            //! Standard 001 response.
             if aic {
                 self.send_command("PMTK286,1")
             } else {
@@ -569,17 +606,17 @@ pub mod send_pmtk {
 
         fn pmtk_869_cmd_easy_enable(&mut self, enable_easy: bool) -> Pmtk001Ack {
             //! Enable or disable EASY function.
-    //! Enabled by default.
-    //! Requires VBACKUP pin to be connected to battery.
-    //! Only valid for 1Hz update rate
-    //!
-    //! true is enable easy, false is disable.
-    //!
-    //! If you wish to query the EASY function, use pmtk_869_cmd_easy_query
-    //! Response
-    //! pmtk,0 -> gives $PMTK869,2,1,3*29
-    //! pmtk,1,0 -> Gives 001 reply.
-    //! pmtk,2,{0,1} -> Gives 001 reply.
+            //! Enabled by default.
+            //! Requires VBACKUP pin to be connected to battery.
+            //! Only valid for 1Hz update rate
+            //!
+            //! true is enable easy, false is disable.
+            //!
+            //! If you wish to query the EASY function, use pmtk_869_cmd_easy_query
+            //! Response
+            //! pmtk,0 -> gives $PMTK869,2,1,3*29
+            //! pmtk,1,0 -> Gives 001 reply.
+            //! pmtk,2,{0,1} -> Gives 001 reply.
             if enable_easy {
                 self.send_command("PMTK869,1,1")
             } else {
@@ -590,8 +627,8 @@ pub mod send_pmtk {
 
         fn pmtk_869_cmd_easy_query(&mut self) -> bool {
             //! Query the EASY command status. Return true or false, true is enabled, false it disabled.
-    //!
-    //! Response: $PMTK869,2,{0:disabled, 1:enabled},{001 status}
+            //!
+            //! Response: $PMTK869,2,{0:disabled, 1:enabled},{001 status}
             self.send_command("PMTK869,0");
             return match self.pmtk_500() {
                 Some(args) => {
@@ -608,31 +645,31 @@ pub mod send_pmtk {
 
         fn pmtk_187_locus_config(&mut self, locus_interval: i8) -> Pmtk001Ack {
             //! Configure Locus setting.
-    //! Locus mode (1 for interval mode) is always on.
-    //! Interval, in seconds, is how often to log a data.
-    //!
-    //! Standard 001 reply.
+            //! Locus mode (1 for interval mode) is always on.
+            //! Interval, in seconds, is how often to log a data.
+            //!
+            //! Standard 001 reply.
             self.send_command(format!("PMTK187,1,{}", locus_interval).as_str());
             self.pmtk_001(10)
         }
 
         fn pmtk_330_api_set_datum(&mut self, datum: u16) -> Pmtk001Ack {
             //! Configure Datum. 222 datum options.
-    //! ‘0’ = WGS84
-    //! ‘1’ = TOKYO-M
-    //! ‘2’ = TOKYO-A
-    //!
-    //! A full list is on the GTOP Datum list, but I can't find it.
-    //! Standard 001 reply.
+            //! ‘0’ = WGS84
+            //! ‘1’ = TOKYO-M
+            //! ‘2’ = TOKYO-A
+            //!
+            //! A full list is on the GTOP Datum list, but I can't find it.
+            //! Standard 001 reply.
             self.send_command(format!("PMTK330,{}", datum).as_str());
             self.pmtk_001(10)
         }
 
         fn pmtk_430_api_q_datum(&mut self) -> u16 {
             //! Query current datum. Gives PMTK530,datum
-    //! See pmtk_330_api_set_datum for more details on datum.
-    //!
-    //! 0 is return value if there is an error.
+            //! See pmtk_330_api_set_datum for more details on datum.
+            //!
+            //! 0 is return value if there is an error.
             self.send_command("PMTK430");
             return match self.pmtk_500() {
                 Some(args) => {
@@ -646,9 +683,9 @@ pub mod send_pmtk {
 
         fn pmtk_351_api_set_support_qzss_nmea(&mut self, enable_qzss: bool) -> Pmtk001Ack {
             //! Sets the output to be the QZSS NMEA format.
-    //! True is enable, false is disable. Default is disable.
-    //!
-    //! Standard 001 reply.
+            //! True is enable, false is disable. Default is disable.
+            //!
+            //! Standard 001 reply.
             if enable_qzss {
                 self.send_command("PMTK351,1")
             } else {
@@ -659,10 +696,10 @@ pub mod send_pmtk {
 
         fn pmtk_352_api_set_stop_qzss(&mut self, enable: bool) -> Pmtk001Ack {
             //! Since QZSS is regional positioning service. The command allow user enable or disable QZSS function.
-    //! Default is enable QZSS function
-    //!
-    //! Enable is true, disable is false. Default is enable.
-    //! Standard 001 reply.
+            //! Default is enable QZSS function
+            //!
+            //! Enable is true, disable is false. Default is enable.
+            //! Standard 001 reply.
             if enable {
                 self.send_command("PMTK352,0")
             } else {
@@ -675,7 +712,9 @@ pub mod send_pmtk {
 
 #[cfg(test)]
 mod pmtktests {
-    use super::send_pmtk::add_checksum;
+    use super::send_pmtk::{add_checksum, DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
+    use super::send_pmtk::SendPmtk;
+    use super::super::gps::{Gps, open_port};
 
     #[test]
     fn checksum() {
@@ -683,5 +722,90 @@ mod pmtktests {
         assert_eq!(add_checksum("PMTK103".to_string()), "$PMTK103*30\r\n")
     }
 
+    #[test]
+    fn test_all_pmtk_cmds() {
+        let port = open_port("/dev/serial0");
+        let mut gps = Gps {port, gps_type: "MT3339" };
 
+        assert_eq!(gps.pmtk_101_cmd_hot_start(), true);
+
+        assert_eq!(gps.pmtk_102_cmd_warm_start(), true);
+
+        assert_eq!(gps.pmtk_103_cmd_cold_start(), true);
+
+        assert_eq!(gps.pmtk_104_cmd_full_cold_start(), true);
+
+        assert_eq!(gps.pmtk_220_set_nmea_updaterate("1000"),  Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_251_set_nmea_baudrate("9600"), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_301_api_set_dgps_mode(DgpsMode::NoDgps), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_401_api_q_dgps_mode(), DgpsMode::NoDgps);
+
+        assert_eq!(gps.pmtk_313_api_set_sbas_enabled(Sbas::Enabled), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_413_api_q_sbas_enabled(), Sbas::Enabled);
+
+        // assert_eq!(gps.pmtk_314_api_set_nm(gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_414_api_q_nmea_output(), NmeaOutput{
+            gll: 0,
+            rmc: 1,
+            vtg: 1,
+            gga: 1,
+            gsa: 1,
+            gsv: 5,
+            pmtkchn_interval: 0,
+        });
+
+        assert_eq!(gps.pmtk_319_api_set_sbas_mode(SbasMode::Integrity), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_419_api_q_sbas_mode(), SbasMode::Integrity);
+
+        assert_eq!(gps.pmtk_605_q_release(), "AXN_5.1.7_3333_19020118,0027,PA1010D,1.0".to_string());
+
+        assert_eq!(gps.pmtk_127_cmd_clear_epo(), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_607_q_epo_info(), EpoData{
+            set: 0,
+            fwn_ftow_week_number: 0,
+            fwn_ftow_tow: 0,
+            lwn_ltow_week_number: 0,
+            lwn_ltow_tow: 0,
+            fcwn_fctow_week_number: 0,
+            fcwn_fctow_tow: 0,
+            lcwn_lctow_week_number: 0,
+            lcwn_lctow_tow: 0
+        });
+
+        assert_eq!(gps.pmtk_397_set_nav_speed_threshold(0.2), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_386_set_nav_speed_threshold(0.2), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_447_q_nav_threshold(), 0.2);  // Set by one above.
+
+        // assert_eq!(gps.pmtk_161_cmd_standby_mode(), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_223_set_al_dee_cfg(1, 30, 180000, 60000), Pmtk001Ack::Success);
+
+        // assert_eq!(gps.pmtk_225_cmd_periodic_mode(run_type: u8, run_time: u32, sleep_time: u32,
+        //                                  second_run_time: u32, second_sleep_time: u32), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_286_cmd_aic_mode(true), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_869_cmd_easy_enable(true), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_869_cmd_easy_query(), true);
+
+        // assert_eq!(gps.pmtk_187_locus_config(locus_interval: i8), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_330_api_set_datum(0), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_430_api_q_datum(), 0);
+
+        assert_eq!(gps.pmtk_351_api_set_support_qzss_nmea(false), Pmtk001Ack::Success);
+
+        assert_eq!(gps.pmtk_352_api_set_stop_qzss(true), Pmtk001Ack::Success);
+    }
 }

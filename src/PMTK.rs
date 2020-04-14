@@ -59,24 +59,24 @@ pub mod send_pmtk {
     }
 
     pub struct NmeaOutput {
-        gll: i8,
-        rmc: i8,
-        vtg: i8,
-        gga: i8,
-        gsa: i8,
-        gsv: i8,
+        pub gll: i8,
+        pub rmc: i8,
+        pub vtg: i8,
+        pub gga: i8,
+        pub gsa: i8,
+        pub gsv: i8,
     }
 
     pub struct EpoData {
-        set: i8,
-        fwn_ftow_week_number: i8,
-        fwn_ftow_tow: i8,
-        lwn_ltow_week_number: i8,
-        lwn_ltow_tow: i8,
-        fcwn_fctow_week_number: i8,
-        fcwn_fctow_tow: i8,
-        lcwn_lctow_week_number: i8,
-        lcwn_lctow_tow: i8,
+        pub set: i8,
+        pub fwn_ftow_week_number: i8,
+        pub fwn_ftow_tow: i8,
+        pub lwn_ltow_week_number: i8,
+        pub lwn_ltow_tow: i8,
+        pub fcwn_fctow_week_number: i8,
+        pub fcwn_fctow_tow: i8,
+        pub lcwn_lctow_week_number: i8,
+        pub lcwn_lctow_tow: i8,
     }
 
     pub fn add_checksum(sentence: String) -> String {
@@ -682,4 +682,6 @@ mod pmtktests {
         assert_eq!(add_checksum("GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,".to_string()), "$GNGGA,165419.000,5132.7378,N,00005.9192,W,1,7,1.93,34.4,M,47.0,M,,*6A\r\n".to_string());
         assert_eq!(add_checksum("PMTK103".to_string()), "$PMTK103*30\r\n")
     }
+
+
 }

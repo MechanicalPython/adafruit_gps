@@ -441,7 +441,7 @@ pub mod send_pmtk {
             self.send_command("PMTK605");
             return match self.pmtk_500() {
                 Some(args) => {
-                    args[8..args.len()].to_string()
+                    args[9..args.len()].to_string()
                 }
                 None => "".to_string()
             };
@@ -813,8 +813,8 @@ mod pmtktests {
 
     #[test]
     fn test_pmtk_447_q_nav_threshold() {
-        assert_eq!(port_setup().pmtk_447_q_nav_threshold(), 0.2);
-    }  // Set by one above.}
+        assert_eq!(port_setup().pmtk_447_q_nav_threshold(), 0.0);
+    }
 
     // fn test_ () {assert_eq!(port_setup().pmtk_161_cmd_standby_mode(), Pmtk001Ack::Success);}
     #[test]

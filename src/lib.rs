@@ -19,33 +19,33 @@
 
 extern crate serialport;
 
-use std::io::{Read};
-use std::str;
-use std::time::Duration;
-
-use serialport::prelude::*;
-
+#[allow(non_snake_case)]
 pub mod PMTK;
-pub use crate::PMTK::SendPmtk;
+pub use crate::PMTK::send_pmtk;
 
+pub mod gps {
+    use std::io::Read;
+    use std::str;
+    use std::time::Duration;
 
-pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
-    let settings = SerialPortSettings {
-        baud_rate: 9600,
-        data_bits: DataBits::Eight,
-        flow_control: FlowControl::None,
-        parity: Parity::None,
-        stop_bits: StopBits::One,
-        timeout: Duration::from_millis(1000),
-    };
-    match serialport::open_with_settings(port_name, &settings) {
-        Ok(port) => return port,
-        Err(_e) => panic!("Port not found: {} - {}", port_name, _e),
+    use serialport::prelude::*;
+
+    pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
+        let settings = SerialPortSettings {
+            baud_rate: 9600,
+            data_bits: DataBits::Eight,
+            flow_control: FlowControl::None,
+            parity: Parity::None,
+            stop_bits: StopBits::One,
+            timeout: Duration::from_millis(1000),
+        };
+        match serialport::open_with_settings(port_name, &settings) {
+            Ok(port) => return port,
+            Err(_e) => panic!("Port not found: {} - {}", port_name, _e),
+        }
     }
-}
 
-
-pub fn is_valid_checksum(s: &str) -> bool {
+    pub fn is_valid_checksum(s: &str) -> bool {
         let s = s.trim();
         // String should be: $..., *XY
 
@@ -73,81 +73,7 @@ pub fn is_valid_checksum(s: &str) -> bool {
         }
     }
 
-pub struct Gps {
-    pub port: Box<dyn SerialPort>,
-    pub gps_type: &'static str,
-}
-
-pub trait GetData {
-    fn update(&mut self) -> GpsArgValues;
-    fn read_line(&mut self) -> String;
-    fn parse_gpgll(args:String) -> GpsArgValues;
-    fn parse_gprmc(args:String) -> GpsArgValues;
-    fn parse_gpgga(args:String) -> GpsArgValues;
-    fn parse_sentence(sentence: &str) -> Option<(String, String)>;
-    fn _parse_degrees(nmea_data: String) -> Option<f32>;
-    fn _format_hhmmss(time: &str) -> String;
-    fn _format_ddmmyy(time: &str) -> String;
-}
-
-
-impl GetData for Gps {
-    fn update(&mut self) -> GpsArgValues {
-        // pmtk::send_pmtk::SendPmtk::pmtk_101_cmd_hot_start();
-
-        let line = self.read_line();
-        let line = line.as_str();
-
-        match Gps::parse_sentence(line) {
-                Some((data_type, args)) => {
-                    return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-                        let values = Gps::parse_gpgll(args);
-                        values
-                    } else if (data_type == "GPRMC".to_string()) | (data_type == "GNRMC".to_string()) {
-                        let values = Gps::parse_gprmc(args);
-                        values
-                    } else if (data_type == "GPGGA".to_string()) | (data_type == "GNGGA".to_string()) {
-                        let values = Gps::parse_gpgga(args);
-                        values
-                    } else {  // If all else fails, return default values.
-                        GpsArgValues::default()
-                    };
-                }
-                None => (),
-            }
-
-        return GpsArgValues::default();
-    }
-
-    fn read_line(&mut self) -> String {
-        // Maximum port buffer size is 4095.
-        // Returns whatever is in the port.
-        // Start of a line is $ (36) and end is \n (10).
-        // The serial buffer reads from bottom to top. New data is added to the top. The amount read
-        // from the serial buffer is the size of the buffer vec.
-
-        // 127 is the maximum valid utf8 number.
-        let mut buffer: Vec<u8> = vec![0; 1];  // Reads what is in the buffer, be it nothing or max.
-        let mut output: Vec<u8> = Vec::new();
-        let p = &mut self.port;
-        let mut cont = true;
-        while cont {
-            match p.read(buffer.as_mut_slice()) {
-                Ok(buffer_size) => {
-                    output.extend_from_slice(&buffer[..buffer_size]);
-
-                    if output.get(output.len() -1).unwrap() == &10u8 {
-                        cont = false;
-                    }
-                }
-                Err(_e) => (),
-            }
-        }
-        let string: String = str::from_utf8(&output).unwrap_or(" ").to_string();
-        return string;
-    }
-
-    fn parse_gpgll(args: String) -> GpsArgValues {
+    pub fn parse_gpgll(args: String) -> GpsArgValues {
         // Format for the gpgll data string:
         // [0] Latitude(as hhmm.mmm),
         // [1] Latitude North or South,
@@ -168,7 +94,7 @@ impl GetData for Gps {
             return gps_values;
         }
         // Parse Latitude.
-        match Gps::_parse_degrees(data[0].to_string()) {
+        match _parse_degrees(data[0].to_string()) {
             Some(mut latitude) => {
                 if data[1].to_ascii_lowercase() == "s".to_ascii_lowercase() {
                     latitude *= -1 as f32;
@@ -179,7 +105,7 @@ impl GetData for Gps {
         }
 
         // Parse Longitude.
-        match Gps::_parse_degrees(data[2].to_string()) {
+        match _parse_degrees(data[2].to_string()) {
             Some(mut longitude) => {
                 if data[3].to_ascii_lowercase() == "w".to_ascii_lowercase() {
                     longitude *= -1 as f32
@@ -190,15 +116,14 @@ impl GetData for Gps {
         }
 
         // Parse time
-        gps_values.timestamp = Some(Gps::_format_hhmmss(data[4]));
+        gps_values.timestamp = Some(_format_hhmmss(data[4]));
 
         // No idea what the point of this data point is.
         gps_values.isactivedata = Some(data[5].to_string());
         return gps_values;
-
     }
 
-    fn parse_gprmc(args: String) -> GpsArgValues {
+    pub fn parse_gprmc(args: String) -> GpsArgValues {
         //Data string format:
         // [0] Time (as hhmmss) -> parse to hh:mm:ss,
         // [1] fix_quality (a = good fix),
@@ -221,7 +146,7 @@ impl GetData for Gps {
 
         // Parse date and time.
 
-        gps_values.timestamp = Some(format!("{} {}", Gps::_format_ddmmyy(data[8]), Gps::_format_hhmmss(data[0])));
+        gps_values.timestamp = Some(format!("{} {}", _format_ddmmyy(data[8]), _format_hhmmss(data[0])));
 
         // get fix quality.
         if data[1].to_ascii_lowercase() == "a".to_ascii_lowercase() {
@@ -230,7 +155,7 @@ impl GetData for Gps {
             gps_values.fix_quality = Some(0)
         }
 
-        match Gps::_parse_degrees(data[2].to_string()) {
+        match _parse_degrees(data[2].to_string()) {
             Some(mut latitude) => {
                 if data[3].to_ascii_lowercase() == "s".to_ascii_lowercase() {
                     latitude *= -1 as f32;
@@ -239,7 +164,7 @@ impl GetData for Gps {
             }
             None => gps_values.latitude = None,
         }
-        match Gps::_parse_degrees(data[4].to_string()) {
+        match _parse_degrees(data[4].to_string()) {
             Some(mut longitude) => {
                 if data[5].to_ascii_lowercase() == "w".to_ascii_lowercase() {
                     longitude *= -1 as f32;
@@ -258,10 +183,9 @@ impl GetData for Gps {
         }
 
         return gps_values;
-
     }
 
-    fn parse_gpgga(args: String) -> GpsArgValues {
+    pub fn parse_gpgga(args: String) -> GpsArgValues {
         // Format for data:
         // [0] time (as hhmmss),
         // [1] latitude (as hhmm.mmm),
@@ -290,10 +214,10 @@ impl GetData for Gps {
         }
 
         // Parse time
-        gps_values.timestamp = Some(Gps::_format_hhmmss(data[0]));
+        gps_values.timestamp = Some(_format_hhmmss(data[0]));
 
         // Parse lat
-        match Gps::_parse_degrees(data[1].to_string()) {
+        match _parse_degrees(data[1].to_string()) {
             Some(mut latitude) => {
                 if data[2].to_ascii_lowercase() == "s".to_ascii_lowercase() {
                     latitude *= -1 as f32;
@@ -304,7 +228,7 @@ impl GetData for Gps {
         }
 
         // Parse long
-        match Gps::_parse_degrees(data[3].to_string()) {
+        match _parse_degrees(data[3].to_string()) {
             Some(mut longitude) => {
                 if data[4].to_ascii_lowercase() == "w".to_ascii_lowercase() {
                     longitude *= -1 as f32;
@@ -342,7 +266,7 @@ impl GetData for Gps {
         return gps_values;
     }
 
-    fn parse_sentence(sentence: &str) -> Option<(String, String)> {
+    pub fn parse_sentence(sentence: &str) -> Option<(String, String)> {
         // Split sentence into data type (what kind of data there is) and args (the actual data)
         if sentence.is_empty() {
             return None;
@@ -372,7 +296,7 @@ impl GetData for Gps {
         }
     }
 
-    fn _parse_degrees(nmea_data: String) -> Option<f32> {
+    pub fn _parse_degrees(nmea_data: String) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
         // ddd is degrees, mm.mmmm is minutes
         // Formula is->
@@ -390,7 +314,7 @@ impl GetData for Gps {
         Some(r)
     }
 
-    fn _format_hhmmss(time: &str) -> String {
+    pub fn _format_hhmmss(time: &str) -> String {
         // Take in a string of hhmmss and return it as a formatted hh-mm-ss
         if time.len() < 6 {
             return "".to_string();
@@ -401,7 +325,7 @@ impl GetData for Gps {
         return format!("{}:{}:{}", hours, mins, secs);
     }
 
-    fn _format_ddmmyy(time: &str) -> String {
+    pub fn _format_ddmmyy(time: &str) -> String {
         if time.len() < 6 {
             return "".to_string();
         }
@@ -410,79 +334,65 @@ impl GetData for Gps {
         let years = format!("20{}", &time[4..6]);  // Only works till year 3000.
         return format!("{}-{}-{}", years, months, days);
     }
-}
 
-
-#[derive(Debug)]
-#[derive(Default)]
-pub struct GpsArgValues {
-    pub timestamp: Option<String>,
-    pub latitude: Option<f32>,
-    pub longitude: Option<f32>,
-    pub fix_quality: Option<i32>,
-    // if A, fix quality is 1.
-    pub fix_quality_3d: Option<i32>,
-    pub satellites: Option<i32>,
-    pub horizontal_dilution: Option<f32>,
-    pub altitude_m: Option<f32>,
-    pub height_geoid: Option<f32>,
-    pub speed_knots: Option<f32>,
-    pub track_angle_deg: Option<f32>,
-    pub sats: Option<i32>,
-    pub isactivedata: Option<String>,
-    pub sat_prns: Option<i32>,
-    pub sel_mode: Option<i32>,
-    // Selection mode. data[0] for parse gpgsa.
-    pub pdop: Option<f32>,
-    // PODP, dilution of precision
-    pub hdop: Option<f32>,
-    // HDOP, hosizontal of precision
-    pub vdop: Option<f32>,
-    // vertical dilution of precision
-    pub total_mess_num: Option<i32>,
-    // total number of messages. _parse_gpgsv
-    pub mess_num: Option<i32>,
-    // message number. _parse_gpgsv
-    pub has_fix: Option<i8>, // 0 is no fix, 1 is fix.
-}
-
-
-#[cfg(test)]
-mod gps_test {
-    use super::*;
-
-    #[test]
-    fn _parse_hhmmss() {
-        assert_eq!(Gps::_format_hhmmss("205530"), "20:55:30".to_string());
+    #[derive(Debug)]
+    #[derive(Default)]
+    pub struct GpsArgValues {
+        pub timestamp: Option<String>,
+        pub latitude: Option<f32>,
+        pub longitude: Option<f32>,
+        pub fix_quality: Option<i32>,
+        // if A, fix quality is 1.
+        pub fix_quality_3d: Option<i32>,
+        pub satellites: Option<i32>,
+        pub horizontal_dilution: Option<f32>,
+        pub altitude_m: Option<f32>,
+        pub height_geoid: Option<f32>,
+        pub speed_knots: Option<f32>,
+        pub track_angle_deg: Option<f32>,
+        pub sats: Option<i32>,
+        pub isactivedata: Option<String>,
+        pub sat_prns: Option<i32>,
+        pub sel_mode: Option<i32>,
+        // Selection mode. data[0] for parse gpgsa.
+        pub pdop: Option<f32>,
+        // PODP, dilution of precision
+        pub hdop: Option<f32>,
+        // HDOP, hosizontal of precision
+        pub vdop: Option<f32>,
+        // vertical dilution of precision
+        pub total_mess_num: Option<i32>,
+        // total number of messages. _parse_gpgsv
+        pub mess_num: Option<i32>,
+        // message number. _parse_gpgsv
+        pub has_fix: Option<i8>, // 0 is no fix, 1 is fix.
     }
 
-    #[test]
-    fn _parse_ddmmyy() {
-        assert_eq!(Gps::_format_ddmmyy("300320"), "2020-03-30".to_string());
+    pub struct Gps {
+        pub port: Box<dyn SerialPort>,
+        pub gps_type: &'static str,
     }
 
-    #[test]
-    fn _parse_degrees() {
-        assert_eq!(Gps::_parse_degrees("3218.0489".to_string()).unwrap(), 32.300815);
-        assert_eq!(Gps::_parse_degrees("6447.5086".to_string()).unwrap(), 64.79181);
+    pub trait GetGpsData {
+        fn update(&mut self) -> GpsArgValues;
+        fn read_line(&mut self) -> String;
     }
 
-    fn spoof_update(test_reading: Vec<u8>) -> GpsArgValues {
-        let port_reading = test_reading;
+    impl GetGpsData for Gps {
+        fn update(&mut self) -> GpsArgValues {
+            let line = self.read_line();
+            let line = line.as_str();
 
-        let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
-        for sentence in string {
-            match Gps::parse_sentence(sentence) {
+            match parse_sentence(line) {
                 Some((data_type, args)) => {
-                    println!("{:?}", sentence);
                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-                        let values = Gps::parse_gpgll(args);
+                        let values = parse_gpgll(args);
                         values
                     } else if (data_type == "GPRMC".to_string()) | (data_type == "GNRMC".to_string()) {
-                        let values = Gps::parse_gprmc(args);
+                        let values = parse_gprmc(args);
                         values
                     } else if (data_type == "GPGGA".to_string()) | (data_type == "GNGGA".to_string()) {
-                        let values = Gps::parse_gpgga(args);
+                        let values = parse_gpgga(args);
                         values
                     } else {  // If all else fails, return default values.
                         GpsArgValues::default()
@@ -490,8 +400,88 @@ mod gps_test {
                 }
                 None => (),
             }
+
+            return GpsArgValues::default();
         }
-        return GpsArgValues::default();
+
+        fn read_line(&mut self) -> String {
+            // Maximum port buffer size is 4095.
+            // Returns whatever is in the port.
+            // Start of a line is $ (36) and end is \n (10).
+            // The serial buffer reads from bottom to top. New data is added to the top. The amount read
+            // from the serial buffer is the size of the buffer vec.
+
+            // 127 is the maximum valid utf8 number.
+            let mut buffer: Vec<u8> = vec![0; 1];  // Reads what is in the buffer, be it nothing or max.
+            let mut output: Vec<u8> = Vec::new();
+            let p = &mut self.port;
+            let mut cont = true;
+            while cont {
+                match p.read(buffer.as_mut_slice()) {
+                    Ok(buffer_size) => {
+                        output.extend_from_slice(&buffer[..buffer_size]);
+
+                        if output.get(output.len() - 1).unwrap() == &10u8 {
+                            cont = false;
+                        }
+                    }
+                    Err(_e) => (),
+                }
+            }
+            let string: String = str::from_utf8(&output).unwrap_or(" ").to_string();
+            return string;
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod gps_test {
+    use super::gps;
+
+    use std::str;
+
+    #[test]
+    fn _parse_hhmmss() {
+        assert_eq!(gps::_format_hhmmss("205530").as_str(), "20:55:30");
+    }
+
+    #[test]
+    fn _parse_ddmmyy() {
+        assert_eq!(gps::_format_ddmmyy("300320"), "2020-03-30".to_string());
+    }
+
+    #[test]
+    fn _parse_degrees() {
+        assert_eq!(gps::_parse_degrees("3218.0489".to_string()).unwrap(), 32.300815);
+        assert_eq!(gps::_parse_degrees("6447.5086".to_string()).unwrap(), 64.79181);
+    }
+
+    fn spoof_update(test_reading: Vec<u8>) -> gps::GpsArgValues {
+        let port_reading = test_reading;
+
+        let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
+        for sentence in string {
+            match gps::parse_sentence(sentence) {
+                Some((data_type, args)) => {
+                    println!("{:?}", sentence);
+                    return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
+                        let values = gps::parse_gpgll(args);
+                        values
+                    } else if (data_type == "GPRMC".to_string()) | (data_type == "GNRMC".to_string()) {
+                        let values = gps::parse_gprmc(args);
+                        values
+                    } else if (data_type == "GPGGA".to_string()) | (data_type == "GNGGA".to_string()) {
+                        let values = gps::parse_gpgga(args);
+                        values
+                    } else {  // If all else fails, return default values.
+                        gps::GpsArgValues::default()
+                    };
+                }
+                None => (),
+            }
+        }
+        return gps::GpsArgValues::default();
     }
 
     fn _parse_gpgll() {}

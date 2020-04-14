@@ -13,7 +13,7 @@ by the GPS as well as sending it commands.
 
 # Usage Example
 ```
-let mut gps = Gps { port: open_port("/dev/serial0") };
+let mut gps = gps { port: open_port("/dev/serial0") };
     let mut gps_values = GpsArgValues::default();
 
     // Turn on the basic GGA and RMC info (what you typically want)

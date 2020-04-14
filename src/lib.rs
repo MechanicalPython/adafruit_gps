@@ -48,6 +48,34 @@ pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
 }
 
 
+pub fn is_valid_checksum(s: &str) -> bool {
+        let s = s.trim();
+        // String should be: $..., *XY
+
+        let star = &s[s.len() - 3..s.len() - 2];
+        let checksum = &s[s.len() - 2..s.len()];
+        let body = &s[0..s.len() - 3];
+
+        if star != "*" {  // Check third last item is a *
+            return false;
+        }
+
+        match u8::from_str_radix(&checksum, 16) {  // Convert to base 16.
+            Ok(expected_checksum) => {
+                let mut actual: u8 = 0;
+                for i in body[1..].as_bytes() {  // Skip $ sign. bitwise xor for each i in body
+                    actual ^= *i;
+                }
+                if actual == expected_checksum {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            Err(_e) => return false,
+        }
+    }
+
 pub struct Gps {
     pub port: Box<dyn SerialPort>,
     pub gps_type: &'static str,
@@ -60,7 +88,6 @@ pub trait GetData {
     fn parse_gprmc(args:String) -> GpsArgValues;
     fn parse_gpgga(args:String) -> GpsArgValues;
     fn parse_sentence(sentence: &str) -> Option<(String, String)>;
-    fn checksum(s: &str) -> bool;
     fn _parse_degrees(nmea_data: String) -> Option<f32>;
     fn _format_hhmmss(time: &str) -> String;
     fn _format_ddmmyy(time: &str) -> String;
@@ -331,7 +358,7 @@ impl GetData for Gps {
         }
         let sentence: &str = sentence.chars().as_str();
 
-        if Gps::checksum(sentence) == false {
+        if is_valid_checksum(sentence) == false {
             return None;
         }
         let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
@@ -343,40 +370,6 @@ impl GetData for Gps {
                 return Some((datatype, args));
             }
             None => return None,
-        }
-    }
-
-    fn checksum(s: &str) -> bool {
-        let mut string = String::new();
-        for char in s.chars() {
-            if char.is_whitespace() == false {
-                string.push(char);
-            }
-        }
-        let s = string.as_str();
-        // String should be: $..., *XY
-
-        let star = &s[s.len() - 3..s.len() - 2];
-        let checksum = &s[s.len() - 2..s.len()];
-        let body = &s[0..s.len() - 3];
-
-        if star != "*" {  // Check third last item is a *
-            return false;
-        }
-
-        match u8::from_str_radix(&checksum, 16) {  // Convert to base 16.
-            Ok(expected_checksum) => {
-                let mut actual: u8 = 0;
-                for i in body[1..].as_bytes() {  // Skip $ sign. bitwise xor for each i in body
-                    actual ^= *i;
-                }
-                if actual == expected_checksum {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            Err(_e) => return false,
         }
     }
 

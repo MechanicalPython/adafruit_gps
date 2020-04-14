@@ -712,6 +712,9 @@ pub mod send_pmtk {
 
 #[cfg(test)]
 mod pmtktests {
+    use std::thread::sleep;
+    use std::time::Duration;
+
     use super::send_pmtk::{add_checksum, DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
     use super::send_pmtk::SendPmtk;
     use super::super::gps::{Gps, open_port};
@@ -722,34 +725,48 @@ mod pmtktests {
         assert_eq!(add_checksum("PMTK103".to_string()), "$PMTK103*30\r\n")
     }
 
-    #[test]
-    fn test_all_pmtk_cmds() {
+    fn port_setup() -> Gps {
         let port = open_port("/dev/serial0");
-        let mut gps = Gps {port, gps_type: "MT3339" };
+        let gps = Gps { port, gps_type: "MT3339" };
+        sleep(Duration::from_secs(1));
+        return gps;
+    }
 
-        assert_eq!(gps.pmtk_101_cmd_hot_start(), true);
+    #[test]
+    fn test_pmtk_101_cmd_hot_start() { assert_eq!(port_setup().pmtk_101_cmd_hot_start(), true); }
 
-        assert_eq!(gps.pmtk_102_cmd_warm_start(), true);
+    #[test]
+    fn test_pmtk_102_cmd_warm_start() { assert_eq!(port_setup().pmtk_102_cmd_warm_start(), true); }
 
-        assert_eq!(gps.pmtk_103_cmd_cold_start(), true);
+    #[test]
+    fn test_pmtk_103_cmd_cold_start() { assert_eq!(port_setup().pmtk_103_cmd_cold_start(), true); }
 
-        assert_eq!(gps.pmtk_104_cmd_full_cold_start(), true);
+    #[test]
+    fn test_pmtk_104_cmd_full_cold_start() { assert_eq!(port_setup().pmtk_104_cmd_full_cold_start(), true); }
 
-        assert_eq!(gps.pmtk_220_set_nmea_updaterate("1000"),  Pmtk001Ack::Success);
+    #[test]
+    fn test_pmtk_220_set_nmea_updaterate() { assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("1000"), Pmtk001Ack::Success); }
 
-        assert_eq!(gps.pmtk_251_set_nmea_baudrate("9600"), Pmtk001Ack::Success);
+    #[test]
+    fn test_pmtk_251_set_nmea_baudrate() { assert_eq!(port_setup().pmtk_251_set_nmea_baudrate("9600"), Pmtk001Ack::Success); }
 
-        assert_eq!(gps.pmtk_301_api_set_dgps_mode(DgpsMode::NoDgps), Pmtk001Ack::Success);
+    #[test]
+    fn test_pmtk_301_api_set_dgps_mode() { assert_eq!(port_setup().pmtk_301_api_set_dgps_mode(DgpsMode::NoDgps), Pmtk001Ack::Success); }
 
-        assert_eq!(gps.pmtk_401_api_q_dgps_mode(), DgpsMode::NoDgps);
+    #[test]
+    fn test_pmtk_401_api_q_dgps_mode() { assert_eq!(port_setup().pmtk_401_api_q_dgps_mode(), DgpsMode::NoDgps); }
 
-        assert_eq!(gps.pmtk_313_api_set_sbas_enabled(Sbas::Enabled), Pmtk001Ack::Success);
+    #[test]
+    fn test_pmtk_313_api_set_sbas_enabled() { assert_eq!(port_setup().pmtk_313_api_set_sbas_enabled(Sbas::Enabled), Pmtk001Ack::Success); }
 
-        assert_eq!(gps.pmtk_413_api_q_sbas_enabled(), Sbas::Enabled);
+    #[test]
+    fn test_pmtk_413_api_q_sbas_enabled() { assert_eq!(port_setup().pmtk_413_api_q_sbas_enabled(), Sbas::Enabled); }
 
-        // assert_eq!(gps.pmtk_314_api_set_nm(gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_414_api_q_nmea_output(), NmeaOutput{
+    #[test]
+    // fn test_ () {assert_eq!(port_setup().pmtk_314_api_set_nm(gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8), Pmtk001Ack::Success);}
+    #[test]
+    fn test_pmtk_414_api_q_nmea_output() {
+        assert_eq!(port_setup().pmtk_414_api_q_nmea_output(), NmeaOutput {
             gll: 0,
             rmc: 1,
             vtg: 1,
@@ -757,17 +774,25 @@ mod pmtktests {
             gsa: 1,
             gsv: 5,
             pmtkchn_interval: 0,
-        });
+        }
+        );
+    }
 
-        assert_eq!(gps.pmtk_319_api_set_sbas_mode(SbasMode::Integrity), Pmtk001Ack::Success);
+    #[test]
+    fn test_pmtk_319_api_set_sbas_mode() { assert_eq!(port_setup().pmtk_319_api_set_sbas_mode(SbasMode::Integrity), Pmtk001Ack::Success); }
 
-        assert_eq!(gps.pmtk_419_api_q_sbas_mode(), SbasMode::Integrity);
+    #[test]
+    fn test_pmtk_419_api_q_sbas_mode() { assert_eq!(port_setup().pmtk_419_api_q_sbas_mode(), SbasMode::Integrity); }
 
-        assert_eq!(gps.pmtk_605_q_release(), "AXN_5.1.7_3333_19020118,0027,PA1010D,1.0".to_string());
+    #[test]
+    fn test_pmtk_605_q_release() { assert_eq!(port_setup().pmtk_605_q_release(), "AXN_5.1.7_3333_19020118,0027,PA1010D,1.0".to_string()); }
 
-        assert_eq!(gps.pmtk_127_cmd_clear_epo(), Pmtk001Ack::Success);
+    #[test]
+    fn test_pmtk_127_cmd_clear_epo() { assert_eq!(port_setup().pmtk_127_cmd_clear_epo(), Pmtk001Ack::Success); }
 
-        assert_eq!(gps.pmtk_607_q_epo_info(), EpoData{
+    #[test]
+    fn test_pmtk_607_q_epo_info() {
+        assert_eq!(port_setup().pmtk_607_q_epo_info(), EpoData {
             set: 0,
             fwn_ftow_week_number: 0,
             fwn_ftow_tow: 0,
@@ -776,36 +801,41 @@ mod pmtktests {
             fcwn_fctow_week_number: 0,
             fcwn_fctow_tow: 0,
             lcwn_lctow_week_number: 0,
-            lcwn_lctow_tow: 0
+            lcwn_lctow_tow: 0,
         });
-
-        assert_eq!(gps.pmtk_397_set_nav_speed_threshold(0.2), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_386_set_nav_speed_threshold(0.2), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_447_q_nav_threshold(), 0.2);  // Set by one above.
-
-        // assert_eq!(gps.pmtk_161_cmd_standby_mode(), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_223_set_al_dee_cfg(1, 30, 180000, 60000), Pmtk001Ack::Success);
-
-        // assert_eq!(gps.pmtk_225_cmd_periodic_mode(run_type: u8, run_time: u32, sleep_time: u32,
-        //                                  second_run_time: u32, second_sleep_time: u32), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_286_cmd_aic_mode(true), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_869_cmd_easy_enable(true), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_869_cmd_easy_query(), true);
-
-        // assert_eq!(gps.pmtk_187_locus_config(locus_interval: i8), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_330_api_set_datum(0), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_430_api_q_datum(), 0);
-
-        assert_eq!(gps.pmtk_351_api_set_support_qzss_nmea(false), Pmtk001Ack::Success);
-
-        assert_eq!(gps.pmtk_352_api_set_stop_qzss(true), Pmtk001Ack::Success);
     }
+
+    #[test]
+    fn test_pmtk_397_set_nav_speed_threshold() { assert_eq!(port_setup().pmtk_397_set_nav_speed_threshold(0.2), Pmtk001Ack::Success); }
+
+    #[test]
+    fn test_pmtk_386_set_nav_speed_threshold() { assert_eq!(port_setup().pmtk_386_set_nav_speed_threshold(0.2), Pmtk001Ack::Success); }
+
+    #[test]
+    fn test_pmtk_447_q_nav_threshold() {
+        assert_eq!(port_setup().pmtk_447_q_nav_threshold(), 0.2);
+    }  // Set by one above.}
+
+    // fn test_ () {assert_eq!(port_setup().pmtk_161_cmd_standby_mode(), Pmtk001Ack::Success);}
+    #[test]
+    fn test_pmtk_223_set_al_dee_cfg() { assert_eq!(port_setup().pmtk_223_set_al_dee_cfg(1, 30, 180000, 60000), Pmtk001Ack::Success); }
+
+    // fn test_ () {assert_eq!(port_setup().pmtk_225_cmd_periodic_mode(run_type: u8, run_time: u32, sleep_time: u32,}
+    //                                  second_run_time: u32, second_sleep_time: u32), Pmtk001Ack::Success);
+    #[test]
+    fn test_pmtk_286_cmd_aic_mode() { assert_eq!(port_setup().pmtk_286_cmd_aic_mode(true), Pmtk001Ack::Success); }
+    #[test]
+    fn test_pmtk_869_cmd_easy_enable() { assert_eq!(port_setup().pmtk_869_cmd_easy_enable(true), Pmtk001Ack::Success); }
+    #[test]
+    fn test_pmtk_869_cmd_easy_query() { assert_eq!(port_setup().pmtk_869_cmd_easy_query(), true); }
+
+    // fn test_ () {assert_eq!(port_setup().pmtk_187_locus_config(locus_interval: i8), Pmtk001Ack::Success);}
+    #[test]
+    fn test_pmtk_330_api_set_datum() { assert_eq!(port_setup().pmtk_330_api_set_datum(0), Pmtk001Ack::Success); }
+    #[test]
+    fn test_pmtk_430_api_q_datum() { assert_eq!(port_setup().pmtk_430_api_q_datum(), 0); }
+    #[test]
+    fn test_pmtk_351_api_set_support_qzss_nmea() { assert_eq!(port_setup().pmtk_351_api_set_support_qzss_nmea(false), Pmtk001Ack::Success); }
+    #[test]
+    fn test_pmtk_352_api_set_stop_qzss() { assert_eq!(port_setup().pmtk_352_api_set_stop_qzss(true), Pmtk001Ack::Success); }
 }

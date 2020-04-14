@@ -120,7 +120,7 @@ the error on those satellites. Meaning: 1 is ideal, 20 is very poor. [See here f
 
 [Info about NMEA taken from here](https://www.tronico.fi/OH6NT/docs/NMEA0183.pdf)
 
-[Information on the PMTK commands you can send to the GPS](https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf)
+[Information on the pmtk commands you can send to the GPS](https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf)
 # Notes on the code and contributing
 This crate library has mostly been made as a personal challenge and to fill a narrow gap so all contributions are welcome.
 That said, this code is likely to need improvement, all of which is welcome. 

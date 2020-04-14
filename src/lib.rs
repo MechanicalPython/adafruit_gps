@@ -17,8 +17,6 @@
 // Would be cool to support all the types of GPS chips and what strings they give.
 // So rather than just update what is given, look for the strings that you want and give that.
 
-
-
 extern crate serialport;
 
 use std::io::{Read};
@@ -27,8 +25,7 @@ use std::time::Duration;
 
 use serialport::prelude::*;
 
-#[allow(unused_imports)]
-mod PMTK;
+pub mod PMTK;
 pub use crate::PMTK::SendPmtk;
 
 
@@ -96,6 +93,8 @@ pub trait GetData {
 
 impl GetData for Gps {
     fn update(&mut self) -> GpsArgValues {
+        // pmtk::send_pmtk::SendPmtk::pmtk_101_cmd_hot_start();
+
         let line = self.read_line();
         let line = line.as_str();
 

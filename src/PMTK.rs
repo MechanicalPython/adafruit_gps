@@ -463,6 +463,7 @@ pub mod send_pmtk {
 
         fn pmtk_607_q_epo_info(&mut self) -> EpoData {
             //! $PMTK707,0,0,0,0,0,0,0,0,0*2E
+            //! Return -1 if it failed to get data in someway.
             //! Get EPO data status
             //! 0 Set: Total number sets of EPO data stored in the GPS chip
             //! 1 FWN & FTOW : GPS week number

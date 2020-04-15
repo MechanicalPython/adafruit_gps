@@ -16,6 +16,8 @@
 //! $PMTK010,001*2E\r\n -> Sys message, 001 Startup.
 //! $PMTK011,MTKGPS*08\r\n -> 001 txt message, output system message.
 //! $PMTK010,002*2D\r\n -> Sys msg, 002 = Notification, aiding EPO.
+//!
+//! Tests for setting baudrate and getting EPO data still fail, unsure why.
 
 pub mod send_pmtk {
     use std::str;

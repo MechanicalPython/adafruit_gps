@@ -126,7 +126,7 @@ pub mod send_pmtk {
         fn pmtk_314_api_set_nmea_output(&mut self, gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8) -> Pmtk001Ack;
         fn pmtk_414_api_q_nmea_output(&mut self) -> NmeaOutput;
 
-        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: SbasMode) -> Pmtk001Ack;
+        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: SbasMode) -> bool;
         fn pmtk_419_api_q_sbas_mode(&mut self) -> SbasMode;
 
         fn pmtk_605_q_release(&mut self) -> String;

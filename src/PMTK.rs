@@ -160,6 +160,7 @@ pub mod send_pmtk {
     impl SendPmtk for Gps {
         #[allow(unused_must_use)]  // self.port.write is not used
         fn send_command(&mut self, cmd: &str) {
+            // Wants no $ and no *checksum.
             let cmd = add_checksum(cmd.to_string());
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
@@ -765,8 +766,7 @@ mod pmtktests {
     #[test]
     // fn test_ () {assert_eq!(port_setup().pmtk_314_api_set_nm(gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8), Pmtk001Ack::Success);}
     #[test]
-    fn test_pmtk_414_api_q_nmea_output() {
-        assert_eq!(port_setup().pmtk_414_api_q_nmea_output(), NmeaOutput {
+    fn test_pmtk_414_api_q_nmea_output() { assert_eq!(port_setup().pmtk_414_api_q_nmea_output(), NmeaOutput {
             gll: 0,
             rmc: 1,
             vtg: 1,
@@ -774,9 +774,7 @@ mod pmtktests {
             gsa: 1,
             gsv: 5,
             pmtkchn_interval: 0,
-        }
-        );
-    }
+        }); }
 
     #[test]
     fn test_pmtk_319_api_set_sbas_mode() { assert_eq!(port_setup().pmtk_319_api_set_sbas_mode(SbasMode::Integrity), Pmtk001Ack::Success); }
@@ -791,8 +789,7 @@ mod pmtktests {
     fn test_pmtk_127_cmd_clear_epo() { assert_eq!(port_setup().pmtk_127_cmd_clear_epo(), Pmtk001Ack::Success); }
 
     #[test]
-    fn test_pmtk_607_q_epo_info() {
-        assert_eq!(port_setup().pmtk_607_q_epo_info(), EpoData {
+    fn test_pmtk_607_q_epo_info() { assert_eq!(port_setup().pmtk_607_q_epo_info(), EpoData {
             set: 0,
             fwn_ftow_week_number: 0,
             fwn_ftow_tow: 0,
@@ -802,8 +799,7 @@ mod pmtktests {
             fcwn_fctow_tow: 0,
             lcwn_lctow_week_number: 0,
             lcwn_lctow_tow: 0,
-        });
-    }
+        }); }
 
     #[test]
     fn test_pmtk_397_set_nav_speed_threshold() { assert_eq!(port_setup().pmtk_397_set_nav_speed_threshold(0.2), Pmtk001Ack::Success); }
@@ -812,9 +808,7 @@ mod pmtktests {
     fn test_pmtk_386_set_nav_speed_threshold() { assert_eq!(port_setup().pmtk_386_set_nav_speed_threshold(0.2), Pmtk001Ack::Success); }
 
     #[test]
-    fn test_pmtk_447_q_nav_threshold() {
-        assert_eq!(port_setup().pmtk_447_q_nav_threshold(), 0.0);
-    }
+    fn test_pmtk_447_q_nav_threshold() { assert_eq!(port_setup().pmtk_447_q_nav_threshold(), 0.0); }
 
     // fn test_ () {assert_eq!(port_setup().pmtk_161_cmd_standby_mode(), Pmtk001Ack::Success);}
     #[test]

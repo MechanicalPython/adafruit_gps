@@ -220,8 +220,19 @@ pub mod send_pmtk {
 
         fn pmtk_startup(&mut self) -> bool {
             //! Return true if it did reboot.
-            // todo
-            true
+            //! Reboot code:
+            //! $PMTK011,MTKGPS*08 -> Look for this code.
+            //! $PMTK010,001*2E
+            //! $PMTK011,MTKGPS*08
+            //! $PMTK010,002*2D
+
+            for _i in 0..10 {
+                let line = self.read_line();
+                if (&line[0..8] == "$PMTK011") && (is_valid_checksum(&line)) {
+                    return true
+                }
+            }
+            false
         }
 
         fn pmtk_101_cmd_hot_start(&mut self) -> bool {
@@ -401,18 +412,18 @@ pub mod send_pmtk {
             };
         }
 
-        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: SbasMode) -> Pmtk001Ack {
+        fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: SbasMode) -> bool {
             //! Set sbas mode. 0=testing mode and 1=integrity mode.
             //! Integrity mode is default.
             //!
-            //! Get's reboot code first.
-            //! Standard 001 reply.
+            //! Get's reboot code.
+            //!
             match sbas_mode {
                 SbasMode::Integrity => self.send_command("PMTK391,1"),
                 SbasMode::Testing => self.send_command("PMTK391,0"),
                 SbasMode::Unknown => (),
             }
-            self.pmtk_001(10)
+            self.pmtk_startup()
         }
 
         fn pmtk_419_api_q_sbas_mode(&mut self) -> SbasMode {
@@ -463,9 +474,9 @@ pub mod send_pmtk {
             //! 7 LCWN & LCTOW : GPS week number
             //! 8 LCWN & LCTOW : TOW of the last set of EPO data that are currently used respectively
 
-            let args = self.pmtk_500().unwrap();
+            let args = self.pmtk_500().unwrap_or("PMTK,-1,-1,-1,-1,-1,-1,-1,-1,-1".to_string());
             let args: Vec<&str> = args.split(",").collect();
-            EpoData {
+            return EpoData {
                 set: args.get(1).unwrap_or(&"-1").parse::<i8>().unwrap(),
                 fwn_ftow_week_number: args.get(2).unwrap_or(&"-1").parse::<i8>().unwrap(),
                 fwn_ftow_tow: args.get(3).unwrap_or(&"-1").parse::<i8>().unwrap(),
@@ -779,7 +790,7 @@ mod pmtktests {
         }); }
 
     #[test]
-    fn test_pmtk_319_api_set_sbas_mode() { assert_eq!(port_setup().pmtk_319_api_set_sbas_mode(SbasMode::Integrity), Pmtk001Ack::Success); }
+    fn test_pmtk_319_api_set_sbas_mode() { assert_eq!(port_setup().pmtk_319_api_set_sbas_mode(SbasMode::Integrity), true); }
 
     #[test]
     fn test_pmtk_419_api_q_sbas_mode() { assert_eq!(port_setup().pmtk_419_api_q_sbas_mode(), SbasMode::Integrity); }

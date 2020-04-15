@@ -23,6 +23,8 @@ extern crate serialport;
 pub mod PMTK;
 pub use crate::PMTK::send_pmtk;
 
+pub mod nmea;
+
 pub mod gps {
     use std::io::Read;
     use std::str;

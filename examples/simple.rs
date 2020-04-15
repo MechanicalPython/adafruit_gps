@@ -14,7 +14,7 @@ fn main() {
     if args.len() == 2 {
         let cmd:&String = args.get(1).expect("No command given.");
         gps.send_command(cmd);
-        for _i in 0..5 {
+        for _i in 0..10 {
             let l = gps.read_line();
             dbg!(l);
         }

@@ -404,6 +404,8 @@ pub mod send_pmtk {
         fn pmtk_319_api_set_sbas_mode(&mut self, sbas_mode: SbasMode) -> Pmtk001Ack {
             //! Set sbas mode. 0=testing mode and 1=integrity mode.
             //! Integrity mode is default.
+            //!
+            //! Get's reboot code first.
             //! Standard 001 reply.
             match sbas_mode {
                 SbasMode::Integrity => self.send_command("PMTK391,1"),
@@ -755,7 +757,7 @@ mod pmtktests {
     fn test_pmtk_301_api_set_dgps_mode() { assert_eq!(port_setup().pmtk_301_api_set_dgps_mode(DgpsMode::NoDgps), Pmtk001Ack::Success); }
 
     #[test]
-    fn test_pmtk_401_api_q_dgps_mode() { assert_eq!(port_setup().pmtk_401_api_q_dgps_mode(), DgpsMode::NoDgps); }
+    fn test_pmtk_401_api_q_dgps_mode() { assert_eq!(port_setup().pmtk_401_api_q_dgps_mode(), DgpsMode::WAAS); }
 
     #[test]
     fn test_pmtk_313_api_set_sbas_enabled() { assert_eq!(port_setup().pmtk_313_api_set_sbas_enabled(Sbas::Enabled), Pmtk001Ack::Success); }

@@ -2,6 +2,11 @@
 //!
 //! All commands will be destructive for all sentences in the buffer.
 //!
+//! Important commands
+//! pmtk_220_set_nmea_updaterate
+//! pmtk_314_api_set_nmea_output  -> Sets 6 modes, GLL is not included in any other docs.
+//!
+//!
 //! The PMTK001 command is the response given when there is a valid command given.
 //!     It's format is $PMTK001,Command it was given, Flag response (0-3), value passed to it*checksum
 //!
@@ -371,7 +376,8 @@ pub mod send_pmtk {
             //! For each field, frequency setting is given: 0-5, 0-> Disabled,
             //! 1-> Output once everty one position fix, 2-> every second... every 5th.
             //! pmtk response is standard PMTK001
-            //! Default is PMTK4314,-1*
+            //! Default is PMTK314,-1* (Default: 0,1,1,1,1,5,0..0)
+
             self.send_command(format!("PMTK314,{},{},{},{},{},{},0,0,0,0,0,0,0,{}",
                                       gll, rmc, vtg, gga, gsa, gsv, pmtkchn_interval).as_str());
             self.pmtk_001(10)
@@ -732,7 +738,8 @@ mod pmtktests {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use super::send_pmtk::{add_checksum, DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
+    use super::send_pmtk::{DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
+    use super::send_pmtk::add_checksum;
     use super::send_pmtk::SendPmtk;
     use super::super::gps::{Gps, open_port};
 
@@ -744,7 +751,7 @@ mod pmtktests {
 
     fn port_setup() -> Gps {
         let port = open_port("/dev/serial0");
-        let gps = Gps { port, gps_type: "MT3339" };
+        let gps = Gps { port};
         sleep(Duration::from_secs(1));
         return gps;
     }

@@ -77,7 +77,7 @@ The data is therefore formatted by the GPS in two ways: GGA and RMC.
     $--GGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
 
 
-1. Time (UTC)
+1. Time (utc)
 2. Latitude
 3. N or S (North or South)
 4. Longitude
@@ -105,7 +105,7 @@ the error on those satellites. Meaning: 1 is ideal, 20 is very poor. [See here f
            |         | |       | |        | |   |   |    |   | |
     $--RMC,hhmmss.ss,A,llll.ll,a,yyyyy.yy,a,x.x,x.x,xxxx,x.x,a*hh
 
-1. Time (UTC)
+1. Time (utc)
 2. Status, V = Navigation receiver warning
 3. Latitude
 4. N or S

@@ -19,10 +19,11 @@
 
 extern crate serialport;
 
-#[allow(non_snake_case)]
-pub mod PMTK;
+pub use crate::nmea::nmea as Nmea;
 pub use crate::PMTK::send_pmtk;
 
+#[allow(non_snake_case)]
+pub mod PMTK;
 pub mod nmea;
 
 pub mod gps {
@@ -31,6 +32,8 @@ pub mod gps {
     use std::time::Duration;
 
     use serialport::prelude::*;
+
+    use crate::nmea;
 
     pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
@@ -75,37 +78,22 @@ pub mod gps {
         }
     }
 
-    #[derive(Debug)]
     #[derive(Default)]
-    pub struct GpsArgValues {
-        pub timestamp: Option<String>,
+    #[derive(Debug)]
+    pub struct GpsValues {
+        pub utc: f64,
         pub latitude: Option<f32>,
         pub longitude: Option<f32>,
-        pub fix_quality: Option<i32>,
-        // if A, fix quality is 1.
-        pub fix_quality_3d: Option<i32>,
-        pub satellites: Option<i32>,
-        pub horizontal_dilution: Option<f32>,
-        pub altitude_m: Option<f32>,
-        pub height_geoid: Option<f32>,
+        pub altitude: Option<f32>,
+        pub true_course: Option<f32>,
+        pub mag_course: Option<f32>,
         pub speed_knots: Option<f32>,
-        pub track_angle_deg: Option<f32>,
-        pub sats: Option<i32>,
-        pub isactivedata: Option<String>,
-        pub sat_prns: Option<i32>,
-        pub sel_mode: Option<i32>,
-        // Selection mode. data[0] for parse gpgsa.
-        pub pdop: Option<f32>,
-        // PODP, dilution of precision
-        pub hdop: Option<f32>,
-        // HDOP, hosizontal of precision
-        pub vdop: Option<f32>,
-        // vertical dilution of precision
-        pub total_mess_num: Option<i32>,
-        // total number of messages. _parse_gpgsv
-        pub mess_num: Option<i32>,
-        // message number. _parse_gpgsv
-        pub has_fix: Option<i8>, // 0 is no fix, 1 is fix.
+        pub speed_kph: Option<f32>,
+        pub geoidal_spe: Option<f32>,
+        pub age_diff_corr: Option<f32>,
+        pub sats_used: i32,
+        pub fix_type: nmea::gga::SatFix,
+
     }
 
     pub struct Gps {
@@ -113,34 +101,59 @@ pub mod gps {
     }
 
     pub trait GetGpsData {
-        fn update(&mut self) -> GpsArgValues;
+        fn update(&mut self, position_data: bool, satellite_data: bool) -> GpsValues;
         fn read_line(&mut self) -> String;
     }
 
     impl GetGpsData for Gps {
-        fn update(&mut self) -> GpsArgValues {
-            // // Read a certain satellites data.
-            //
-            // let line = self.read_line();
-            //
-            // match parse_sentence(line) {
-            //     Some((data_type, args)) => {
-            //         return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-            //             let values = parse_gpgll(args);
-            //             values
-            //         } else if (data_type == "GPRMC".to_string()) | (data_type == "GNRMC".to_string()) {
-            //             let values = parse_gprmc(args);
-            //             values
-            //         } else if (data_type == "GPGGA".to_string()) | (data_type == "GNGGA".to_string()) {
-            //             let values = parse_gpgga(args);
-            //             values
-            //         } else {  // If all else fails, return default values.
-            //             GpsArgValues::default()
-            //         };
-            //     }
-            //     None => (),
-            // }
-            return GpsArgValues::default();
+        fn update(&mut self, position_data: bool, satellite_data: bool) -> GpsValues {
+            // Read a certain satellites data.
+            // So I can read a sentence, parse that sentence and get data out of it.
+            // So a function could return some data.
+            // But how to pass that data to the user?
+            // Order of lines is GGA, GLL, GSA, GSV, RMC, VTG.
+
+            // The data bools are a bit confusing as gps.update(true, true) means you want
+            // that data, so while true, find the data.
+            let mut gga = position_data;
+            let mut vtg = position_data;
+            let mut gsa = satellite_data;
+            let mut gsv = satellite_data;
+
+            let mut values = GpsValues::default();
+
+            while (gga == true) && (vtg == true) && (gsa == true) && (gsv == true) {
+                let line = self.read_line();
+                let sentence = nmea::nmea::parse_sentence(line.as_str());
+                if sentence.is_some() {
+                    let sentence = sentence.unwrap();
+                    if &sentence.get(0).unwrap()[3..5] == "GG" {
+                        let gga_values = nmea::gga::parse_gga(sentence);
+                        values.utc = gga_values.utc;
+                        values.latitude = gga_values.lat;
+                        values.longitude = gga_values.long;
+                        values.sats_used = gga_values.satellites_used;
+                        values.altitude = gga_values.msl_alt;
+                        values.geoidal_spe = gga_values.geoidal_sep;
+                        values.age_diff_corr = gga_values.age_diff_corr;
+                        values.fix_type = gga_values.sat_fix;
+                        gga = false;
+                    } else if &sentence.get(0).unwrap()[3..6] == "VTG"  {
+                        let vtg_values = nmea::vtg::parse_vtg(sentence);
+                        values.true_course = vtg_values.true_course;
+                        values.mag_course = vtg_values.magnetic_course;
+                        values.speed_knots = vtg_values.speed_knots;
+                        values.speed_kph = vtg_values.speed_kph;
+                        vtg = false;
+                    } else if &sentence.get(0).unwrap()[3..6] == "GSA" {
+                        gsa = false;
+
+                    } else if &sentence.get(0).unwrap()[3..6] == "GSV" {
+                        gsv = false;
+                    }
+                }
+            }
+            values
         }
 
         fn read_line(&mut self) -> String {
@@ -174,121 +187,121 @@ pub mod gps {
 }
 
 
-// #[cfg(test)]
-// mod gps_test {
-//     use super::gps;
-//
-//     use std::str;
-//
-//     #[test]
-//     fn _parse_hhmmss() {
-//         assert_eq!(gps::_format_hhmmss("205530").as_str(), "20:55:30");
-//     }
-//
-//     #[test]
-//     fn _parse_ddmmyy() {
-//         assert_eq!(gps::_format_ddmmyy("300320"), "2020-03-30".to_string());
-//     }
-//
-//     #[test]
-//     fn _parse_degrees() {
-//         assert_eq!(gps::_parse_degrees("3218.0489".to_string()).unwrap(), 32.300815);
-//         assert_eq!(gps::_parse_degrees("6447.5086".to_string()).unwrap(), 64.79181);
-//     }
-//
-//     fn spoof_update(test_reading: Vec<u8>) -> gps::GpsArgValues {
-//         let port_reading = test_reading;
-//
-//         let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
-//         for sentence in string {
-//             match gps::parse_sentence(sentence) {
-//                 Some((data_type, args)) => {
-//                     println!("{:?}", sentence);
-//                     return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
-//                         let values = gps::parse_gpgll(args);
-//                         values
-//                     } else if (data_type == "GPRMC".to_string()) | (data_type == "GNRMC".to_string()) {
-//                         let values = gps::parse_gprmc(args);
-//                         values
-//                     } else if (data_type == "GPGGA".to_string()) | (data_type == "GNGGA".to_string()) {
-//                         let values = gps::parse_gpgga(args);
-//                         values
-//                     } else {  // If all else fails, return default values.
-//                         gps::GpsArgValues::default()
-//                     };
-//                 }
-//                 None => (),
-//             }
-//         }
-//         return gps::GpsArgValues::default();
-//     }
-//
-//     fn _parse_gpgll() {}
-//
-//     #[cfg(test)]
-//     mod rmc_tests {
-//         use super::*;
-//
-//         fn test_rmc_string(s: &str) -> (Option<String>, Option<i32>, Option<f32>, Option<f32>, Option<f32>, Option<f32>) {
-//             let s = s.as_bytes().to_vec();  // Process str to what read_lines gives.
-//             let r = spoof_update(s);
-//             return (r.timestamp, r.fix_quality, r.latitude, r.longitude, r.speed_knots, r.track_angle_deg);
-//         }
-//
-//         #[test]
-//         fn test_parse_gprmc_1() {
-//             let s = "$GNRMC,110942.000,A,5132.7394,N,00005.9165,W,0.36,193.42,020420,,,A*63\r\n";
-//             assert_eq!(test_rmc_string(&s), (Some("2020-04-02 11:09:42".to_string()), Some(1),
-//                                              Some(51.54566), Some(-0.098608), Some(0.36), Some(193.42)));
-//         }
-//     }
-//
-//
-//     // GGA tests
-//     #[cfg(test)]
-//     mod gga_tests {
-//         use super::*;
-//
-//         fn test_gpgga_string(s: &str) -> (Option<String>, Option<f32>, Option<f32>, Option<i32>,
-//                                           Option<i32>, Option<f32>, Option<f32>, Option<f32>) {
-//             let s = s.as_bytes().to_vec();  // Process str to what read_lines gives.
-//             let r = spoof_update(s);
-//             return (r.timestamp, r.latitude, r.longitude, r.fix_quality, r.satellites, r.horizontal_dilution, r.altitude_m, r.height_geoid);
-//         }
-//
-//         #[test]
-//         fn test_parse_gpgga_1() {
-//             let s1 = "$GNGGA,110942.000,5132.7394,N,00005.9165,W,1,8,1.38,50.9,M,47.0,M,,*60\r\n";
-//             assert_eq!(test_gpgga_string(&s1),
-//                        (Some("11:09:42".to_string()), Some(51.54566), Some(-0.098608),
-//                         Some(1), Some(8), Some(1.38), Some(50.9), Some(47.0)));
-//         }
-//
-//         #[test]
-//         fn test_parse_gpgga_2() {
-//             let s2 = "$GNGGA,131714.000,5132.7319,N,00005.9117,W,1,12,0.85,35.9,M,47.0,M,,*51\r\n";
-//             assert_eq!(test_gpgga_string(&s2),
-//                        (Some("13:17:14".to_string()), Some(51.545532), Some(-0.098528),
-//                         Some(1), Some(12), Some(0.85), Some(35.9), Some(47.0)));
-//         }
-//
-//         #[test]
-//         fn test_parse_gpgga_3() {
-//             let s3 = "$HFJHS,,,,,,";
-//             assert_eq!(test_gpgga_string(&s3), (None, None, None, None, None, None, None, None));
-//         }
-//
-//         #[test]
-//         fn test_parse_gpgga_4() {
-//             let s4 = "";
-//             assert_eq!(test_gpgga_string(&s4), (None, None, None, None, None, None, None, None));
-//         }
-//
-//         #[test]
-//         fn test_parse_gpgga_5() {
-//             let s5 = "$GNGGA,000400.100,,,,,0,0,,,M,,M,,*53\r";
-//             assert_eq!(test_gpgga_string(&s5), (Some("00:04:00".to_string()), None, None, Some(0), Some(0), None, None, None));
-//         }
-//     }
-// }
+#[cfg(test)]
+mod gps_test {
+    use super::gps;
+
+    use std::str;
+
+    #[test]
+    fn _parse_hhmmss() {
+        assert_eq!(gps::_format_hhmmss("205530").as_str(), "20:55:30");
+    }
+
+    #[test]
+    fn _parse_ddmmyy() {
+        assert_eq!(gps::_format_ddmmyy("300320"), "2020-03-30".to_string());
+    }
+
+    #[test]
+    fn _parse_degrees() {
+        assert_eq!(gps::_parse_degrees("3218.0489".to_string()).unwrap(), 32.300815);
+        assert_eq!(gps::_parse_degrees("6447.5086".to_string()).unwrap(), 64.79181);
+    }
+
+    fn spoof_update(test_reading: Vec<u8>) -> gps::GpsArgValues {
+        let port_reading = test_reading;
+
+        let string: Vec<&str> = str::from_utf8(&port_reading).unwrap().split("\n").collect();
+        for sentence in string {
+            match gps::parse_sentence(sentence) {
+                Some((data_type, args)) => {
+                    println!("{:?}", sentence);
+                    return if (data_type == "GPGLL".to_string()) | (data_type == "GNGGL".to_string()) {
+                        let values = gps::parse_gpgll(args);
+                        values
+                    } else if (data_type == "GPRMC".to_string()) | (data_type == "GNRMC".to_string()) {
+                        let values = gps::parse_gprmc(args);
+                        values
+                    } else if (data_type == "GPGGA".to_string()) | (data_type == "GNGGA".to_string()) {
+                        let values = gps::parse_gpgga(args);
+                        values
+                    } else {  // If all else fails, return default values.
+                        gps::GpsArgValues::default()
+                    };
+                }
+                None => (),
+            }
+        }
+        return gps::GpsArgValues::default();
+    }
+
+    fn _parse_gpgll() {}
+
+    #[cfg(test)]
+    mod rmc_tests {
+        use super::*;
+
+        fn test_rmc_string(s: &str) -> (Option<String>, Option<i32>, Option<f32>, Option<f32>, Option<f32>, Option<f32>) {
+            let s = s.as_bytes().to_vec();  // Process str to what read_lines gives.
+            let r = spoof_update(s);
+            return (r.timestamp, r.fix_quality, r.latitude, r.longitude, r.speed_knots, r.track_angle_deg);
+        }
+
+        #[test]
+        fn test_parse_gprmc_1() {
+            let s = "$GNRMC,110942.000,A,5132.7394,N,00005.9165,W,0.36,193.42,020420,,,A*63\r\n";
+            assert_eq!(test_rmc_string(&s), (Some("2020-04-02 11:09:42".to_string()), Some(1),
+                                             Some(51.54566), Some(-0.098608), Some(0.36), Some(193.42)));
+        }
+    }
+
+
+    // GGA tests
+    #[cfg(test)]
+    mod gga_tests {
+        use super::*;
+
+        fn test_gpgga_string(s: &str) -> (Option<String>, Option<f32>, Option<f32>, Option<i32>,
+                                          Option<i32>, Option<f32>, Option<f32>, Option<f32>) {
+            let s = s.as_bytes().to_vec();  // Process str to what read_lines gives.
+            let r = spoof_update(s);
+            return (r.timestamp, r.latitude, r.longitude, r.fix_quality, r.satellites, r.horizontal_dilution, r.altitude_m, r.height_geoid);
+        }
+
+        #[test]
+        fn test_parse_gpgga_1() {
+            let s1 = "$GNGGA,110942.000,5132.7394,N,00005.9165,W,1,8,1.38,50.9,M,47.0,M,,*60\r\n";
+            assert_eq!(test_gpgga_string(&s1),
+                       (Some("11:09:42".to_string()), Some(51.54566), Some(-0.098608),
+                        Some(1), Some(8), Some(1.38), Some(50.9), Some(47.0)));
+        }
+
+        #[test]
+        fn test_parse_gpgga_2() {
+            let s2 = "$GNGGA,131714.000,5132.7319,N,00005.9117,W,1,12,0.85,35.9,M,47.0,M,,*51\r\n";
+            assert_eq!(test_gpgga_string(&s2),
+                       (Some("13:17:14".to_string()), Some(51.545532), Some(-0.098528),
+                        Some(1), Some(12), Some(0.85), Some(35.9), Some(47.0)));
+        }
+
+        #[test]
+        fn test_parse_gpgga_3() {
+            let s3 = "$HFJHS,,,,,,";
+            assert_eq!(test_gpgga_string(&s3), (None, None, None, None, None, None, None, None));
+        }
+
+        #[test]
+        fn test_parse_gpgga_4() {
+            let s4 = "";
+            assert_eq!(test_gpgga_string(&s4), (None, None, None, None, None, None, None, None));
+        }
+
+        #[test]
+        fn test_parse_gpgga_5() {
+            let s5 = "$GNGGA,000400.100,,,,,0,0,,,M,,M,,*53\r";
+            assert_eq!(test_gpgga_string(&s5), (Some("00:04:00".to_string()), None, None, Some(0), Some(0), None, None, None));
+        }
+    }
+}
 

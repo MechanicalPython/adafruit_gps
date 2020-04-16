@@ -5,7 +5,9 @@
 //! GSV -> GNSS satellites in view, elevation, azimuth, SNR values
 //! RMC -> Time, date, position, course, speed
 //! VTG -> Course and speed info relative to the ground.
+//! GLL -> Lat, Long.
 //!
+//! On each iteration, all the data is the same. So why not output all the data and gather it all?
 //! ## Sentence prefix: ${GP, GL, GA, GN}{GGA, GSA, GSV, RMC, VTG}
 //! GP is short for GPS (American)
 //! GL is short for GLONASS (Russian)
@@ -32,8 +34,10 @@
 //! ### VTG
 //! Course (true), Course (magnetic), speed knots, speed kph, mode.
 //!
-//! Combine GSA and GSV to give SatelliteMetaData:
+//! Combine GSA and GSV to give SatelliteData:
 //! For each satellite seen, give the data from GSV plus the DOP data from GSA.
+//!
+//! Combine GGA and VTG for all the position data you need.
 //!
 //!
 //! |Position fix indicator|1||Value of satellite fix, 0:no fix, 1:GPS fix, 2:DGPS fix|
@@ -50,18 +54,8 @@
 //! |Azimuth||degrees|The number of degrees (0-359) from north the satellite is. https://en.wikipedia.org/wiki/Azimuth
 //!
 
-#![allow(warnings)]
 pub mod nmea {
-    // Remember, read_line() always gives a sentence.
-    struct PositionData {
-
-    }
-    pub fn satellite_data() {
-    }
-
-    pub fn position_data() {
-
-    }
+    use crate::gps::is_valid_checksum;
 
     pub fn _parse_degrees(degrees: &str, compass_direction: &str) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
@@ -97,36 +91,42 @@ pub mod nmea {
         return format!("{}:{}:{}", hours, mins, secs);
     }
 
-    fn convert_sentence(sentence: &str) -> Vec<&str> {
+    pub fn parse_sentence(sentence: &str) -> Option<Vec<&str>> {
         // Assumes that a valid sentence is always given.
         // Convert sentence into a split vec along ','.
 
         let sentence = sentence.trim();  // Remove whitespace.
-        let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
 
-        return sentence.split(",").collect();
+        if is_valid_checksum(sentence) {
+            let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
+            return Some(sentence.split(",").collect());
+        } else {
+            return None;
+        }
     }
 }
 
-mod gga {
+pub(crate) mod gga {
     use super::nmea::*;
 
-    enum SatFix {
+    #[derive(Debug)]
+    pub enum SatFix {
         NoFix,
         GpsFix,
         DgpsFix,
     }
 
+    #[derive(Debug)]
     pub struct GgaData {
-        utc: f64,
-        lat: Option<f32>,
-        long: Option<f32>,
-        sat_fix: SatFix,
-        satellites_used: i32,
-        hdop: Option<f32>,
-        msl_alt: Option<f32>,
-        geoidal_sep: Option<f32>,
-        age_diff_corr: Option<f32>,
+        pub utc: f64,
+        pub lat: Option<f32>,
+        pub long: Option<f32>,
+        pub sat_fix: SatFix,
+        pub satellites_used: i32,
+        pub hdop: Option<f32>,
+        pub msl_alt: Option<f32>,
+        pub geoidal_sep: Option<f32>,
+        pub age_diff_corr: Option<f32>,
     }
 
     pub fn parse_gga(args: Vec<&str>) -> GgaData {
@@ -151,7 +151,6 @@ mod gga {
             &"2" => SatFix::DgpsFix,
             _ => SatFix::NoFix,
         };
-        use std::str::FromStr;
         let satellites_used: i32 = args.get(7).unwrap().parse().unwrap();
         let hdop  = args.get(8).unwrap().parse::<f32>().ok();
         let msl_alt: Option<f32> = args.get(9).unwrap().parse::<f32>().ok();
@@ -171,7 +170,7 @@ mod gga {
     }
 }
 
-mod gsa {
+pub(crate) mod gsa {
     //! Format for GSA sentence:
     //! $GPGSA,Mode1, Mode2, Sat1,Sat2,Sat3,Sat4,Sat5,Sat6,Sat7,Sat8,Sat9,Sat10,Sat11,Sat12 ,PDOP,HDOP,VDOP*Checksum
     //! Mode1 (Mode) : M (Manual - forced to operate in 2D or 3D mode),
@@ -193,23 +192,23 @@ mod gsa {
     }
 
     pub struct GsaData {
-        mode: Mode,
-        dimention_fix: DimentionFix,
-        sat1: Option<i32>,
-        sat2: Option<i32>,
-        sat3: Option<i32>,
-        sat4: Option<i32>,
-        sat5: Option<i32>,
-        sat6: Option<i32>,
-        sat7: Option<i32>,
-        sat8: Option<i32>,
-        sat9: Option<i32>,
-        sat10: Option<i32>,
-        sat11: Option<i32>,
-        sat12: Option<i32>,
-        pdop: Option<f32>,
-        hdop: Option<f32>,
-        vdop: Option<f32>,
+        pub mode: Mode,
+        pub dimention_fix: DimentionFix,
+        pub sat1: Option<i32>,
+        pub sat2: Option<i32>,
+        pub sat3: Option<i32>,
+        pub sat4: Option<i32>,
+        pub sat5: Option<i32>,
+        pub sat6: Option<i32>,
+        pub sat7: Option<i32>,
+        pub sat8: Option<i32>,
+        pub sat9: Option<i32>,
+        pub sat10: Option<i32>,
+        pub sat11: Option<i32>,
+        pub sat12: Option<i32>,
+        pub pdop: Option<f32>,
+        pub hdop: Option<f32>,
+        pub vdop: Option<f32>,
     }
 
     pub fn parse_gsa(args: Vec<&str>) -> GsaData {
@@ -270,7 +269,7 @@ mod gsa {
 }
 
 // todo
-mod gsv {
+pub(crate) mod gsv {
     // GSV gives satellites in view. If there are many satellites in view it will require
     // multiple sentences.
     // A single GSV string can hold 4 satellites worth of data.
@@ -283,29 +282,29 @@ mod gsv {
     // If I assume that the sentences will always come one after another, I can just read the next sentences.
 
     pub struct GsvData {
-        sat1: Option<SatData>,
-        sat2: Option<SatData>,
-        sat3: Option<SatData>,
-        sat4: Option<SatData>,
-        sat5: Option<SatData>,
-        sat6: Option<SatData>,
-        sat7: Option<SatData>,
-        sat8: Option<SatData>,
-        sat9: Option<SatData>,
-        sat10: Option<SatData>,
-        sat11: Option<SatData>,
-        sat12: Option<SatData>,
-        sat13: Option<SatData>,
-        sat14: Option<SatData>,
-        sat15: Option<SatData>,
-        sat16: Option<SatData>,
+        pub sat1: Option<SatData>,
+        pub sat2: Option<SatData>,
+        pub sat3: Option<SatData>,
+        pub sat4: Option<SatData>,
+        pub sat5: Option<SatData>,
+        pub sat6: Option<SatData>,
+        pub sat7: Option<SatData>,
+        pub sat8: Option<SatData>,
+        pub sat9: Option<SatData>,
+        pub sat10: Option<SatData>,
+        pub sat11: Option<SatData>,
+        pub sat12: Option<SatData>,
+        pub sat13: Option<SatData>,
+        pub sat14: Option<SatData>,
+        pub sat15: Option<SatData>,
+        pub sat16: Option<SatData>,
     }
 
     pub struct SatData {
-        id: i32,
-        elevation: i32,
-        azimuth: i32,
-        snr: i32,
+        pub id: i32,
+        pub elevation: i32,
+        pub azimuth: i32,
+        pub snr: i32,
     }
 
     pub fn parse_gsv(args: Vec<&str>) -> GsvData {
@@ -334,7 +333,6 @@ mod gsv {
         let number_of_messages:i32 = args.get(1).unwrap().parse().unwrap();
         for message in 1..number_of_messages + 1 {
 
-
         }
         return GsvData {
                 sat1: None,
@@ -358,27 +356,27 @@ mod gsv {
     }
 }
 
-mod rmc {
+pub(crate) mod rmc {
     //! Fix status is bool, true for it has a fix.
     //! Magnetic variation, positive is east, negative is west.
 
     use super::nmea::*;
 
     pub struct RmcData {
-        utc: f64,
-        fix_status: bool,
-        latitude: Option<f32>,
-        longitude: Option<f32>,
-        speed: Option<f32>,
-        course: Option<f32>,
-        date: String,
-        mag_var: Option<f32>,
+        pub utc: f64,
+        pub fix_status: bool,
+        pub latitude: Option<f32>,
+        pub longitude: Option<f32>,
+        pub speed: Option<f32>,
+        pub course: Option<f32>,
+        pub date: String,
+        pub mag_var: Option<f32>,
     }
 
     pub fn parse_rmc(args: Vec<&str>) -> RmcData {
         // Data string format:
-        //   0     1         2       3           4       5       6           7       8      9
-        // $GPRMC,UTC, Fix status, Lat, NS indicator, Long, EW indicator, Speed, Course, date,
+        //   0     1         2       3           4       5       6           7       8           9
+        // $GPRMC,UTC, Fix status, Lat, NS indicator, Long, EW indicator, Speed, Course (true), date,
         //         10                           11                  12
         // magnetic variation (degrees), magnetic variation (E/W), Mode * checksum
 
@@ -411,7 +409,7 @@ mod rmc {
     }
 }
 
-mod vtg {
+pub(crate) mod vtg {
     enum Mode {
         Autonomous,
         Differential,
@@ -419,16 +417,16 @@ mod vtg {
         Unknown,
     }
     pub struct VtgData {
-        true_course: Option<f32>,
-        magnetic_course: Option<f32>,
-        speed_knots: Option<f32>,
-        speed_kph: Option<f32>,
-        mode: Mode,
+        pub true_course: Option<f32>,
+        pub magnetic_course: Option<f32>,
+        pub speed_knots: Option<f32>,
+        pub speed_kph: Option<f32>,
+        pub mode: Mode,
     }
     pub fn parse_vtg(args: Vec<&str>) -> VtgData {
         // Format
         //    0       1             2             3             4             5      6
-        // $GPVTG,  course, reference (True), course, reference (magnatic), Speed, knots,
+        // $GPVTG,  course, reference (True), course, reference (magnetic), Speed, knots,
         //   7     8    9
         // speed, kph, mode.
         let true_course: Option<f32> = args.get(1).unwrap().parse::<f32>().ok();
@@ -453,14 +451,14 @@ mod vtg {
     }
 }
 
-mod gll {
+pub(crate) mod gll {
     use super::nmea::*;
 
     pub struct GllData {
-        latitude: Option<f32>,
-        longitude: Option<f32>,
-        utc: Option<f64>,
-        is_valid: bool,
+        pub latitude: Option<f32>,
+        pub longitude: Option<f32>,
+        pub utc: Option<f64>,
+        pub is_valid: bool,
     }
 
     pub fn parse_gll(args: Vec<&str>) -> GllData {
@@ -470,7 +468,8 @@ mod gll {
         // [3] Longitude(as hhmm.mmm),
         // [4] Longitude North or South,
         // [5] Time as hhmmss.ss,
-        // [6] isactivedata(no idea what it does or is)
+        // [6] A
+        // [7] A
 
         // Parse Latitude.
 

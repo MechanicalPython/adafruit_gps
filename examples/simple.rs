@@ -20,5 +20,4 @@ fn main() {
 
     // Call a method that gets you all the data from a pre_defined list.
 
-
 }

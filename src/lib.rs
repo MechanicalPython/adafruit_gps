@@ -165,7 +165,7 @@ pub mod gps {
                     } else if &sentence.get(0).unwrap()[3..6] == "GSV" {
                         gsv = false;
                     }
-                    dbg!(gga, vtg)
+                    dbg!(gga, vtg);
                 }
             }
             values

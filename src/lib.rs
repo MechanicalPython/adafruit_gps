@@ -142,6 +142,7 @@ pub mod gps {
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
                     if &sentence.get(0).unwrap()[3..5] == "GG" {
+                        dbg!("GG");
                         let gga_values = nmea::gga::parse_gga(sentence);
                         values.utc = gga_values.utc;
                         values.latitude = gga_values.lat;
@@ -153,6 +154,7 @@ pub mod gps {
                         values.fix_type = gga_values.sat_fix;
                         gga = false;
                     } else if &sentence.get(0).unwrap()[3..6] == "VTG"  {
+                        dbg!("vtg");
                         let vtg_values = nmea::vtg::parse_vtg(sentence);
                         values.true_course = vtg_values.true_course;
                         values.mag_course = vtg_values.magnetic_course;
@@ -160,9 +162,11 @@ pub mod gps {
                         values.speed_kph = vtg_values.speed_kph;
                         vtg = false;
                     } else if &sentence.get(0).unwrap()[3..6] == "GSA" {
+                        dbg!("Gsa");
                         gsa = false;
 
                     } else if &sentence.get(0).unwrap()[3..6] == "GSV" {
+                        dbg!("Gsv");
                         gsv = false;
                     }
                     dbg!(gga, vtg);

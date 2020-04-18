@@ -3,6 +3,9 @@ extern crate adafruit_gps;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 
+use std::thread;
+use std::time::Duration;
+
 fn main() {
     let port = open_port("/dev/serial0");
     let mut gps = Gps {port, position_data: true, satellite_data: false};
@@ -12,6 +15,7 @@ fn main() {
     loop {
         let values = gps.update(true, false);
         dbg!(values);
+        thread::sleep(Duration::from_secs(1))
     }
 
     // Call a method that gets you all the data from a pre_defined list.

@@ -180,12 +180,12 @@ pub(crate) mod gsa {
     //!                        3- 3D (>= 4 SVs used)
     //! Mode and DimentionFix should always be given. The other values don't have to be.
 
-    enum Mode {
+    pub enum Mode {
         Manual,
         Automatic,
     }
 
-    enum DimentionFix {
+    pub enum DimentionFix {
         NotAvaliable,
         Dimention2d,
         Dimention3d,
@@ -331,7 +331,7 @@ pub(crate) mod gsv {
             }
         }
         let number_of_messages:i32 = args.get(1).unwrap().parse().unwrap();
-        for message in 1..number_of_messages + 1 {
+        for _message in 1..number_of_messages + 1 {
 
         }
         return GsvData {
@@ -410,7 +410,7 @@ pub(crate) mod rmc {
 }
 
 pub(crate) mod vtg {
-    enum Mode {
+    pub enum Mode {
         Autonomous,
         Differential,
         Estimated,

@@ -229,7 +229,7 @@ pub mod gps {
                     Err(_e) => (),
                 }
             }
-            let string: String = str::from_utf8(&output).unwrap().to_string();
+            let string: String = str::from_utf8(&output).expect("No line read").to_string();
             return string;
         }
     }

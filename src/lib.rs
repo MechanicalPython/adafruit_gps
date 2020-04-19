@@ -153,8 +153,7 @@ pub mod gps {
             let mut gsv = true;
 
             let mut values = GpsData::default();
-            dbg!("Start:", gga, vtg, gsa, gsv);
-            while (gga == true) && (vtg == true) && (gsa == true) && (gsv == true) {
+            while (gga == true) || (vtg == true) || (gsa == true) || (gsv == true) {
                 let line = self.read_line();
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
@@ -203,7 +202,6 @@ pub mod gps {
                     }
                 }
             }
-            dbg!("End:", gga, vtg, gsa, gsv);
             values
         }
 

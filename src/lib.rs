@@ -154,7 +154,7 @@ pub mod gps {
 
             let mut values = GpsData::default();
 
-            while gga && vtg && gsa && gsv {
+            while (gga == true) && (vtg == true) && (gsa == true) && (gsv == true) {
                 let line = self.read_line();
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {

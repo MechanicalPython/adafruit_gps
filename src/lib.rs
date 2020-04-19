@@ -155,10 +155,10 @@ pub mod gps {
             let mut values = GpsData::default();
             while (gga == true) || (vtg == true) || (gsa == true) || (gsv == true) {
                 let line = self.read_line();
+                println!("{:?}", &line);
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
-                    println!("{:?}", &sentence);
                     if &sentence.get(0).unwrap()[3..5] == "GG" {
                         let gga_values = nmea::gga::parse_gga(sentence);
                         values.utc = gga_values.utc;

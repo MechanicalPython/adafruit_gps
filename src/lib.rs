@@ -155,7 +155,7 @@ pub mod gps {
             let mut values = GpsData::default();
             while (gga == true) || (vtg == true) || (gsa == true) || (gsv == true) {
                 let line = self.read_line();
-                println!("{:?}", &line);
+                println!("top: {:?}", line);
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
@@ -191,7 +191,7 @@ pub mod gps {
                             let mut gsv_values: Vec<Satellites> = nmea::gsv::parse_gsv(sentence);  // First sentence
                             for _message in 1..number_of_messages + 1 {  // Read lines and add it for each message.
                                 let line = self.read_line();
-                                println!("{}", line);
+                                println!("GSV: {}", line);
                                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                                 let sentence = sentence.unwrap();
                                 gsv_values.append(nmea::gsv::parse_gsv(sentence).as_mut())

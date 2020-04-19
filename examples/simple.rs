@@ -33,7 +33,7 @@ satellites: {:?}\n\n
 ", values.utc, values.latitude, values.longitude, values.altitude, values.true_course,
         values.mag_course, values.speed_knots, values.speed_kph, values.geoidal_spe, values.age_diff_corr,
         values.sats_used, values.hdop, values.vdop, values.pdop, values.satellites);
-        println!("{}", pretty_print);
+        // println!("{}", pretty_print);
         thread::sleep(Duration::from_secs(1))
     }
 

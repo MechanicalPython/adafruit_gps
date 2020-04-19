@@ -3,8 +3,6 @@ extern crate adafruit_gps;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 
-use std::thread;
-use std::time::Duration;
 
 fn main() {
     let port = open_port("/dev/serial0");
@@ -18,7 +16,6 @@ fn main() {
         values.mag_course, values.speed_knots, values.speed_kph, values.geoidal_spe, values.age_diff_corr,
         values.sats_used, values.hdop, values.vdop, values.pdop, values.satellites);
         println!("{}", pretty_print);
-        // thread::sleep(Duration::from_secs(1))
     }
 
 }

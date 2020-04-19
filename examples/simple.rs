@@ -14,21 +14,21 @@ fn main() {
 
     loop {
         let values = gps.update();
-        let pretty_print = format!("Sat data:\n\
-utc: {}\n\
-lat:  {:?}\n\
-long: {:?}\n\
-alt:  {:?}\n\
-course true:{:?}\n
-course mag: {:?}\n
-knots: {:?}\n
-kph:   {:?}\n
-geo: {:?}\n
-age: {:?}\n
-sats: {:?}\n
-hdop: {:?}\n
-vdop: {:?}\n
-pdop: {:?}\n
+        let pretty_print = format!("Sat data:
+utc: {}
+lat:  {:?}
+long: {:?}
+alt:  {:?}
+course true:{:?}
+course mag: {:?}
+knots: {:?}
+kph:   {:?}
+geo: {:?}
+age: {:?}
+sats: {:?}
+hdop: {:?}
+vdop: {:?}
+pdop: {:?}
 satellites: {:?}\n\n
 ", values.utc, values.latitude, values.longitude, values.altitude, values.true_course,
         values.mag_course, values.speed_knots, values.speed_kph, values.geoidal_spe, values.age_diff_corr,

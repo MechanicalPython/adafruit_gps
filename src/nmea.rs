@@ -126,7 +126,7 @@ pub(crate) mod gga {
         // Time, sat fix and sats used always given.
 
         // Parse time
-        let utc: f64 = _format_hhmmss(args.get(1).unwrap()).parse().unwrap();
+        let utc: f64 = args.get(1).unwrap().parse().unwrap();
 
         // Parse lat
         let lat: Option<f32> = _parse_degrees(args.get(2).unwrap(), args.get(3).unwrap());

@@ -189,7 +189,7 @@ pub mod gps {
                             nmea::gsv::parse_gsv(sentence)
                         } else {
                             let mut gsv_values: Vec<Satellites> = nmea::gsv::parse_gsv(sentence);  // First sentence
-                            for _message in 1..number_of_messages + 1 {  // Read lines and add it for each message.
+                            for _message in 1..number_of_messages {  // Read lines and add it for each message.
                                 let line = self.read_line();
                                 println!("GSV: {}", line);
                                 let sentence = nmea::nmea::parse_sentence(line.as_str());

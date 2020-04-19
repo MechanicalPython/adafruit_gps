@@ -179,29 +179,33 @@ pub mod send_pmtk {
             //! Value isn't always present.
             for _i in 0..search_depth {   // Check 10 lines before giving up.
                 let line = self.read_line();
-                if (&line[0..8] == "$PMTK001") && (is_valid_checksum(&line)) {
-                    let line = line.trim();
-                    // Remove checksum.
-                    let line: Vec<&str> = line.split("*").collect();
-                    let line: &str = line.get(0).unwrap();
+                if is_valid_checksum(&line) {  // Sometimes the line is incomplete so check here.
+                    if &line[0..8] == "$PMTK001" {
+                        let line = line.trim();
+                        // Remove checksum.
+                        let line: Vec<&str> = line.split("*").collect();
+                        let line: &str = line.get(0).unwrap();
 
-                    let args: Vec<&str> = line.split(",").collect();
-                    // args: $PMTK001, cmd, flag,
-                    // let cmd: &str = args.get(1).expect("pmtk001 format not correct");
-                    let flag: &str = args.get(2).expect("pmtk001 format not correct");
-                    // let value: &str = args.get(3).unwrap_or(&"");
+                        let args: Vec<&str> = line.split(",").collect();
+                        // args: $PMTK001, cmd, flag,
+                        // let cmd: &str = args.get(1).expect("pmtk001 format not correct");
+                        let flag: &str = args.get(2).expect("pmtk001 format not correct");
+                        // let value: &str = args.get(3).unwrap_or(&"");
 
-                    return if flag == "0" {
-                        Pmtk001Ack::Invalid
-                    } else if flag == "1" {
-                        Pmtk001Ack::Unsupported
-                    } else if flag == "2" {
-                        Pmtk001Ack::Failed
-                    } else if flag == "3" {
-                        Pmtk001Ack::Success
+                        return if flag == "0" {
+                            Pmtk001Ack::Invalid
+                        } else if flag == "1" {
+                            Pmtk001Ack::Unsupported
+                        } else if flag == "2" {
+                            Pmtk001Ack::Failed
+                        } else if flag == "3" {
+                            Pmtk001Ack::Success
+                        } else {
+                            Pmtk001Ack::NoPacket
+                        };
                     } else {
-                        Pmtk001Ack::NoPacket
-                    };
+                        continue;
+                    }
                 } else {
                     continue;
                 }
@@ -236,7 +240,7 @@ pub mod send_pmtk {
             for _i in 0..10 {
                 let line = self.read_line();
                 if (&line[0..8] == "$PMTK011") && (is_valid_checksum(&line)) {
-                    return true
+                    return true;
                 }
             }
             false
@@ -495,7 +499,7 @@ pub mod send_pmtk {
                 fcwn_fctow_tow: args.get(7).unwrap_or(&"-1").parse::<i8>().unwrap(),
                 lcwn_lctow_week_number: args.get(8).unwrap_or(&"-1").parse::<i8>().unwrap(),
                 lcwn_lctow_tow: args.get(9).unwrap_or(&"-1").parse::<i8>().unwrap(),
-            }
+            };
         }
 
         fn pmtk_127_cmd_clear_epo(&mut self) -> Pmtk001Ack {
@@ -751,7 +755,7 @@ mod pmtktests {
 
     fn port_setup() -> Gps {
         let port = open_port("/dev/serial0");
-        let gps = Gps {port};
+        let gps = Gps { port };
         sleep(Duration::from_secs(1));
         return gps;
     }
@@ -789,7 +793,8 @@ mod pmtktests {
     #[test]
     // fn test_ () {assert_eq!(port_setup().pmtk_314_api_set_nm(gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8), Pmtk001Ack::Success);}
     #[test]
-    fn test_pmtk_414_api_q_nmea_output() { assert_eq!(port_setup().pmtk_414_api_q_nmea_output(), NmeaOutput {
+    fn test_pmtk_414_api_q_nmea_output() {
+        assert_eq!(port_setup().pmtk_414_api_q_nmea_output(), NmeaOutput {
             gll: 0,
             rmc: 1,
             vtg: 1,
@@ -797,7 +802,8 @@ mod pmtktests {
             gsa: 1,
             gsv: 5,
             pmtkchn_interval: 0,
-        }); }
+        });
+    }
 
     #[test]
     fn test_pmtk_319_api_set_sbas_mode() { assert_eq!(port_setup().pmtk_319_api_set_sbas_mode(SbasMode::Integrity), true); }
@@ -812,7 +818,8 @@ mod pmtktests {
     fn test_pmtk_127_cmd_clear_epo() { assert_eq!(port_setup().pmtk_127_cmd_clear_epo(), Pmtk001Ack::Success); }
 
     #[test]
-    fn test_pmtk_607_q_epo_info() { assert_eq!(port_setup().pmtk_607_q_epo_info(), EpoData {
+    fn test_pmtk_607_q_epo_info() {
+        assert_eq!(port_setup().pmtk_607_q_epo_info(), EpoData {
             set: 0,
             fwn_ftow_week_number: 0,
             fwn_ftow_tow: 0,
@@ -822,7 +829,8 @@ mod pmtktests {
             fcwn_fctow_tow: 0,
             lcwn_lctow_week_number: 0,
             lcwn_lctow_tow: 0,
-        }); }
+        });
+    }
 
     #[test]
     fn test_pmtk_397_set_nav_speed_threshold() { assert_eq!(port_setup().pmtk_397_set_nav_speed_threshold(0.2), Pmtk001Ack::Success); }
@@ -841,18 +849,23 @@ mod pmtktests {
     //                                  second_run_time: u32, second_sleep_time: u32), Pmtk001Ack::Success);
     #[test]
     fn test_pmtk_286_cmd_aic_mode() { assert_eq!(port_setup().pmtk_286_cmd_aic_mode(true), Pmtk001Ack::Success); }
+
     #[test]
     fn test_pmtk_869_cmd_easy_enable() { assert_eq!(port_setup().pmtk_869_cmd_easy_enable(true), Pmtk001Ack::Success); }
+
     #[test]
     fn test_pmtk_869_cmd_easy_query() { assert_eq!(port_setup().pmtk_869_cmd_easy_query(), true); }
 
     // fn test_ () {assert_eq!(port_setup().pmtk_187_locus_config(locus_interval: i8), Pmtk001Ack::Success);}
     #[test]
     fn test_pmtk_330_api_set_datum() { assert_eq!(port_setup().pmtk_330_api_set_datum(0), Pmtk001Ack::Success); }
+
     #[test]
     fn test_pmtk_430_api_q_datum() { assert_eq!(port_setup().pmtk_430_api_q_datum(), 0); }
+
     #[test]
     fn test_pmtk_351_api_set_support_qzss_nmea() { assert_eq!(port_setup().pmtk_351_api_set_support_qzss_nmea(false), Pmtk001Ack::Success); }
+
     #[test]
     fn test_pmtk_352_api_set_stop_qzss() { assert_eq!(port_setup().pmtk_352_api_set_stop_qzss(true), Pmtk001Ack::Success); }
 }

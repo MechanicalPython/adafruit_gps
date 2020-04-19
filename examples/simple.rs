@@ -14,7 +14,7 @@ fn main() {
 
     loop {
         let values = gps.update();
-        let pretty_print = format!("
+        let pretty_print = format!("Sat data:\n
         utc: {}\n
         lat:  {:?}\n
         long: {:?}\n

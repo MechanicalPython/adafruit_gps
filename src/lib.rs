@@ -4,12 +4,33 @@
 //! Python code: https://github.com/adafruit/Adafruit_CircuitPython_GPS
 //! GPS module docs: https://learn.adafruit.com/adafruit-ultimate-gps/
 //!
-//! According the the GPS specs, it can give 1Hz or 10Hz outputs.
+//! ## Hardware specs
+//! Please read the docs for the specific GPS module you are using.
+//! Update rate: 1Hz or 10Hz outputs.
 //!
-//! GPS enum has all the items that are needed.
-//! The way it works. Constantly call gps.update(). This will update the variables with the
-//! most up to date items (each type of prefix indicates a different level of importance)
-//! And then every second print the most up to date info.
+//! ## Outputs
+//! Outputs are split between two types: position data and satellite data.
+//! UTC - The UTC time as a f64
+//! Latitude - As degrees
+//! Longitude - As degrees
+//! Altitude - Altitude above Mean Sea Level in metres.
+//! True Course - Measured heading, degrees
+//! Magnetic Course - Measured heading by magnatic north, degrees
+//! Speed (knots)
+//! Speed (kph)
+//! Geoidal Separation - Difference between WGS-84 earth ellipsoid and mean sea level, basically altitude.
+//! Age Diff Corr - Age in seconds since last update from reference station.
+//! PDOP - Position DOP
+//! HDOP - Horizontal DOP
+//! VDOP - Vertical DOP
+//! Satellites - As a Vec<Satellites>
+//!     ID - Satellite id number, 1-32 and 193-195 for QZSS.
+//!     Elevation - Elevation of the satellite in degrees
+//!     Azimuth - The degrees from north the satellite is, if it was on the ground.
+//!     SNR - Signal to Noise ratio: Signal / Noise , 0-99, null if not tracking.
+//!
+//! Note: DOP is dilution of precision, a measure of error based on the position of the satellites.
+//!
 //!
 //! More info on the GPS module at https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf
 //!
@@ -79,7 +100,17 @@ pub mod gps {
     }
 
     #[derive(Debug)]
-    pub struct GpsValues {
+    #[derive(Default)]
+    pub struct Satellites {
+        pub id: Option<i32>,
+        pub elevation: Option<f32>,
+        pub azimuth: Option<f32>,
+        pub snr: Option<f32>,
+    }
+
+    #[derive(Debug)]
+    #[derive(Default)]
+    pub struct GpsData {
         pub utc: f64,
         pub latitude: Option<f32>,
         pub longitude: Option<f32>,
@@ -91,23 +122,23 @@ pub mod gps {
         pub geoidal_spe: Option<f32>,
         pub age_diff_corr: Option<f32>,
         pub sats_used: i32,
-        pub fix_type: nmea::gga::SatFix,
-
+        pub pdop: Option<f32>,
+        pub hdop: Option<f32>,
+        pub vdop: Option<f32>,
+        pub satellites: Vec<Satellites>,
     }
 
     pub struct Gps {
         pub port: Box<dyn SerialPort>,
-        pub position_data: bool,
-        pub satellite_data: bool
     }
 
     pub trait GetGpsData {
-        fn update(&mut self, position_data: bool, satellite_data: bool) -> GpsValues;
+        fn update(&mut self) -> GpsData;
         fn read_line(&mut self) -> String;
     }
 
     impl GetGpsData for Gps {
-        fn update(&mut self, position_data: bool, satellite_data: bool) -> GpsValues {
+        fn update(&mut self) -> GpsData {
             // Read a certain satellites data.
             // So I can read a sentence, parse that sentence and get data out of it.
             // So a function could return some data.
@@ -116,33 +147,19 @@ pub mod gps {
 
             // The data bools are a bit confusing as gps.update(true, true) means you want
             // that data, so while true, find the data.
-            let mut gga = position_data;
-            let mut vtg = position_data;
-            let mut gsa = satellite_data;
-            let mut gsv = satellite_data;
+            let mut gga = true;
+            let mut vtg = true;
+            let mut gsa = true;
+            let mut gsv = true;
 
-            let mut values = GpsValues{
-                utc: 0.0,
-                latitude: None,
-                longitude: None,
-                altitude: None,
-                true_course: None,
-                mag_course: None,
-                speed_knots: None,
-                speed_kph: None,
-                geoidal_spe: None,
-                age_diff_corr: None,
-                sats_used: 0,
-                fix_type: nmea::gga::SatFix::NoFix,
-            };
+            let mut values = GpsData::default();
 
-            while (gga == true) && (vtg == true) && (gsa == true) && (gsv == true) {
+            while gga && vtg && gsa && gsv {
                 let line = self.read_line();
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
                     if &sentence.get(0).unwrap()[3..5] == "GG" {
-                        dbg!("GG");
                         let gga_values = nmea::gga::parse_gga(sentence);
                         values.utc = gga_values.utc;
                         values.latitude = gga_values.lat;
@@ -151,10 +168,8 @@ pub mod gps {
                         values.altitude = gga_values.msl_alt;
                         values.geoidal_spe = gga_values.geoidal_sep;
                         values.age_diff_corr = gga_values.age_diff_corr;
-                        values.fix_type = gga_values.sat_fix;
                         gga = false;
-                    } else if &sentence.get(0).unwrap()[3..6] == "VTG"  {
-                        dbg!("vtg");
+                    } else if &sentence.get(0).unwrap()[3..6] == "VTG" {
                         let vtg_values = nmea::vtg::parse_vtg(sentence);
                         values.true_course = vtg_values.true_course;
                         values.mag_course = vtg_values.magnetic_course;
@@ -162,14 +177,29 @@ pub mod gps {
                         values.speed_kph = vtg_values.speed_kph;
                         vtg = false;
                     } else if &sentence.get(0).unwrap()[3..6] == "GSA" {
-                        dbg!("Gsa");
+                        let gsa_values = nmea::gsa::parse_gsa(sentence);
+                        values.hdop = gsa_values.hdop;
+                        values.vdop = gsa_values.vdop;
+                        values.pdop = gsa_values.pdop;
                         gsa = false;
-
                     } else if &sentence.get(0).unwrap()[3..6] == "GSV" {
-                        dbg!("Gsv");
+                        let number_of_messages: i32 = sentence.get(1).unwrap().parse().unwrap();
+
+                        let v = if number_of_messages == 1 {
+                            nmea::gsv::parse_gsv(sentence)
+                        } else {
+                            let mut gsv_values: Vec<Satellites> = nmea::gsv::parse_gsv(sentence);  // First sentence
+                            for _message in 1..number_of_messages + 1 {  // Read lines and add it for each message.
+                                let line = self.read_line();
+                                let sentence = nmea::nmea::parse_sentence(line.as_str());
+                                let sentence = sentence.unwrap();
+                                gsv_values.append(nmea::gsv::parse_gsv(sentence).as_mut())
+                            }
+                            gsv_values
+                        };
+                        values.satellites = v;
                         gsv = false;
                     }
-                    dbg!(gga, vtg);
                 }
             }
             values

@@ -8,16 +8,14 @@ use std::time::Duration;
 
 fn main() {
     let port = open_port("/dev/serial0");
-    let mut gps = Gps {port, position_data: true, satellite_data: false};
+    let mut gps = Gps {port};
 
-    gps.pmtk_314_api_set_nmea_output(0,0,1,1,0,0,1);
+    gps.pmtk_314_api_set_nmea_output(0,0,1,1,1,1,1);
 
     loop {
-        let values = gps.update(true, false);
+        let values = gps.update();
         dbg!(values);
         thread::sleep(Duration::from_secs(1))
     }
-
-    // Call a method that gets you all the data from a pre_defined list.
 
 }

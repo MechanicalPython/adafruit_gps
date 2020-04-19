@@ -39,20 +39,6 @@
 //!
 //! Combine GGA and VTG for all the position data you need.
 //!
-//!
-//! |Position fix indicator|1||Value of satellite fix, 0:no fix, 1:GPS fix, 2:DGPS fix|
-//! |Satellites used|14||Number of satellites that can be seen.|
-//! |HDOP|1.26||Horizontal Dilution of Precision. It's a measure of error based on the satellites error bounds and position|
-//! |PDOP|1.26||Position Dilution of Precision. It's a measure of error based on the satellites error bounds and position|
-//! |VDOP|1.26||Vertical Dilution of Precision. It's a measure of error based on the satellites error bounds and position|
-//! |MLS Altitude|22.6|metres|Altitude above Mean Sea Level|
-//! |MLS Units|M|metres|Units for MLS|
-//! |Geoidal Separation|18.5|metres|Unknown what this is|
-//! |Geoidal units|M| metres||
-//! |Age of Diff. Corr.||second|Null when no DGPS|
-//! |SNR|39|dBHz|0 to 99, Null when not tracking.|
-//! |Azimuth||degrees|The number of degrees (0-359) from north the satellite is. https://en.wikipedia.org/wiki/Azimuth
-//!
 
 pub mod nmea {
     use crate::gps::is_valid_checksum;
@@ -106,6 +92,7 @@ pub mod nmea {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) mod gga {
     use super::nmea::*;
 
@@ -170,6 +157,7 @@ pub(crate) mod gga {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) mod gsa {
     //! Format for GSA sentence:
     //! $GPGSA,Mode1, Mode2, Sat1,Sat2,Sat3,Sat4,Sat5,Sat6,Sat7,Sat8,Sat9,Sat10,Sat11,Sat12 ,PDOP,HDOP,VDOP*Checksum
@@ -268,94 +256,51 @@ pub(crate) mod gsa {
     }
 }
 
-// todo
+#[allow(dead_code)]
 pub(crate) mod gsv {
-    // GSV gives satellites in view. If there are many satellites in view it will require
-    // multiple sentences.
-    // A single GSV string can hold 4 satellites worth of data.
-    // It is given for each set of satellites it could track (GP, GL, etc).
+    //! GSV gives satellites in view. If there are many satellites in view it will require
+    //! multiple sentences.
+    //! A single GSV string can hold 4 satellites worth of data.
+    //! It is given for each set of satellites it could track (GP, GL, etc).
 
-    // $GPGSV,1,1,00*79 if no satellites are in view.
-    // Format is $GPSGV,number of messages, message number, satellites in view, sat id, elevation, azimuth, SNR,
-    // SNR can be null (,,)
-    // Max of 4 messages so 16 total satellites.
-    // If I assume that the sentences will always come one after another, I can just read the next sentences.
+    //! $GPGSV,1,1,00*79 if no satellites are in view.
+    //! Format is $GPSGV,number of messages, message number, satellites in view, sat id, elevation, azimuth, SNR,
+    //! SNR can be null (,,)
+    //! Max of 4 messages so 16 total satellites.
+    //! If I assume that the sentences will always come one after another, I can just read the next sentences.
+    use crate::gps::Satellites;
 
-    pub struct GsvData {
-        pub sat1: Option<SatData>,
-        pub sat2: Option<SatData>,
-        pub sat3: Option<SatData>,
-        pub sat4: Option<SatData>,
-        pub sat5: Option<SatData>,
-        pub sat6: Option<SatData>,
-        pub sat7: Option<SatData>,
-        pub sat8: Option<SatData>,
-        pub sat9: Option<SatData>,
-        pub sat10: Option<SatData>,
-        pub sat11: Option<SatData>,
-        pub sat12: Option<SatData>,
-        pub sat13: Option<SatData>,
-        pub sat14: Option<SatData>,
-        pub sat15: Option<SatData>,
-        pub sat16: Option<SatData>,
-    }
-
-    pub struct SatData {
-        pub id: i32,
-        pub elevation: i32,
-        pub azimuth: i32,
-        pub snr: i32,
-    }
-
-    pub fn parse_gsv(args: Vec<&str>) -> GsvData {
+    pub fn parse_gsv(args: Vec<&str>) -> Vec<Satellites> {
         // Format $GPGSV, Number of messages, Message number, Sats in view,
         //      sat ID, Sat elevation, Sat Azimuth, Sat SNE, Repeat 4 times, *checksum
-        if args.len() == 4 {
-            return GsvData {
-                sat1: None,
-                sat2: None,
-                sat3: None,
-                sat4: None,
-                sat5: None,
-                sat6: None,
-                sat7: None,
-                sat8: None,
-                sat9: None,
-                sat10: None,
-                sat11: None,
-                sat12: None,
-                sat13: None,
-                sat14: None,
-                sat15: None,
-                sat16: None
+
+        // Can vary in length.
+        let mut values = Vec::new();
+        let _meta = &args.get(0..4);
+        let sat1 = &args.get(4..8);
+        let sat2 = &args.get(8..12);
+        let sat3 = &args.get(12..16);
+        let sat4 = &args.get(16..20);
+        for sat in &[sat1, sat2, sat3, sat4] {
+            if sat.is_some() {
+                values.push(parse_sat(sat.unwrap()))
             }
         }
-        let number_of_messages:i32 = args.get(1).unwrap().parse().unwrap();
-        for _message in 1..number_of_messages + 1 {
-
-        }
-        return GsvData {
-                sat1: None,
-                sat2: None,
-                sat3: None,
-                sat4: None,
-                sat5: None,
-                sat6: None,
-                sat7: None,
-                sat8: None,
-                sat9: None,
-                sat10: None,
-                sat11: None,
-                sat12: None,
-                sat13: None,
-                sat14: None,
-                sat15: None,
-                sat16: None
-            }
-
+        values
     }
+
+    fn parse_sat(args: &[&str]) -> Satellites {
+        Satellites{
+            id: args.get(0).unwrap().parse().ok(),
+            elevation: args.get(1).unwrap().parse().ok(),
+            azimuth: args.get(2).unwrap().parse().ok(),
+            snr: args.get(3).unwrap().parse().ok(),
+        }
+    }
+
 }
 
+#[allow(dead_code)]
 pub(crate) mod rmc {
     //! Fix status is bool, true for it has a fix.
     //! Magnetic variation, positive is east, negative is west.
@@ -409,6 +354,7 @@ pub(crate) mod rmc {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) mod vtg {
     pub enum Mode {
         Autonomous,
@@ -451,7 +397,9 @@ pub(crate) mod vtg {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) mod gll {
+    //! This module is basically pointless as all gll data is in the gga data.
     use super::nmea::*;
 
     pub struct GllData {

@@ -158,6 +158,7 @@ pub mod gps {
                 let line = self.read_line();
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
+                    dbg!(sentence.unwrap());
                     let sentence = sentence.unwrap();
                     if &sentence.get(0).unwrap()[3..5] == "GG" {
                         let gga_values = nmea::gga::parse_gga(sentence);

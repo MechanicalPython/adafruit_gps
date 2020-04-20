@@ -1,47 +1,40 @@
 //! NMEA is the sentence format for receiving data from a GPS.
-//! There are 5 output formats:
-//! GGA -> Time, position and fix type
-//! GSA -> GNSS receiver operating mode: active satellite numbers, PDOP, VDOP, HDOP
-//! GSV -> GNSS satellites in view, elevation, azimuth, SNR values
-//! RMC -> Time, date, position, course, speed
-//! VTG -> Course and speed info relative to the ground.
-//! GLL -> Lat, Long.
+//!
+//! # GPS outputs
+//! ## GPS sentence outputs.
+//! - GGA -> TC, Latitude, longitude, Position fix (GPS, DGPS, No fix), sats used, HDOP, altitude, Geoidal Seperation, Age of diff corr
+//! - GSA -> Manual or Automatic mode, 2D or 3D fix, List of satellites used, PDOP, HDOP, VDOP.
+//! - GSV -> Satellites in view data: sat id, elevation, azimuth and SNR for each sat seen.
+//! - RMC -> UTC, lat, long, speed, course, date, magnetic variation.
+//! - VTG -> Course (true), Course (magnetic), speed knots, speed kph, mode.
+//! - GLL -> Lat, Long. Pretty pointless sentence.
 //!
 //! On each iteration, all the data is the same. So why not output all the data and gather it all?
-//! ## Sentence prefix: ${GP, GL, GA, GN}{GGA, GSA, GSV, RMC, VTG}
+//!
+//! ### Sentence prefix: ${GP, GL, GA, GN}{GGA, GSA, GSV, RMC, VTG}
 //! GP is short for GPS (American)
+//!
 //! GL is short for GLONASS (Russian)
+//!
 //! GA is short for Galileo (EU)
+//!
 //! GN is multi-system.
 //!
-//! ## Prefixes table ({} means heading of GP/GL/GA is added.
+//! ### Prefixes table ({} means heading of GP/GL/GA is added.
 //! |           |GGA     |GSA     |GSV    |RMC     |VTG  |
 //! |-----------|:------:|-------:|------:|-------:|-----|
 //! |GPS        |GPGGA   |GPGSA   |GPGSV  |GPRMC   |GPVTG|
 //! |GP+GL      |GNGGA   |{}GAS   |{}GSV  |GNRMC   |GNVTG|
 //! |GP+GL+GA   |GNGG    |{}GSA   |{}GSV  |GNRMC   |GNVTG|
+//!
 //! In the GP+GL and GP+GL+GA modes, all satellites from those systems are used for the best fix.
 //!
-//! ## Data formats
-//! ### GGA
-//! UTC, Latitude, longitude, Position fix (GPS, DGPS, No fix), sats used, HDOP, altitude, Geoidal Seperation, Age of diff corr
-//! ### GSA
-//! Manual or Automatic mode, 2D or 3D fix, List of satellites used, PDOP, HDOP, VDOP.
-//! ### GSV
-//! Satellites in view data: sat id, elevation, azimuth and SNR for each sat seen.
-//! ### RMC
-//! UTC, lat, long, speed, course, date, magnetic variation.
-//! ### VTG
-//! Course (true), Course (magnetic), speed knots, speed kph, mode.
-//!
-//! Combine GSA and GSV to give SatelliteData:
-//! For each satellite seen, give the data from GSV plus the DOP data from GSA.
-//!
-//! Combine GGA and VTG for all the position data you need.
 //!
 
+
 pub mod nmea {
-    use crate::gps::is_valid_checksum;
+    //! Main moduel for parsing any NMEA sentence and exporting NMEA parsing to lib.rs
+    use crate::gps;
 
     pub fn _parse_degrees(degrees: &str, compass_direction: &str) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
@@ -83,7 +76,7 @@ pub mod nmea {
 
         let sentence = sentence.trim();  // Remove whitespace.
 
-        if is_valid_checksum(sentence) {
+        if gps::is_valid_checksum(sentence) {
             let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
             return Some(sentence.split(",").collect());
         } else {
@@ -93,7 +86,12 @@ pub mod nmea {
 }
 
 #[allow(dead_code)]
-pub(crate) mod gga {
+pub mod gga {
+    //! Parse GGA sentences
+    //!
+    //! UTC, Latitude, Longitude, Fix quality, Satellites used, HDOP, MSL altitude, Geoidal separation
+    //! , Age of difference correction.
+
     use super::nmea::*;
 
     #[derive(Debug)]
@@ -116,15 +114,12 @@ pub(crate) mod gga {
         pub age_diff_corr: Option<f32>,
     }
 
+    /// Take a parse_sentence vec<&str> and output GgaData.
     pub fn parse_gga(args: Vec<&str>) -> GgaData {
-        // Format for data:
-        //      0             1     2   3     4     5        6           7       8     9       10
-        // ${GP,GL,GA,GN}GGA, UTC, lat, N/S, long, E/S, Fix quality, Sats used, HDOP, Alt, Alt Units,
-        //
-        //        11              12             13             14
-        // Geoidal separation, Geo units, Age of diff corr, * checksum
-        // Time, sat fix and sats used always given.
-
+        //! ${GP,GL,GA,GN}GGA, UTC, lat, N/S, long, E/S, Fix quality, Sats used, HDOP, Alt, Alt Units,
+        //! Geoidal separation, Geo units, Age of diff corr, * checksum
+        //!
+        //! Time, sat fix and sats used always given.
         // Parse time
         let utc: f64 = args.get(1).unwrap().parse().unwrap();
 
@@ -139,7 +134,7 @@ pub(crate) mod gga {
             _ => SatFix::NoFix,
         };
         let satellites_used: i32 = args.get(7).unwrap().parse().unwrap();
-        let hdop  = args.get(8).unwrap().parse::<f32>().ok();
+        let hdop = args.get(8).unwrap().parse::<f32>().ok();
         let msl_alt: Option<f32> = args.get(9).unwrap().parse::<f32>().ok();
         let geoidal_sep: Option<f32> = args.get(11).unwrap().parse::<f32>().ok();
         let age_diff_corr: Option<f32> = args.get(13).unwrap().parse::<f32>().ok();
@@ -158,16 +153,10 @@ pub(crate) mod gga {
 }
 
 #[allow(dead_code)]
-pub(crate) mod gsa {
-    //! Format for GSA sentence:
-    //! $GPGSA,Mode1, Mode2, Sat1,Sat2,Sat3,Sat4,Sat5,Sat6,Sat7,Sat8,Sat9,Sat10,Sat11,Sat12 ,PDOP,HDOP,VDOP*Checksum
-    //! Mode1 (Mode) : M (Manual - forced to operate in 2D or 3D mode),
-    //!                A (2D automatic - can switch between 2D and 3D automatically)
-    //! Mode2 (DimentionFix) : 1 - Fix not avaliable
-    //!                        2 - 2D (< 4 SVs used)
-    //!                        3- 3D (>= 4 SVs used)
-    //! Mode and DimentionFix should always be given. The other values don't have to be.
-
+pub mod gsa {
+    //! Parse GSA sentences.
+    //!
+    //! Gives All the satellites that are being tracked and the HDOP, VDOP, PDOP.
     pub enum Mode {
         Manual,
         Automatic,
@@ -200,11 +189,20 @@ pub(crate) mod gsa {
     }
 
     pub fn parse_gsa(args: Vec<&str>) -> GsaData {
-        // Format
-        //    0      1          2         3     4     5     6     7     8     9     10    11    12
-        // $G{}GSA, Mode, dimention_fix, Sat1, Sat2, Sat3, Sat4, Sat5, Sat6, Sat7, Sat8, Sat9, Sat10,
-        //    13    14    15    16    17
-        // Sat11, Sat12, PDOP, HDOP, VDOP  *checksum
+        //! Format
+        //! $G{}GSA, Mode, dimention_fix, Sat1, Sat2, Sat3, Sat4, Sat5, Sat6, Sat7, Sat8, Sat9, Sat10,
+        //! Sat11, Sat12, PDOP, HDOP, VDOP  *checksum
+        //!
+        //! Mode1 (Mode)
+        //! - M (Manual - forced to operate in 2D or 3D mode),
+        //! - A (2D automatic - can switch between 2D and 3D automatically)
+        //!
+        //! Mode2 (DimentionFix) :
+        //! - 1 - Fix not avaliable
+        //! - 2 - 2D (< 4 SVs used)
+        //! - 3- 3D (>= 4 SVs used)
+        //!
+        //! Mode and DimentionFix should always be given. The other values don't have to be.
 
         let mode = match args.get(1).unwrap() {
             &"M" => Mode::Manual,
@@ -257,24 +255,30 @@ pub(crate) mod gsa {
 }
 
 #[allow(dead_code)]
-pub(crate) mod gsv {
+pub mod gsv {
+    //! Parse GSV sentence
+    //!
     //! GSV gives satellites in view. If there are many satellites in view it will require
     //! multiple sentences.
-    //! A single GSV string can hold 4 satellites worth of data.
-    //! It is given for each set of satellites it could track (GP, GL, etc).
+    //!
 
-    //! $GPGSV,1,1,00*79 if no satellites are in view.
-    //! Format is $GPSGV,number of messages, message number, satellites in view, sat id, elevation, azimuth, SNR,
-    //! SNR can be null (,,)
-    //! Max of 4 messages so 16 total satellites.
-    //! If I assume that the sentences will always come one after another, I can just read the next sentences.
     use crate::gps::Satellites;
 
     pub fn parse_gsv(args: Vec<&str>) -> Vec<Satellites> {
-        // Format $GPGSV, Number of messages, Message number, Sats in view,
-        //      sat ID, Sat elevation, Sat Azimuth, Sat SNE, Repeat 4 times, *checksum
-
-        // Can vary in length.
+        //! Format $GPGSV, Number of messages, Message number, Sats in view,
+        //!      sat ID, Sat elevation, Sat Azimuth, Sat SNE, Repeat 4 times, *checksum
+        //!
+        //! Sentences can vary in length.
+        //!
+        //! A single GSV string can hold 4 satellites worth of data.
+        //!
+        //! It is given for each set of satellites it could track (GP, GL, etc).
+        //!
+        //! $GPGSV,1,1,00*79 if no satellites are in view.
+        //!
+        //! Max of 4 messages so 16 total satellites.
+        //!
+        //! Assumes that the sentences will always come one after another, I can just read the next sentences.
         let mut values = Vec::new();
         let _meta = &args.get(0..4);
         let sat1 = &args.get(4..8);
@@ -290,21 +294,20 @@ pub(crate) mod gsv {
     }
 
     fn parse_sat(args: &[&str]) -> Satellites {
-        Satellites{
+        Satellites {
             id: args.get(0).unwrap().parse().ok(),
             elevation: args.get(1).unwrap().parse().ok(),
             azimuth: args.get(2).unwrap().parse().ok(),
             snr: args.get(3).unwrap().parse().ok(),
         }
     }
-
 }
 
 #[allow(dead_code)]
-pub(crate) mod rmc {
-    //! Fix status is bool, true for it has a fix.
-    //! Magnetic variation, positive is east, negative is west.
-
+pub mod rmc {
+    //! Parse RMC sentences.
+    //!
+    //! Gives UTC, latitude, longitude, Speed, True course, Magnetic course, Date, Magnatic variation
     use super::nmea::*;
 
     pub struct RmcData {
@@ -319,11 +322,12 @@ pub(crate) mod rmc {
     }
 
     pub fn parse_rmc(args: Vec<&str>) -> RmcData {
-        // Data string format:
-        //   0     1         2       3           4       5       6           7       8           9
-        // $GPRMC,UTC, Fix status, Lat, NS indicator, Long, EW indicator, Speed, Course (true), date,
-        //         10                           11                  12
-        // magnetic variation (degrees), magnetic variation (E/W), Mode * checksum
+        //! Magnetic variation, positive is east, negative is west.
+        //! Data string format:
+        //!   0     1         2       3           4       5       6           7       8           9
+        //! $GPRMC,UTC, Fix status, Lat, NS indicator, Long, EW indicator, Speed, Course (true), date,
+        //!         10                           11                  12
+        //! magnetic variation (degrees), magnetic variation (E/W), Mode * checksum
 
         let utc = args.get(1).unwrap().parse().unwrap_or(0.0);
         let fix_status = match args.get(2).unwrap_or(&"V") {
@@ -341,7 +345,7 @@ pub(crate) mod rmc {
             &"W" => Some(args.get(11).unwrap().parse::<f32>().unwrap() * -1.0),
             _ => None,
         };
-        return RmcData{
+        return RmcData {
             utc,
             fix_status,
             latitude,
@@ -349,19 +353,24 @@ pub(crate) mod rmc {
             speed,
             course,
             date,
-            mag_var
-        }
+            mag_var,
+        };
     }
 }
 
 #[allow(dead_code)]
-pub(crate) mod vtg {
+pub mod vtg {
+    //! Parse VTG sentences
+    //!
+    //! Gives course headings and speed data.
+
     pub enum Mode {
         Autonomous,
         Differential,
         Estimated,
         Unknown,
     }
+
     pub struct VtgData {
         pub true_course: Option<f32>,
         pub magnetic_course: Option<f32>,
@@ -369,12 +378,12 @@ pub(crate) mod vtg {
         pub speed_kph: Option<f32>,
         pub mode: Mode,
     }
+
     pub fn parse_vtg(args: Vec<&str>) -> VtgData {
-        // Format
-        //    0       1             2             3             4             5      6
-        // $GPVTG,  course, reference (True), course, reference (magnetic), Speed, knots,
-        //   7     8    9
-        // speed, kph, mode.
+        //! Sentence format
+        //!
+        //! $GPVTG,  course, reference (True), course, reference (magnetic), Speed, knots,
+        //! speed, kph, mode.
         let true_course: Option<f32> = args.get(1).unwrap().parse::<f32>().ok();
         let magnetic_course: Option<f32> = args.get(3).unwrap().parse::<f32>().ok();
         let speed_knots: Option<f32> = args.get(5).unwrap().parse::<f32>().ok();
@@ -392,14 +401,14 @@ pub(crate) mod vtg {
             speed_knots,
             speed_kph,
             mode,
-        }
+        };
 
     }
 }
 
 #[allow(dead_code)]
-pub(crate) mod gll {
-    //! This module is basically pointless as all gll data is in the gga data.
+mod gll {
+    /// This module is basically pointless as all gll data is in the gga data.
     use super::nmea::*;
 
     pub struct GllData {
@@ -434,20 +443,10 @@ pub(crate) mod gll {
             latitude,
             longitude,
             utc,
-            is_valid
-        }
+            is_valid,
+        };
     }
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

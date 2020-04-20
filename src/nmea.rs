@@ -29,11 +29,11 @@
 //!
 //! In the GP+GL and GP+GL+GA modes, all satellites from those systems are used for the best fix.
 //!
-//!
 
 
 pub mod nmea {
     //! Main moduel for parsing any NMEA sentence and exporting NMEA parsing to lib.rs
+
     use crate::gps;
 
     pub fn _parse_degrees(degrees: &str, compass_direction: &str) -> Option<f32> {
@@ -262,7 +262,16 @@ pub mod gsv {
     //! multiple sentences.
     //!
 
-    use crate::gps::Satellites;
+    #[derive(Debug)]
+    #[derive(Default)]
+    /// This is the individual satellite data given by the GSV sentence. It is used in the
+    /// main GpsData struct, as a Vec<Satellites>.
+    pub struct Satellites {
+        pub id: Option<i32>,
+        pub elevation: Option<f32>,
+        pub azimuth: Option<f32>,
+        pub snr: Option<f32>,
+    }
 
     pub fn parse_gsv(args: Vec<&str>) -> Vec<Satellites> {
         //! Format $GPGSV, Number of messages, Message number, Sats in view,
@@ -402,7 +411,6 @@ pub mod vtg {
             speed_kph,
             mode,
         };
-
     }
 }
 
@@ -450,3 +458,7 @@ mod gll {
 
 
 
+#[cfg(test)]
+mod nmea_tests {
+
+}

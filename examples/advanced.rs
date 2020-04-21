@@ -21,9 +21,7 @@ fn main() {
         // Convert the String to a Vec<&str>
         let line = nmea::nmea::parse_sentence(line.as_str()).unwrap();
         // Parse the Vec<&str> to parse_gsa and return the GsaData struct.
-        let gsa = nmea::gsa::parse_gsa(line);
-
-
+        let _gsa = nmea::gsa::parse_gsa(line);
 
     }
 }

@@ -1,3 +1,4 @@
+
 //! NMEA is the sentence format for receiving data from a GPS.
 //!
 //! # GPS outputs
@@ -95,6 +96,7 @@ pub mod gga {
     use super::nmea::*;
 
     #[derive(Debug)]
+    #[derive(PartialEq)]
     pub enum SatFix {
         NoFix,
         GpsFix,
@@ -102,6 +104,7 @@ pub mod gga {
     }
 
     #[derive(Debug)]
+    #[derive(PartialEq)]
     pub struct GgaData {
         pub utc: f64,
         pub lat: Option<f32>,
@@ -120,6 +123,11 @@ pub mod gga {
         //! Geoidal separation, Geo units, Age of diff corr, * checksum
         //!
         //! Time, sat fix and sats used always given.
+        let header = args.get(0).unwrap();
+        if &header[3..5] != "GG" {
+            panic!(format!("Sentence is not a GGA format, it's {} format", header))
+        }
+
         // Parse time
         let utc: f64 = args.get(1).unwrap().parse().unwrap();
 
@@ -157,17 +165,24 @@ pub mod gsa {
     //! Parse GSA sentences.
     //!
     //! Gives All the satellites that are being tracked and the HDOP, VDOP, PDOP.
+
+    #[derive(PartialEq)]
+    #[derive(Debug)]
     pub enum Mode {
         Manual,
         Automatic,
     }
 
+    #[derive(PartialEq)]
+    #[derive(Debug)]
     pub enum DimentionFix {
         NotAvaliable,
         Dimention2d,
         Dimention3d,
     }
 
+    #[derive(PartialEq)]
+    #[derive(Debug)]
     pub struct GsaData {
         pub mode: Mode,
         pub dimention_fix: DimentionFix,
@@ -203,6 +218,11 @@ pub mod gsa {
         //! - 3- 3D (>= 4 SVs used)
         //!
         //! Mode and DimentionFix should always be given. The other values don't have to be.
+
+        let header = args.get(0).unwrap();
+        if &header[3..6] != "GSA" {
+            panic!(format!("Incorrect sentence header. Should be GSA, it is {}", header))
+        }
 
         let mode = match args.get(1).unwrap() {
             &"M" => Mode::Manual,
@@ -264,6 +284,7 @@ pub mod gsv {
 
     #[derive(Debug)]
     #[derive(Default)]
+    #[derive(PartialEq)]
     /// This is the individual satellite data given by the GSV sentence. It is used in the
     /// main GpsData struct, as a Vec<Satellites>.
     pub struct Satellites {
@@ -288,6 +309,11 @@ pub mod gsv {
         //! Max of 4 messages so 16 total satellites.
         //!
         //! Assumes that the sentences will always come one after another, I can just read the next sentences.
+
+        let header = args.get(0).unwrap();
+        if &header[3..6] != "GSV" {
+            panic!(format!("Incorrect sentence header. Should be GSV, it is {}", header))
+        }
         let mut values = Vec::new();
         let _meta = &args.get(0..4);
         let sat1 = &args.get(4..8);
@@ -319,6 +345,7 @@ pub mod rmc {
     //! Gives UTC, latitude, longitude, Speed, True course, Magnetic course, Date, Magnatic variation
     use super::nmea::*;
 
+    #[derive(PartialEq)]
     pub struct RmcData {
         pub utc: f64,
         pub fix_status: bool,
@@ -373,6 +400,7 @@ pub mod vtg {
     //!
     //! Gives course headings and speed data.
 
+    #[derive(PartialEq)]
     pub enum Mode {
         Autonomous,
         Differential,
@@ -380,6 +408,7 @@ pub mod vtg {
         Unknown,
     }
 
+    #[derive(PartialEq)]
     pub struct VtgData {
         pub true_course: Option<f32>,
         pub magnetic_course: Option<f32>,
@@ -457,8 +486,76 @@ mod gll {
 }
 
 
-
 #[cfg(test)]
 mod nmea_tests {
+    mod gga {
+        use crate::nmea::gga;
 
+        #[test]
+        fn gga_normal() {
+            //${GP,GL,GA,GN}GGA, UTC, lat, N/S, long, E/S, Fix quality, Sats used, HDOP, Alt, Alt Units,
+            // Geoidal separation, Geo units, Age of diff corr, * checksum
+            assert_eq!(gga::parse_gga(vec!["$GPGGA", "19294.00", "29343.543", "N", "29343.543", "E",
+                                           "1", "10", "1.01", "47.7", "M", "10.0", "M", "0.1"]),
+                       gga::GgaData {
+                           utc: 19294.00,
+                           lat: Some(34.725716),
+                           long: Some(34.725716),
+                           sat_fix: gga::SatFix::GpsFix,
+                           satellites_used: 10,
+                           hdop: Some(1.01),
+                           msl_alt: Some(47.7),
+                           geoidal_sep: Some(10.0),
+                           age_diff_corr: Some(0.1),
+                       });
+        }
+
+        #[test]
+        #[should_panic]
+        fn gga_incorrect_header() {
+            gga::parse_gga(vec!["$GPGSV", "19294.00", "29343.543", "N", "29343.543", "E",
+                                           "1", "10", "1.01", "47.7", "M", "10.0", "M", "0.1"]);
+        }
+
+    }
+    mod gsa {
+        use crate::nmea::gsa;
+
+        #[test]
+        fn gsa_normal() {
+            assert_eq!(gsa::parse_gsa(vec!["$GPGSA", "M", "2", "01", "02", "03", "04", "05"
+            , "06", "07", "08", "09", "10", "11", "12", "1.0", "2.04", "32.04"]), gsa::GsaData{
+                mode: gsa::Mode::Manual,
+                dimention_fix: gsa::DimentionFix::Dimention2d,
+                sat1: Some(1),
+                sat2: Some(2),
+                sat3: Some(3),
+                sat4: Some(4),
+                sat5: Some(5),
+                sat6: Some(6),
+                sat7: Some(7),
+                sat8: Some(8),
+                sat9: Some(9),
+                sat10: Some(10),
+                sat11: Some(11),
+                sat12: Some(12),
+                pdop: Some(1.0),
+                hdop: Some(2.04),
+                vdop: Some(32.04)
+            })
+        }
+        #[test]
+        #[should_panic]
+        fn gsa_incorrect_header() {
+            gsa::parse_gsa(vec!["$GPGGA", "M", "2", "01", "02", "03", "04", "05"
+            , "06", "07", "08", "09", "10", "11", "12", "1.0", "2.04", "32.04"]);
+        }
+    }
+    mod gsv {
+    }
+    mod rmc {
+    }
+    mod vtg {
+    }
 }
+

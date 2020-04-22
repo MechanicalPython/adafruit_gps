@@ -131,7 +131,7 @@ pub mod send_pmtk {
 
     pub trait SendPmtk {
         /// Send the PMTK command.
-        fn send_command(&mut self, cmd: &str);
+        fn send_command(&mut self, cmd: &str) -> String;
 
         /// Check for a PMTK001 return.
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack;

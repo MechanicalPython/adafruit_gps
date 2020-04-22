@@ -264,6 +264,7 @@ pub mod send_pmtk {
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);
+            dbg!(cmd);
         }
 
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack {

@@ -264,7 +264,6 @@ pub mod send_pmtk {
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);
-            dbg!(cmd);
         }
 
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack {
@@ -880,7 +879,11 @@ mod pmtktests {
     }
 
     #[test]
-    fn test_pmtk_397_set_nav_speed_threshold() { assert_eq!(port_setup().pmtk_397_set_nav_speed_threshold(0.2), Pmtk001Ack::Success); }
+    fn test_pmtk_397_set_nav_speed_threshold() {
+        assert_eq!(port_setup().pmtk_397_set_nav_speed_threshold(0.2), Pmtk001Ack::Success);
+        assert_eq!(port_setup().pmtk_397_set_nav_speed_threshold(0.4), Pmtk001Ack::Success);
+        assert_eq!(port_setup().pmtk_397_set_nav_speed_threshold(0.8), Pmtk001Ack::Success);
+    }
 
     #[test]
     fn test_pmtk_386_set_nav_speed_threshold() { assert_eq!(port_setup().pmtk_386_set_nav_speed_threshold(0.2), Pmtk001Ack::Success); }

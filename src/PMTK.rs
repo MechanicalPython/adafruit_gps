@@ -131,7 +131,7 @@ pub mod send_pmtk {
 
     pub trait SendPmtk {
         /// Send the PMTK command.
-        fn send_command(&mut self, cmd: &str) -> String;
+        fn send_command(&mut self, cmd: &str) ;
 
         /// Check for a PMTK001 return.
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack;
@@ -258,13 +258,13 @@ pub mod send_pmtk {
 
     impl SendPmtk for Gps {
         #[allow(unused_must_use)]  // self.port.write is not used
-        fn send_command(&mut self, cmd: &str) -> String {
+        fn send_command(&mut self, cmd: &str) {
             //! Input: no $ and no *checksum.
             let cmd = add_checksum(cmd.to_string());
+            dbg!(&cmd);
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);
-            return cmd;
         }
 
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack {
@@ -351,8 +351,7 @@ pub mod send_pmtk {
         }
 
         fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: &str) -> Pmtk001Ack {
-            let c = self.send_command(format!("PMTK220,{}", update_rate).as_str());
-            dbg!(c);
+            self.send_command(format!("PMTK220,{}", update_rate).as_str());
             self.pmtk_001(10)
         }
 

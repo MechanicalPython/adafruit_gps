@@ -815,7 +815,11 @@ mod pmtktests {
     fn test_pmtk_104_cmd_full_cold_start() { assert_eq!(port_setup().pmtk_104_cmd_full_cold_start(), true); }
 
     #[test]
-    fn test_pmtk_220_set_nmea_updaterate() { assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("1000"), Pmtk001Ack::Success); }
+    fn test_pmtk_220_set_nmea_updaterate() {
+        assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("1000"), Pmtk001Ack::Success);
+        assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("100"), Pmtk001Ack::Success);
+        assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("10000"), Pmtk001Ack::Success);
+    }
 
     #[test]
     fn test_pmtk_251_set_nmea_baudrate() { assert_eq!(port_setup().pmtk_251_set_nmea_baudrate("9600"), Pmtk001Ack::Success); }

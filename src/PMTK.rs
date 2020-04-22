@@ -817,7 +817,7 @@ mod pmtktests {
     #[test]
     fn test_pmtk_220_set_nmea_updaterate() {
         assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("1000"), Pmtk001Ack::Success);
-        assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("100"), Pmtk001Ack::Success);
+        assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("200"), Pmtk001Ack::Success);
         assert_eq!(port_setup().pmtk_220_set_nmea_updaterate("10000"), Pmtk001Ack::Success);
     }
 

@@ -15,8 +15,8 @@ fn main() {
     gps.pmtk_314_api_set_nmea_output(0,0,1,1,1,1,1);
     // Recommended gps update rate 1000miliseconds, or 1Hz.
     dbg!(gps.pmtk_220_set_nmea_updaterate("1000"));
-    dbg!(gps.pmtk_220_set_nmea_updaterate("100"));
-    dbg!(gps.pmtk_220_set_nmea_updaterate("10000"));
+    dbg!(gps.pmtk_220_set_nmea_updaterate("500"));
+    dbg!(gps.pmtk_220_set_nmea_updaterate("10000")); // Success.
 
     // In a loop, constantly update the gps. The update trait will give you all the data you
     // want from the gps module.

@@ -258,12 +258,13 @@ pub mod send_pmtk {
 
     impl SendPmtk for Gps {
         #[allow(unused_must_use)]  // self.port.write is not used
-        fn send_command(&mut self, cmd: &str) {
+        fn send_command(&mut self, cmd: &str) -> String {
             //! Input: no $ and no *checksum.
             let cmd = add_checksum(cmd.to_string());
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);
+            return cmd;
         }
 
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack {
@@ -350,7 +351,8 @@ pub mod send_pmtk {
         }
 
         fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: &str) -> Pmtk001Ack {
-            self.send_command(format!("PMTK220,{}", update_rate).as_str());
+            let c = self.send_command(format!("PMTK220,{}", update_rate).as_str());
+            dbg!(c);
             self.pmtk_001(10)
         }
 

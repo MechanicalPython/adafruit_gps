@@ -246,6 +246,7 @@ mod gps_test {
 
     #[test]
     fn is_valid_sentence() {
+        assert_eq!(gps::is_valid_checksum("$PMTK220,100*2F"), true);
         assert_eq!(gps::is_valid_checksum("$GPGSV,4,3,14,12,12,100,,04,11,331,,16,06,282,,05,05,074,22*75"), true);
         assert_eq!(gps::is_valid_checksum("$GPGSV,4,4,14,32,01,215,,41,,,*4F"), true);
         assert_eq!(gps::is_valid_checksum("$GNGGA,131613.000,5132.7314,N,00005.9099,W,1,9,1.17,42.4,M,47.0,M,,*60\r\n"), true);

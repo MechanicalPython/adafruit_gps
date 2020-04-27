@@ -1,23 +1,27 @@
 extern crate adafruit_gps;
+use std::thread;
+use std::time::Duration;
 
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 
-
 fn main() {
     // Open the port that is connected to the GPS module.
     let port = open_port("/dev/serial0");
-    dbg!(port.bytes_to_read());
     // Initialise the Gps.
-    let mut gps = Gps {port};
-    gps.pmtk_104_cmd_full_cold_start();
+    let mut gps = Gps { port };
+    // gps.pmtk_104_cmd_full_cold_start();
     // Send the gps a PMTK command telling it to give you no rmc or gll data
     // but to give gga, gsa, vtg and gsv data once per loop. Read the docs for advanced usage.
 
-    gps.pmtk_314_api_set_nmea_output(0,0,1,1,1,1,1);
+    gps.pmtk_314_api_set_nmea_output(0, 0, 1, 1, 1, 1, 1);
     // Recommended gps update rate 1000miliseconds, or 1Hz.
-    let reply = gps.pmtk_220_set_nmea_updaterate("100");
-    dbg!(reply);
+    for _ in 0..10 {
+        let reply = gps.pmtk_220_set_nmea_updaterate("100");
+        dbg!(reply);
+        thread::sleep(Duration::from_millis(500));
+    }
+
 
     // In a loop, constantly update the gps. The update trait will give you all the data you
     // want from the gps module.

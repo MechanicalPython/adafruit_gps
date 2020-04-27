@@ -16,11 +16,8 @@ fn main() {
 
     gps.pmtk_314_api_set_nmea_output(0, 0, 1, 1, 1, 1, 1);
     // Recommended gps update rate 1000miliseconds, or 1Hz.
-    for _ in 1..11 {
-        let reply = gps.pmtk_220_set_nmea_updaterate("500");
-        dbg!(reply);
-        thread::sleep(Duration::from_millis(500));
-    }
+    let r = gps.pmtk_605_q_release();
+    dbg!(r);
 
 
     // In a loop, constantly update the gps. The update trait will give you all the data you

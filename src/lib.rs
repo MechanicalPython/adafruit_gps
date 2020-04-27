@@ -129,6 +129,7 @@ pub mod gps {
         pub pdop: Option<f32>,
         pub hdop: Option<f32>,
         pub vdop: Option<f32>,
+        pub fix_quality: nmea::gga::SatFix,
         pub satellites: Vec<Satellites>,
     }
 
@@ -172,6 +173,7 @@ pub mod gps {
                         values.altitude = gga_values.msl_alt;
                         values.geoidal_spe = gga_values.geoidal_sep;
                         values.age_diff_corr = gga_values.age_diff_corr;
+                        values.fix_quality = gga_values.sat_fix;
                         gga = false;
                     } else if &sentence.get(0).unwrap()[3..6] == "VTG" {
                         let vtg_values = nmea::vtg::parse_vtg(sentence);

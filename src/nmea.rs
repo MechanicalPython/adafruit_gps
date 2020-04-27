@@ -103,6 +103,12 @@ pub mod gga {
         DgpsFix,
     }
 
+    impl Default for SatFix {
+        fn default() -> SatFix {
+            SatFix::NoFix
+        }
+    }
+
     #[derive(Debug)]
     #[derive(PartialEq)]
     pub struct GgaData {

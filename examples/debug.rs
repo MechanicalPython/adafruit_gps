@@ -10,7 +10,7 @@ fn main() {
     dbg!(port.bytes_to_read());
     // Initialise the Gps.
     let mut gps = Gps {port};
-
+    gps.pmtk_104_cmd_full_cold_start();
     // Send the gps a PMTK command telling it to give you no rmc or gll data
     // but to give gga, gsa, vtg and gsv data once per loop. Read the docs for advanced usage.
 
@@ -23,9 +23,9 @@ fn main() {
     // want from the gps module.
     loop {
         let values = gps.update();
-        let pretty_print = format!("utc:{},lat:{:?},long:{:?}, alt:{:?}, course true:{:?}, course mag:{:?}, knots:{:?}, kph:{:?}, geo:{:?}, age:{:?}, sats:{:?}, hdop:{:?}, vdop:{:?}, pdop:{:?}, satellites:{:?}\n", values.utc, values.latitude, values.longitude, values.altitude, values.true_course,
-        values.mag_course, values.speed_knots, values.speed_kph, values.geoidal_spe, values.age_diff_corr,
-        values.sats_used, values.hdop, values.vdop, values.pdop, values.satellites);
-        println!("{}", pretty_print);
+        // let _pretty_print = format!("utc:{},lat:{:?},long:{:?}, alt:{:?}, course true:{:?}, course mag:{:?}, knots:{:?}, kph:{:?}, geo:{:?}, age:{:?}, sats:{:?}, hdop:{:?}, vdop:{:?}, pdop:{:?}, satellites:{:?}\n", values.utc, values.latitude, values.longitude, values.altitude, values.true_course,
+        // values.mag_course, values.speed_knots, values.speed_kph, values.geoidal_spe, values.age_diff_corr,
+        // values.sats_used, values.hdop, values.vdop, values.pdop, values.satellites);
+        println!("{}", values.utc);
     }
 }

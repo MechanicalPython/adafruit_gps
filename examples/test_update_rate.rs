@@ -8,12 +8,12 @@ use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 // For use in testing your gps modules update rate. type the update rate in miliseconds in the cmd line.
 
 fn main() {
-    let args = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     let port = open_port("/dev/serial0");
     let mut gps = Gps { port };
 
-    let update_r = gps.pmtk_220_set_nmea_updaterate(args.get(1));
+    let update_r = gps.pmtk_220_set_nmea_updaterate(&args[1]);
     dbg!(update_r);
 
     for _ in 0..10 {

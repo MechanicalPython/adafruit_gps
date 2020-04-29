@@ -5,8 +5,10 @@ use std::env;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 
+// For use in testing your gps modules update rate. type the update rate in miliseconds in the cmd line.
+
 fn main() {
-    let args = env::args();
+    let args = env::args().collect();
 
     let port = open_port("/dev/serial0");
     let mut gps = Gps { port };

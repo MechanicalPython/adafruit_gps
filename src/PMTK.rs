@@ -799,8 +799,8 @@ mod pmtktests {
     }
 
     fn port_setup() -> Gps {
-        let port = open_port("/dev/serial0");
-        let gps = Gps { port };
+        let port = open_port("/dev/serial0", 9600);
+        let gps = Gps { port , satellite_data: true, naviagtion_data: true };
         sleep(Duration::from_secs(1));
         return gps;
     }

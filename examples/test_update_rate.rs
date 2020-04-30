@@ -18,7 +18,7 @@ fn main() {
     println!("gps done");
     let update_r = gps.pmtk_220_set_nmea_updaterate(&args[1]);
     dbg!(update_r);
-    let update_b = gps.pmtk_251_set_nmea_baudrate(args.get(3));
+    let update_b = gps.pmtk_251_set_nmea_baudrate(args.get(3).unwrap());
     dbg!(update_b);
 
     for _ in 0..10 {

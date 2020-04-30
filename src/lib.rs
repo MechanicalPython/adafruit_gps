@@ -238,7 +238,7 @@ pub mod gps {
                     Ok(buffer_size) => {
                         output.extend_from_slice(&buffer[..buffer_size]);
 
-                        if output.get(output.len() - 1).unwrap() == &10u8 || output.len() > 4095{
+                        if output.get(output.len() - 1).unwrap() == &10u8 || output.len() > 255{
                             cont = false;
                         }
                     }

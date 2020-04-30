@@ -15,10 +15,10 @@ fn main() {
     println!("{:?}", port.baud_rate());
     let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
 
-    gps.pmtk_314_api_set_nmea_output(0, 1, 0, 0, 0, 0, 1);
 
     let update_b = gps.pmtk_251_set_nmea_baudrate(baud_rate);
     dbg!(update_b);
+    gps.pmtk_314_api_set_nmea_output(0, 1, 0, 0, 0, 0, 1);
 
     let update_r = gps.pmtk_220_set_nmea_updaterate(&args[1]);
     dbg!(update_r);

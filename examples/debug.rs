@@ -5,7 +5,7 @@ use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 
 fn main() {
     // Open the port that is connected to the GPS module.
-    let port = open_port("/dev/serial0");
+    let port = open_port("/dev/serial0", 9600);
     // Initialise the Gps.
     let mut gps = Gps { port };
     // gps.pmtk_104_cmd_full_cold_start();

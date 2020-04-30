@@ -241,7 +241,7 @@ pub mod gps {
                         if output.get(output.len() - 1).unwrap() == &10u8 {
                             cont = false;
                         }
-                        dbg!(&output);
+                        dbg!(&output.len());
                     }
                     Err(_e) => (),
                 }

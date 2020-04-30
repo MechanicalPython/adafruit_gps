@@ -7,7 +7,8 @@
 //! the gps after sending it a command.
 //!
 //! ## Important commands
-//! pmtk_220_set_nmea_updaterate
+//! pmtk_220_set_nmea_updaterate -> Hz for the gps update rate. The baudrate (pmtk_220_set_nmea_updaterate)
+//! may need to be changed as well.
 //!
 //! pmtk_314_api_set_nmea_output  -> Sets 6 modes, GLL is not included in any other docs.
 //!
@@ -158,6 +159,8 @@ pub mod send_pmtk {
         fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: &str) -> Pmtk001Ack;
 
         /// Set the baudrate
+        /// Settings: 4800, 9600, 14400, 19200, 38400, 57600, 115200
+        ///
         fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) -> Pmtk001Ack;
 
         /// Set Differental Gps mode

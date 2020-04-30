@@ -65,9 +65,10 @@ pub mod gps {
     use crate::nmea::gsv::Satellites;
 
     /// Opens the port to the GPS, probably /dev/serial0
-    pub fn open_port(port_name: &str) -> Box<dyn SerialPort> {
+    /// Default baudrate is 9600
+    pub fn open_port(port_name: &str, baud_rate:u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
-            baud_rate: 9600,
+            baud_rate,
             data_bits: DataBits::Eight,
             flow_control: FlowControl::None,
             parity: Parity::None,

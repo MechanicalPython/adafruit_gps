@@ -7,6 +7,10 @@ The GPS module provides a serial byte signal providing longitude, latitude and m
 
 This module has only been tested using an Adafruit Mini GPS PA1010D on a raspberry pi zero. 
 
+
+## Note
+3.0 update introduced breaking changes to Gps struct and open port in an attempt to increase gps Hz. 
+
 # Dependencies
 Serialport: https://docs.rs/serialport/3.2.0/serialport/. Serialport is used for reading the byte information provided by the GPS as well as sending it commands. 
 

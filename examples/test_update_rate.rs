@@ -4,7 +4,6 @@ use std::env;
 
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::SendPmtk;
-use std::io::Write;
 use std::time::Duration;
 use std::thread;
 
@@ -21,6 +20,7 @@ fn main() {
         thread::sleep(Duration::from_secs(1))
     }
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
+    dbg!(port.baud_rate());
     println!("{:?}", port.baud_rate());
     let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
 

@@ -14,6 +14,7 @@ fn main() {
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     println!("{:?}", port.baud_rate());
     let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
+    gps.pmtk_104_cmd_full_cold_start();
     let update_b = gps.pmtk_251_set_nmea_baudrate(baud_rate);
     dbg!(update_b);
 

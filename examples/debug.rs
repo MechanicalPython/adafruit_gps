@@ -7,7 +7,7 @@ fn main() {
     // Open the port that is connected to the GPS module.
     let port = open_port("/dev/serial0", 9600);
     // Initialise the Gps.
-    let mut gps = Gps { port };
+    let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
     // gps.pmtk_104_cmd_full_cold_start();
     // Send the gps a PMTK command telling it to give you no rmc or gll data
     // but to give gga, gsa, vtg and gsv data once per loop. Read the docs for advanced usage.

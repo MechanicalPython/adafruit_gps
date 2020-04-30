@@ -7,7 +7,6 @@
 //!
 //! PMTK commands https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf
 //!
-//!
 //! ## Modules
 //! The PMTK module is a way of easily sending command to the GPS, changing it's settings.
 //!
@@ -17,6 +16,11 @@
 //! ## Hardware specs
 //! Please read the docs for the specific GPS module you are using.
 //! Update rate: 1Hz or 10Hz outputs.
+//!
+//! # Gps struct
+//! port is the open_port option
+//! satellite_data -> the individual satellite data from GSA and GSV
+//! navigation_data -> the naviagtion data from GGA and VTG
 //!
 //! # Module Outputs
 //! gps.update() gives the following outputs in the GpsData struct
@@ -136,8 +140,13 @@ pub mod gps {
 
     /// This is the main struct around which all commands are centered. It allows for communication
     /// with the GPS module via the open port.
+    ///
+    /// Satellite data: true if you want the individual satellite data
+    /// Navigation data: true if you want the naviagion data (lat, long, etc)
     pub struct Gps {
         pub port: Box<dyn SerialPort>,
+        pub satellite_data: bool,
+        pub naviagtion_data:bool,
     }
 
     /// This trait contains the two most important commands: update and read_line.
@@ -154,10 +163,10 @@ pub mod gps {
         ///
         /// Returns GpsData.
         fn update(&mut self) -> GpsData {
-            let mut gga = true;
-            let mut vtg = true;
-            let mut gsa = true;
-            let mut gsv = true;
+            let mut gga = self.naviagtion_data;
+            let mut vtg = self.naviagtion_data;
+            let mut gsa = self.satellite_data;
+            let mut gsv = self.satellite_data;
 
             let mut values = GpsData::default();
             while (gga == true) || (vtg == true) || (gsa == true) || (gsv == true) {

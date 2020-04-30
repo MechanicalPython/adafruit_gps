@@ -11,7 +11,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     // args: hz, baudrate for port, baudrate for gps.
     let baud_rate = args.get(2).unwrap();
-    let port = open_port("/dev/serial0", baud_ratebaud_rate.parse::<u32>().unwrap(););
+    let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     println!("{:?}", port.baud_rate());
     let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
     let update_b = gps.pmtk_251_set_nmea_baudrate(baud_rate);

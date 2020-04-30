@@ -9,10 +9,11 @@ use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-
+    // args: hz, baudrate
     let baud_rate = args.get(2).unwrap();
     let baud_rate: u32 = baud_rate.parse().unwrap();
     let port = open_port("/dev/serial0", baud_rate);
+    println!("{:?}", port.baud_rate());
     let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
 
     let update_r = gps.pmtk_220_set_nmea_updaterate(&args[1]);

@@ -149,6 +149,7 @@ pub mod send_pmtk {
 
     pub fn set_baud_rate(baud_rate: &str, port_name: &str) {
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
+        dbg!("Reboot gps");
         Command::new("echo")
             .arg("\\$PMTK104*37\r\n")
             .arg(">")
@@ -156,6 +157,7 @@ pub mod send_pmtk {
 
         sleep(Duration::from_secs(2));
 
+        dbg!("Set port to 9600 default");
         Command::new("stty")
             .arg("-F")
             .arg("/dev/serial0")
@@ -166,9 +168,11 @@ pub mod send_pmtk {
             .arg("-cstopb");
 
         let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
+        dbg!("Set gps baud rate to new rate");
         Command::new("echo").arg(format!("\\{}", cmd).as_str()).arg(">").arg(port_name);
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
+        dbg!("Set port to new baud rate");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)

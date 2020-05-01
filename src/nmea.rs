@@ -81,11 +81,11 @@ pub mod nmea {
         if sentence.len() < 6 {
             return None;
         }
-        if gps::is_valid_checksum(sentence) {
+        return if gps::is_valid_checksum(sentence) {
             let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
-            return Some(sentence.split(",").collect());
+            Some(sentence.split(",").collect())
         } else {
-            return None;
+            None
         }
     }
 }

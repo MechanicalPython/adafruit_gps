@@ -78,7 +78,9 @@ pub mod nmea {
         // Convert sentence into a split vec along ','.
 
         let sentence = sentence.trim();  // Remove whitespace.
-
+        if sentence.len() < 6 {
+            return None;
+        }
         if gps::is_valid_checksum(sentence) {
             let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
             return Some(sentence.split(",").collect());

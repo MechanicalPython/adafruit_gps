@@ -27,9 +27,6 @@ fn main() {
     }
 
     // Important note:
-    // If for some reason this doesn't work and you get invalid byte sentences, the port baud rate
-    // and the gps baud rate are out of sync. So best thing to do is reboot the gps (physically unplug it, without battery)
-    // or change the port baud setting using: stty -F /dev/port baudrate clocal cread cs8 -cstopb -parenb
-    // until cat /dev/port gives sentences ($GGA,stuff kind of strings).
     // Valid baud rates are 4800,9600,14400,19200,38400,57600,115200.
+    // However, not all baud rates will work, so some trial and error will be needed.
 }

@@ -3,9 +3,6 @@ extern crate adafruit_gps;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::{SendPmtk, set_baud_rate};
 
-// use std::time::Duration;
-// use std::thread;
-
 // For use in testing your gps modules update rate. type the update rate in miliseconds in the cmd line.
 
 
@@ -23,9 +20,7 @@ fn main() {
 
     let port = open_port("/dev/serial0", 57600);
 
-    let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
-
-    gps.pmtk_314_api_set_nmea_output(0, 1, 0, 0, 0, 0, 1);
+    let mut gps = Gps { port , satellite_data: false, naviagtion_data: true };
 
     let update_r = gps.pmtk_220_set_nmea_updaterate("100");
     dbg!(update_r);

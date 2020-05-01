@@ -153,7 +153,6 @@ pub mod send_pmtk {
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
-        dbg!("Reboot gps");
         Command::new("echo")
             .arg("\\$PMTK104*37\r\n")
             .arg(">")
@@ -161,7 +160,7 @@ pub mod send_pmtk {
 
         sleep(Duration::from_secs(2));
 
-        dbg!("Set port to 9600 default");
+        // dbg!("Set port to 9600 default");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)
@@ -173,8 +172,8 @@ pub mod send_pmtk {
         sleep(Duration::from_secs(2));
 
         let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
-        dbg!("Set gps baud rate to new rate");
-        dbg!(&cmd);
+        // dbg!("Set gps baud rate to new rate");
+        // dbg!(&cmd);
         Command::new("echo")
             .arg("-e")
             .arg(format!("\"\\{}\"", cmd).as_str())
@@ -182,7 +181,7 @@ pub mod send_pmtk {
         sleep(Duration::from_secs(2));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
-        dbg!("Set port to new baud rate");
+        // dbg!("Set port to new baud rate");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)
@@ -323,7 +322,6 @@ pub mod send_pmtk {
         fn send_command(&mut self, cmd: &str) {
             //! Input: no $ and no *checksum.
             let cmd = add_checksum(cmd.to_string());
-            dbg!(&cmd);
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);

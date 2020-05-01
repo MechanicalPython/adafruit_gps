@@ -826,9 +826,6 @@ mod pmtktests {
     }
 
     #[test]
-    fn test_pmtk_251_set_nmea_baudrate() { assert_eq!(port_setup().pmtk_251_set_nmea_baudrate("9600"), Pmtk001Ack::Success); }
-
-    #[test]
     fn test_pmtk_301_api_set_dgps_mode() { assert_eq!(port_setup().pmtk_301_api_set_dgps_mode(DgpsMode::NoDgps), Pmtk001Ack::Success); }
 
     #[test]

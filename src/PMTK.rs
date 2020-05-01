@@ -52,7 +52,7 @@ pub mod send_pmtk {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use crate::gps::{GetGpsData, Gps, is_valid_checksum, open_port};
+    use crate::gps::{GetGpsData, Gps, is_valid_checksum};
 
     #[derive(Debug)]
     #[derive(PartialEq)]

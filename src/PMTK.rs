@@ -166,6 +166,7 @@ pub mod send_pmtk {
                 // this is not working.
                 gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
                 println!("Current rate: {}", rate);
+                println!("Changing to: {}", baud_rate);
                 break
             }
         }

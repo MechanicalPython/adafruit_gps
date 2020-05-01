@@ -841,7 +841,7 @@ mod pmtktests {
     use std::time::Duration;
 
     use super::send_pmtk::{DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
-    use super::send_pmtk::add_checksum;
+    use super::send_pmtk::{add_checksum, set_baud_rate};
     use super::send_pmtk::SendPmtk;
     use super::super::gps::{Gps, open_port};
 
@@ -856,6 +856,10 @@ mod pmtktests {
         let gps = Gps { port, satellite_data: true, naviagtion_data: true };
         sleep(Duration::from_secs(1));
         return gps;
+    }
+    #[test]
+    fn reset_baud_rate() {
+        set_baud_rate("9600", "/dev/serial")
     }
 
     #[test]

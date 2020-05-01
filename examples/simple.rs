@@ -1,8 +1,6 @@
 extern crate adafruit_gps;
 
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
-use adafruit_gps::PMTK::send_pmtk::SendPmtk;
-
 
 fn main() {
     // Open the port that is connected to the GPS module.

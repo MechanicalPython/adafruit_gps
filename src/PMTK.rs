@@ -859,7 +859,7 @@ mod pmtktests {
     }
     #[test]
     fn reset_baud_rate() {
-        set_baud_rate("9600", "/dev/serial")
+        set_baud_rate("9600", "/dev/serial0")
     }
 
     #[test]

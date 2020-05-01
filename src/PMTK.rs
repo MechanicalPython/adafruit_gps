@@ -207,11 +207,6 @@ pub mod send_pmtk {
         /// Set the update rate, as miliseconds from 100 (100Hz) to 10_000 (0.1Hz). 1000 is default.
         fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: &str) -> Pmtk001Ack;
 
-        /// Set the baudrate
-        /// Settings: 4800, 9600, 14400, 19200, 38400, 57600, 115200
-        ///
-        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str, port_name: &str);
-
         /// Set Differental Gps mode
         fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: DgpsMode) -> Pmtk001Ack;
 

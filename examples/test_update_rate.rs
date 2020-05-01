@@ -1,9 +1,7 @@
 extern crate adafruit_gps;
 
-// use std::env;
-use std::process::Command;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
-use adafruit_gps::PMTK::send_pmtk::{self, SendPmtk, set_baud_rate};
+use adafruit_gps::PMTK::send_pmtk::{SendPmtk, set_baud_rate};
 
 // use std::time::Duration;
 // use std::thread;

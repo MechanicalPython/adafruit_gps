@@ -170,16 +170,18 @@ pub mod send_pmtk {
             .arg("clocal")
             .arg("cread")
             .arg("-cstopb")
-            .arg("-parenb").output().unwrap();
+            .arg("-parenb")
+            .output().unwrap();
         sleep(Duration::from_secs(2));
 
         let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
         println!("Set gps baud rate to new rate");
-        dbg!(&cmd);
         Command::new("echo")
             .arg("-e")
             .arg(format!("\"\\{}\"", cmd).as_str())
-            .arg(">").arg(port_name);
+            .arg(">")
+            .arg(port_name)
+            .output().unwrap();
 
         sleep(Duration::from_secs(2));
 
@@ -194,7 +196,8 @@ pub mod send_pmtk {
             .arg("clocal")
             .arg("cread")
             .arg("-cstopb")
-            .arg("-parenb").output().unwrap();
+            .arg("-parenb")
+            .output().unwrap();
         sleep(Duration::from_secs(2));
     }
 

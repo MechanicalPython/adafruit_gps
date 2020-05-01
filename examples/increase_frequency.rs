@@ -26,7 +26,7 @@ fn main() {
         let values = gps.update();
         println!("{}", values.utc);
     }
-    gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
+    gps.send_command(format!("PMTK251,9600").as_str());
     for _ in 0..10 {
         let values = gps.update();
         println!("{}", values.utc);

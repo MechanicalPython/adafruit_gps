@@ -155,12 +155,13 @@ pub mod send_pmtk {
         // If the port baud and gps baud are out of sync, this wont work.
 
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
-        Command::new("echo")
-            .arg("\\$PMTK104*37\r\n")
-            .arg(">")
-            .arg(port_name);
+        {  // In new scope so port is closed.
+            let port = open_port(port_name, 9600);
+            let mut gps = Gps { port, satellite_data: false, naviagtion_data: false };
+            gps.send_command(format!("PMTK104", baud_rate).as_str());
+        }
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
 
         // println!("Set port to 9600 default");
         Command::new("stty")
@@ -172,7 +173,7 @@ pub mod send_pmtk {
             .arg("-cstopb")
             .arg("-parenb")
             .output().unwrap();
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
 
         {  // In new scope so port is closed.
             let port = open_port(port_name, 9600);
@@ -180,7 +181,7 @@ pub mod send_pmtk {
             gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
         }
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
@@ -194,7 +195,7 @@ pub mod send_pmtk {
             .arg("-cstopb")
             .arg("-parenb")
             .output().unwrap();
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
     }
 
     pub trait SendPmtk {

@@ -160,7 +160,7 @@ pub mod send_pmtk {
         dbg!("Set port to 9600 default");
         Command::new("stty")
             .arg("-F")
-            .arg("/dev/serial0")
+            .arg(port_name)
             .arg("raw")
             .arg("9600")
             .arg("cs8")

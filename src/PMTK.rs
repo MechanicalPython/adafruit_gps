@@ -52,7 +52,7 @@ pub mod send_pmtk {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use crate::gps::{GetGpsData, Gps, is_valid_checksum};
+    use crate::gps::{GetGpsData, Gps, is_valid_checksum, open_port};
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -174,17 +174,22 @@ pub mod send_pmtk {
             .output().unwrap();
         sleep(Duration::from_secs(2));
 
-        let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
-        let cmd = format!("\"\\{}\n\r\"", cmd);
-        let cmd = cmd.as_str();
-        println!("{}", &cmd);
-        println!("Set gps baud rate to new rate");
-        Command::new("echo")
-            .arg("-e")
-            .arg(cmd)
-            .arg(">")
-            .arg(port_name)
-            .output().unwrap();
+        {  // In new scope so port is closed.
+            let port = open_port(port_name, baud_rate.parse::<u32>().unwrap());
+            let mut gps = Gps { port, satellite_data: false, naviagtion_data: false };
+            gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
+        }
+        // let cmd = format!("\"\\{}\n\r\"", cmd);
+        // let cmd = cmd.as_str();
+        // println!("{}", &cmd);
+        // println!("Set gps baud rate to new rate");
+        // // This command is not working.
+        // Command::new("echo")
+        //     .arg("-e")
+        //     .arg(cmd)
+        //     .arg(">")
+        //     .arg(port_name)
+        //     .output().unwrap();
 
         sleep(Duration::from_secs(2));
 

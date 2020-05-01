@@ -162,7 +162,7 @@ pub mod send_pmtk {
             }
             dbg!(&line);
             if line != "Invalid bytes given".to_string() {
-                println!("{}", gps.port.baud_rate());
+                println!("{:?}", gps.port.baud_rate());
                 gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
                 println!("Current rate: {}", rate);
                 break

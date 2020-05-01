@@ -243,7 +243,7 @@ pub mod gps {
                         gsv = false;
                     }
                 } else {
-                    dbg!("Invalid byte string returned");
+                    println!("Invalid byte string returned");
                 }
             }
             values

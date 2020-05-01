@@ -52,7 +52,7 @@ pub mod send_pmtk {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use crate::gps::{GetGpsData, Gps, is_valid_checksum};
+    use crate::gps::{GetGpsData, Gps, is_valid_checksum, open_port};
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -162,19 +162,19 @@ pub mod send_pmtk {
 
         sleep(Duration::from_secs(2));
 
-        dbg!("Set port to 9600 default");
+        println!("Set port to 9600 default");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)
-            .arg("raw")
             .arg("9600")
-            .arg("cs8")
             .arg("clocal")
-            .arg("-cstopb");
+            .arg("cread")
+            .arg("-cstopb")
+            .arg("-parenb");
         sleep(Duration::from_secs(2));
 
         let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
-        dbg!("Set gps baud rate to new rate");
+        println!("Set gps baud rate to new rate");
         dbg!(&cmd);
         Command::new("echo")
             .arg("-e")
@@ -184,7 +184,8 @@ pub mod send_pmtk {
         sleep(Duration::from_secs(2));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
-        dbg!("Set port to new baud rate");
+        // Not working.
+        println!("Set port to new baud rate");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)

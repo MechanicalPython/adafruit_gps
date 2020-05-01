@@ -1,6 +1,6 @@
 extern crate adafruit_gps;
 
-use std::env;
+// use std::env;
 use std::process::Command;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::{self, SendPmtk};
@@ -15,7 +15,7 @@ fn main() {
     // change the serial port baudrate -> stty -F /dev/serial0 raw 19200 cs8 clocal -cstopb
     // Open gps and update the hz.
 
-    let port_name = "/dev/serial0";
+    // let port_name = "/dev/serial0";
 
     let cmd = send_pmtk::add_checksum("PMTK251,19200".to_string());
 
@@ -40,7 +40,7 @@ fn main() {
 
     gps.pmtk_314_api_set_nmea_output(0, 1, 0, 0, 0, 0, 1);
 
-    let update_r = gps.pmtk_220_set_nmea_updaterate(100);
+    let update_r = gps.pmtk_220_set_nmea_updaterate("100");
     dbg!(update_r);
 
     for _ in 0..10 {

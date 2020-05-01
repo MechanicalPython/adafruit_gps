@@ -170,7 +170,7 @@ pub mod send_pmtk {
             .arg("clocal")
             .arg("cread")
             .arg("-cstopb")
-            .arg("-parenb");
+            .arg("-parenb").output().unwrap();
         sleep(Duration::from_secs(2));
 
         let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
@@ -184,6 +184,7 @@ pub mod send_pmtk {
         sleep(Duration::from_secs(2));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
+
         // Not working.
         println!("Set port to new baud rate");
         Command::new("stty")
@@ -193,7 +194,7 @@ pub mod send_pmtk {
             .arg("clocal")
             .arg("cread")
             .arg("-cstopb")
-            .arg("-parenb");
+            .arg("-parenb").output().unwrap();
         sleep(Duration::from_secs(2));
     }
 

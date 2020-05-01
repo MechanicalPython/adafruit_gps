@@ -182,7 +182,7 @@ pub mod send_pmtk {
             .arg("-cstopb")
             .arg("-parenb")
             .output().unwrap();
-        println!("{}", c.status);
+        println!("{:?}", c);
 
         sleep(Duration::from_secs(1));
     }

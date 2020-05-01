@@ -156,9 +156,10 @@ pub mod send_pmtk {
 
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
         Command::new("echo")
-            .arg("$PMTK104*37")
+            .arg("\\$PMTK104*37")
             .arg(">")
-            .arg(port_name).output().unwrap();
+            .arg(port_name)
+            .output().unwrap();
 
         sleep(Duration::from_secs(1));
 

@@ -156,7 +156,9 @@ pub mod send_pmtk {
         for rate in baud_rates.iter() {
             let port = open_port(port_name, rate.to_owned());
             let mut gps = Gps{port, naviagtion_data: false, satellite_data: false};
-            if gps.read_line() != "Invalid bytes given".to_string() {
+            let line = gps.read_line();
+            dbg!(line);
+            if line != "Invalid bytes given".to_string() {
                 gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
                 println!("Current rate: {}", rate);
                 break

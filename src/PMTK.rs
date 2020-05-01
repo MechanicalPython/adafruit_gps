@@ -166,10 +166,13 @@ pub mod send_pmtk {
             .arg("cs8")
             .arg("clocal")
             .arg("-cstopb");
+        sleep(Duration::from_secs(2));
 
         let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
         dbg!("Set gps baud rate to new rate");
+        dbg!(cmd);
         Command::new("echo").arg(format!("\\{}", cmd).as_str()).arg(">").arg(port_name);
+        sleep(Duration::from_secs(2));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
         dbg!("Set port to new baud rate");
@@ -181,6 +184,7 @@ pub mod send_pmtk {
             .arg("cread")
             .arg("-cstopb")
             .arg("-parenb");
+        sleep(Duration::from_secs(2));
     }
 
     pub trait SendPmtk {

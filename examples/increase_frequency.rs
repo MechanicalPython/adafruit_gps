@@ -1,7 +1,7 @@
 extern crate adafruit_gps;
 
-pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
-use adafruit_gps::PMTK::send_pmtk::{set_baud_rate};
+pub use adafruit_gps::gps::{self, GetGpsData, Gps, open_port};
+use adafruit_gps::PMTK::send_pmtk::{set_baud_rate, SendPmtk};
 
 use std::env;
 
@@ -26,7 +26,11 @@ fn main() {
         let values = gps.update();
         println!("{}", values.utc);
     }
-
+    gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
+    for _ in 0..10 {
+        let values = gps.update();
+        println!("{}", values.utc);
+    }
     // Important note:
     // Valid baud rates are 4800,9600,14400,19200,38400,57600,115200.
     // However, not all baud rates will work, so some trial and error will be needed.

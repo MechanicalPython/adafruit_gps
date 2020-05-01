@@ -317,7 +317,6 @@ pub mod send_pmtk {
         fn send_command(&mut self, cmd: &str) {
             //! Input: no $ and no *checksum.
             let cmd = add_checksum(cmd.to_string());
-            dbg!(&cmd);
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);

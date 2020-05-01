@@ -155,8 +155,8 @@ pub mod send_pmtk {
         // If the port baud and gps baud are out of sync, this wont work.
 
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
-        Command::new("echo")
-            .arg("\\$PMTK104*37\r\n")
+        Command::new("cat")
+            .arg("reboot_cmd.txt")
             .arg(">")
             .arg(port_name)
             .output().unwrap();

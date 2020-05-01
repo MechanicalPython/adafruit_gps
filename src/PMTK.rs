@@ -152,6 +152,10 @@ pub mod send_pmtk {
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
+
+        // If the port baud rate isn't correct, then this won't work.
+
+
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
         Command::new("echo")
             .arg("\\$PMTK104*37\r\n")

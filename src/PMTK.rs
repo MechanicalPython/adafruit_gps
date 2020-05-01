@@ -158,7 +158,7 @@ pub mod send_pmtk {
         Command::new("echo")
             .arg("$PMTK104*37")
             .arg(">")
-            .arg(port_name);
+            .arg(port_name).output().unwrap();
 
         sleep(Duration::from_secs(1));
 

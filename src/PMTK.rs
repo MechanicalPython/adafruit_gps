@@ -175,10 +175,13 @@ pub mod send_pmtk {
         sleep(Duration::from_secs(2));
 
         let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
+        let cmd = format!("\"\\{}\"", cmd);
+        let cmd = cmd.as_str();
+        println!("{}", &cmd);
         println!("Set gps baud rate to new rate");
         Command::new("echo")
             .arg("-e")
-            .arg(format!("\"\\{}\"", cmd).as_str())
+            .arg(cmd)
             .arg(">")
             .arg(port_name)
             .output().unwrap();

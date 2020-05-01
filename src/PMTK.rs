@@ -163,6 +163,7 @@ pub mod send_pmtk {
             dbg!(&line);
             if line != "Invalid bytes given".to_string() {
                 println!("{:?}", gps.port.baud_rate());
+                // this is not working.
                 gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
                 println!("Current rate: {}", rate);
                 break
@@ -316,6 +317,7 @@ pub mod send_pmtk {
         fn send_command(&mut self, cmd: &str) {
             //! Input: no $ and no *checksum.
             let cmd = add_checksum(cmd.to_string());
+            dbg!(&cmd);
             let byte_cmd = cmd.as_bytes();
             self.port.clear(serialport::ClearBuffer::Input);
             self.port.write(byte_cmd);

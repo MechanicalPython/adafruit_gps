@@ -154,9 +154,9 @@ pub mod send_pmtk {
 
         // If the port baud and gps baud are out of sync, this wont work.
 
-        let baud_rates = [4800,9600,14400,19200,38400,57600,115200];
-        for rate in baud_rates {
-            let port = open_port(port_name, rate);
+        let baud_rates:[u32;7] = [4800,9600,14400,19200,38400,57600,115200];
+        for rate in baud_rates.iter() {
+            let port = open_port(port_name, rate.to_owned());
             let mut gps = Gps{port, naviagtion_data: false, satellite_data: false};
             if gps.read_line() != "Invalid bytes given".to_string() {
                 gps.send_command(format!("PMTK251,{}", baud_rate).as_str());

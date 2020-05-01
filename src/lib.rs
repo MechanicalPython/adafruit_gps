@@ -162,6 +162,9 @@ pub mod gps {
     }
 
     impl GetGpsData for Gps {
+        /// Return hashmap values:
+        /// Update rate: pmtk001 enum
+        /// Return type: pmtk001 enum
         fn init(&mut self, update_rate: &str) -> HashMap<String, Pmtk001Ack> {
             let (vtg, gga) = if self.naviagtion_data {
                 (1, 1)

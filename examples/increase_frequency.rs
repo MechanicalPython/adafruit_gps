@@ -18,7 +18,8 @@ fn main() {
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
     let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
-    gps.init(update_rate);
+    let r = gps.init(update_rate);
+    println!("{:?}", r.get("Update rate").unwrap());
 
     for _ in 0..10 {
         let values = gps.update();

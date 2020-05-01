@@ -158,7 +158,7 @@ pub mod send_pmtk {
         {  // In new scope so port is closed.
             let port = open_port(port_name, 9600);
             let mut gps = Gps { port, satellite_data: false, naviagtion_data: false };
-            gps.send_command(format!("PMTK104").as_str());
+            gps.send_command("PMTK104");
         }
 
         sleep(Duration::from_secs(1));

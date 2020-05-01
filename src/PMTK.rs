@@ -148,7 +148,7 @@ pub mod send_pmtk {
     }
 
     pub fn set_baud_rate(baud_rate: &str, port_name: &str) {
-        // stty -F /dev/serial0 raw 9600 cs8 clocal -cstopb
+        // stty -F /dev/serial0 9600 clocal cread cs8 -cstopb -parenb
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 

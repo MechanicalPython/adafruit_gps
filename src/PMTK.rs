@@ -155,11 +155,10 @@ pub mod send_pmtk {
         // If the port baud and gps baud are out of sync, this wont work.
 
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
-        {  // In new scope so port is closed.
-            let port = open_port(port_name, 9600);
-            let mut gps = Gps { port, satellite_data: false, naviagtion_data: false };
-            gps.send_command("PMTK104");
-        }
+        Command::new("echo")
+            .arg("$PMTK104*37")
+            .arg(">")
+            .arg(port_name);
 
         sleep(Duration::from_secs(1));
 

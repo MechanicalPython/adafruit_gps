@@ -154,38 +154,20 @@ pub mod send_pmtk {
 
         // If the port baud and gps baud are out of sync, this wont work.
 
-        //echo -e "\$PMTK104*37\r\n" > /dev/serial0
-        Command::new("cat")
-            .arg("reboot_cmd.txt")
-            .arg(">")
-            .arg(port_name)
-            .output().unwrap();
-
-        sleep(Duration::from_secs(1));
-
-        // println!("Set port to 9600 default");
-        Command::new("stty")
-            .arg("-F")
-            .arg(port_name)
-            .arg("9600")
-            .arg("clocal")
-            .arg("cread")
-            .arg("-cstopb")
-            .arg("-parenb")
-            .output().unwrap();
-        sleep(Duration::from_secs(1));
-
-        {  // In new scope so port is closed.
-            let port = open_port(port_name, 9600);
-            let mut gps = Gps { port, satellite_data: false, naviagtion_data: false };
-            gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
+        let baud_rates = [4800,9600,14400,19200,38400,57600,115200];
+        for rate in baud_rates {
+            let port = open_port(port_name, rate);
+            let mut gps = Gps{port, naviagtion_data: false, satellite_data: false};
+            if gps.read_line() != "Invalid bytes given".to_string() {
+                gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
+                break
+            }
         }
 
         sleep(Duration::from_secs(1));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
-        // println!("Set port to new baud rate");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)

@@ -161,7 +161,7 @@ pub mod send_pmtk {
         /// Set the baudrate
         /// Settings: 4800, 9600, 14400, 19200, 38400, 57600, 115200
         ///
-        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) -> Pmtk001Ack;
+        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) ;
 
         /// Set Differental Gps mode
         fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: DgpsMode) -> Pmtk001Ack;
@@ -358,9 +358,9 @@ pub mod send_pmtk {
             self.pmtk_001(10)
         }
 
-        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) -> Pmtk001Ack {
+        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) {
             self.send_command(format!("PMTK251,{}", baud_rate).as_str());
-            self.pmtk_001(10)
+            // self.pmtk_001(10)
         }
 
         fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: DgpsMode) -> Pmtk001Ack {

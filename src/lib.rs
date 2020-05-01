@@ -242,6 +242,8 @@ pub mod gps {
                         values.satellites = v;
                         gsv = false;
                     }
+                } else {
+                    dbg!("Invalid byte string returned");
                 }
             }
             values

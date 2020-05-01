@@ -28,6 +28,13 @@ See example/simple.rs for examples on basic usage.
 
 For more advanced usage, read the specs.md for the commands that can be read and commands that can be sent.  
 
+## Notes the baud rate and gps output frequency
+For the 3.0 update, I've tried to get the gps to increase it's update frequency to 10Hz. 
+
+To increase the frequency, the baud rate of the gps AND the port need to be changed to allow for more data to be outputted. 
+To do this, at the beginning of the file, before opening the port, the baud rate must be set (unless the default 9600 is 
+what you want). 
+ 
 # Notes on the code and contributing
 This crate library has mostly been made as a personal challenge and to fill a narrow gap so all contributions are welcome.
 That said, this code is likely to need improvement, all of which is welcome. 

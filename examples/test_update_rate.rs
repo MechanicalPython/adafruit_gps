@@ -21,7 +21,9 @@ fn main() {
     let port = open_port("/dev/serial0", 57600);
 
     let mut gps = Gps { port , satellite_data: false, naviagtion_data: true };
+    gps.init();
 
+    gps.pmtk_314_api_set_nmea_output();
     let update_r = gps.pmtk_220_set_nmea_updaterate("100");
     dbg!(update_r);
 

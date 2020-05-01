@@ -67,10 +67,12 @@ pub mod gps {
 
     use crate::nmea;
     use crate::nmea::gsv::Satellites;
+    use crate::PMTK::send_pmtk::{SendPmtk, Pmtk001Ack};
+    use std::collections::HashMap;
 
     /// Opens the port to the GPS, probably /dev/serial0
-    /// Default baudrate is 9600
-    pub fn open_port(port_name: &str, baud_rate:u32) -> Box<dyn SerialPort> {
+        /// Default baudrate is 9600
+    pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
             data_bits: DataBits::Eight,
@@ -146,19 +148,43 @@ pub mod gps {
     pub struct Gps {
         pub port: Box<dyn SerialPort>,
         pub satellite_data: bool,
-        pub naviagtion_data:bool,
+        pub naviagtion_data: bool,
     }
 
     /// This trait contains the two most important commands: update and read_line.
     pub trait GetGpsData {
+        /// Init the gps settings with the correct settings based on a few things
+        fn init(&mut self, update_rate: &str) -> HashMap<String, Pmtk001Ack>;
         /// Returns the GpsData struct
         fn update(&mut self) -> GpsData;
         /// Reads a whole sentence given by the serial buffer
         fn read_line(&mut self) -> String;
     }
 
-
     impl GetGpsData for Gps {
+        fn init(&mut self, update_rate: &str) -> HashMap<String, Pmtk001Ack> {
+            let (vtg, gga) = if self.naviagtion_data {
+                (1, 1)
+            } else {
+                (0, 0)
+            };
+
+            let (gsa, gsv) = if self.satellite_data {
+                (1, 1)
+            } else {
+                (0, 0)
+            };
+
+            let mut hash = HashMap::new();
+            let return_types = self.pmtk_314_api_set_nmea_output(0, 0, vtg, gga, gsa, gsv, 1);
+            hash.insert(String::from("Return types"), return_types);
+
+            let update_rate = self.pmtk_220_set_nmea_updaterate(update_rate);
+            hash.insert(String::from("Update rate"), update_rate);
+
+            return hash
+        }
+
         /// Keeps reading sentences until all the required sentences are read.
         ///
         /// Returns GpsData.
@@ -238,7 +264,7 @@ pub mod gps {
                     Ok(buffer_size) => {
                         output.extend_from_slice(&buffer[..buffer_size]);
 
-                        if output.get(output.len() - 1).unwrap() == &10u8 || output.len() > 255{
+                        if output.get(output.len() - 1).unwrap() == &10u8 || output.len() > 255 {
                             cont = false;
                         }
                     }
@@ -266,6 +292,5 @@ mod gps_test {
         assert_eq!(gps::is_valid_checksum("$GPGSA,A,3,29,02,26,25,31,14,,,,,,,1.42,1.17,0.80*07\r\n"), true);
         assert_eq!(gps::is_valid_checksum("$GPGSA,A,3,29,02,26,25,31,14,,,,,,,1.42,1.17,0.80*A7\r\n"), false);
     }
-
 }
 

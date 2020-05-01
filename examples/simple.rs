@@ -9,12 +9,15 @@ fn main() {
     let port = open_port("/dev/serial0", 9600);
     // Initialise the Gps.
     let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
-    // Send the gps a PMTK command telling it to give you no rmc or gll data
-    // but to give gga, gsa, vtg and gsv data once per loop. Read the docs for advanced usage.
 
-    gps.pmtk_314_api_set_nmea_output(0,0,1,1,1,1,1);
-    // Recommended gps update rate 1000miliseconds, or 1Hz.
-    gps.pmtk_220_set_nmea_updaterate("1000");
+    // gps.init() requires the update rate for the gps (1000 miliseconds (1Hz) is default)
+    // It returns a hash map to tell you if setting the update rate was successful and if the
+    // return type setting was successful.
+    // If the return type setting was not successful, the gps.update() method may hang forever and
+    // you will need to try gps.init() again until it is successful.
+    // If the update_rate is not successful, the gps will run but at whatever the previous setting was.
+    // If setting the update_rate consistently fails for faster updates, see exmaples/increasing_frequency.rs
+    let values = gps.init("1000");
 
     // In a loop, constantly update the gps. The update trait will give you all the data you
     // want from the gps module.

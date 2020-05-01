@@ -16,7 +16,7 @@ fn main() {
 
     // Then open the port to the gps and you're good.
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
-    println!("{}", port.baud_rate());
+    println!("{:?}", port.baud_rate());
     // Initialise the Gps.
     let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
     let r = gps.init(update_rate);

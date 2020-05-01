@@ -1,7 +1,7 @@
 extern crate adafruit_gps;
 
 use std::env;
-
+use std::process::Command;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 // use std::time::Duration;
@@ -25,6 +25,9 @@ fn main() {
     let mut gps = Gps { port , satellite_data: true, naviagtion_data: true };
 
     let _ = gps.pmtk_251_set_nmea_baudrate(baud_rate);
+
+    Command::new("stty").arg("-F").arg("/dev/serial0").arg(baud_rate);
+    //stty -F /dev/ttyUSB0 56700
 
     gps.pmtk_314_api_set_nmea_output(0, 1, 0, 0, 0, 0, 1);
 

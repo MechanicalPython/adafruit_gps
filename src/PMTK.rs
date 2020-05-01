@@ -156,11 +156,11 @@ pub mod send_pmtk {
 
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
         Command::new("echo")
-            .arg("\\$PMTK104*37\r\n")
+            .arg("$PMTK104*37")
             .arg(">")
             .arg(port_name);
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
 
         // println!("Set port to 9600 default");
         Command::new("stty")
@@ -172,7 +172,7 @@ pub mod send_pmtk {
             .arg("-cstopb")
             .arg("-parenb")
             .output().unwrap();
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
 
         {  // In new scope so port is closed.
             let port = open_port(port_name, 9600);
@@ -180,7 +180,7 @@ pub mod send_pmtk {
             gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
         }
 
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
@@ -194,7 +194,7 @@ pub mod send_pmtk {
             .arg("-cstopb")
             .arg("-parenb")
             .output().unwrap();
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(1));
     }
 
     pub trait SendPmtk {

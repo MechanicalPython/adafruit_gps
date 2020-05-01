@@ -177,7 +177,7 @@ pub mod send_pmtk {
         dbg!(&cmd);
         Command::new("echo")
             .arg("-e")
-            .arg(format!("\\{}", cmd).as_str())
+            .arg(format!("\"\\{}\"", cmd).as_str())
             .arg(">").arg(port_name);
         sleep(Duration::from_secs(2));
 

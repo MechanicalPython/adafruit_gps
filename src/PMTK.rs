@@ -175,7 +175,7 @@ pub mod send_pmtk {
         sleep(Duration::from_secs(2));
 
         {  // In new scope so port is closed.
-            let port = open_port(port_name, baud_rate.parse::<u32>().unwrap());
+            let port = open_port(port_name, 9600);
             let mut gps = Gps { port, satellite_data: false, naviagtion_data: false };
             gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
         }

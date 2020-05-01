@@ -152,7 +152,7 @@ pub mod send_pmtk {
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
-        // If the port baud rate isn't correct, then this won't work.
+        // If the port baud and gps baud are out of sync, this wont work.
 
         //echo -e "\$PMTK104*37\r\n" > /dev/serial0
         Command::new("echo")
@@ -162,7 +162,7 @@ pub mod send_pmtk {
 
         sleep(Duration::from_secs(2));
 
-        println!("Set port to 9600 default");
+        // println!("Set port to 9600 default");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)
@@ -179,24 +179,12 @@ pub mod send_pmtk {
             let mut gps = Gps { port, satellite_data: false, naviagtion_data: false };
             gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
         }
-        // let cmd = format!("\"\\{}\n\r\"", cmd);
-        // let cmd = cmd.as_str();
-        // println!("{}", &cmd);
-        // println!("Set gps baud rate to new rate");
-        // // This command is not working.
-        // Command::new("echo")
-        //     .arg("-e")
-        //     .arg(cmd)
-        //     .arg(">")
-        //     .arg(port_name)
-        //     .output().unwrap();
 
         sleep(Duration::from_secs(2));
 
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
-        // Not working.
-        println!("Set port to new baud rate");
+        // println!("Set port to new baud rate");
         Command::new("stty")
             .arg("-F")
             .arg(port_name)

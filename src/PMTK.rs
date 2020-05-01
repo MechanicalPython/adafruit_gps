@@ -7,10 +7,24 @@
 //! the gps after sending it a command.
 //!
 //! ## Important commands
-//! pmtk_220_set_nmea_updaterate -> Hz for the gps update rate. The baudrate (pmtk_220_set_nmea_updaterate)
-//! may need to be changed as well.
+//! pmtk_220_set_nmea_updaterate -> Hz for the gps update rate.
 //!
-//! pmtk_314_api_set_nmea_output  -> Sets 6 modes, GLL is not included in any other docs.
+//! //! pmtk_314_api_set_nmea_output  -> Sets 6 modes, GLL is not included in any other docs.
+//!
+//! ## Changing the baudrate
+//! Given it's a special function, it's a stand alone methon in the send_pmtk module.
+//!
+//! The port baud rate needs to be changed and the gps baudrate needs to be changed. To do so,
+//! a specific set of commands need to be given (changing to 57600, for example):
+//! - stty -F /dev/serial0 raw 9600 cs8 clocal -cstopb
+//! - echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
+//! - stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
+//!
+//! Then open the port at the new baudrate and you're good.
+//!
+//! To remove sources of error, changing the baud rate here will do a full restart, so all saved
+//! options will be removed.
+//!
 //!
 //! ## PMTK return formats
 //! ### PMTK001
@@ -33,7 +47,10 @@
 // Tests for setting baudrate and getting EPO data still fail, unsure why.
 
 pub mod send_pmtk {
+    use std::process::Command;
     use std::str;
+    use std::thread::sleep;
+    use std::time::Duration;
 
     use crate::gps::{GetGpsData, Gps, is_valid_checksum};
 
@@ -130,9 +147,41 @@ pub mod send_pmtk {
         return checksumed_sentence;
     }
 
+    pub fn set_baud_rate(baud_rate: &str, port_name: &str) {
+        //echo -e "\$PMTK104*37\r\n" > /dev/serial0
+        Command::new("echo")
+            .arg("\\$PMTK104*37\r\n")
+            .arg(">")
+            .arg(port_name);
+
+        sleep(Duration::from_secs(2));
+
+        Command::new("stty")
+            .arg("-F")
+            .arg("/dev/serial0")
+            .arg("raw")
+            .arg("9600")
+            .arg("cs8")
+            .arg("clocal")
+            .arg("-cstopb");
+
+        let cmd = add_checksum(format!("PMTK251,{}", baud_rate).to_string());
+        Command::new("echo").arg(format!("\\{}", cmd).as_str()).arg(">").arg(port_name);
+
+        // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
+        Command::new("stty")
+            .arg("-F")
+            .arg(port_name)
+            .arg(baud_rate)
+            .arg("clocal")
+            .arg("cread")
+            .arg("-cstopb")
+            .arg("-parenb");
+    }
+
     pub trait SendPmtk {
         /// Send the PMTK command.
-        fn send_command(&mut self, cmd: &str) ;
+        fn send_command(&mut self, cmd: &str);
 
         /// Check for a PMTK001 return.
         fn pmtk_001(&mut self, search_depth: i32) -> Pmtk001Ack;
@@ -161,7 +210,7 @@ pub mod send_pmtk {
         /// Set the baudrate
         /// Settings: 4800, 9600, 14400, 19200, 38400, 57600, 115200
         ///
-        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str);
+        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str, port_name: &str);
 
         /// Set Differental Gps mode
         fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: DgpsMode) -> Pmtk001Ack;
@@ -356,11 +405,6 @@ pub mod send_pmtk {
         fn pmtk_220_set_nmea_updaterate(&mut self, update_rate: &str) -> Pmtk001Ack {
             self.send_command(format!("PMTK220,{}", update_rate).as_str());
             self.pmtk_001(10)
-        }
-
-        fn pmtk_251_set_nmea_baudrate(&mut self, baud_rate: &str) {
-            self.send_command(format!("PMTK251,{}", baud_rate).as_str());
-            // self.pmtk_001(10)
         }
 
         fn pmtk_301_api_set_dgps_mode(&mut self, dgps_mode: DgpsMode) -> Pmtk001Ack {
@@ -801,7 +845,7 @@ mod pmtktests {
 
     fn port_setup() -> Gps {
         let port = open_port("/dev/serial0", 9600);
-        let gps = Gps { port , satellite_data: true, naviagtion_data: true };
+        let gps = Gps { port, satellite_data: true, naviagtion_data: true };
         sleep(Duration::from_secs(1));
         return gps;
     }

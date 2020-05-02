@@ -155,13 +155,21 @@ pub mod send_pmtk {
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
+
+        // Overall, open port in baud rate the same of gps, change the gps baud rate, open the port
+        // in the new baud rate.
+
         // Possible states are port and gps are in sync or out of sync.
         // Assume they are in sync first of all.
+        let p = serialport::available_ports().unwrap();
+        dbg!(p);
 
         // Get current baud rate
-        let port = serialport::open(port_name).unwrap();
-        dbg!(port.baud_rate());
-
+        // let possible_baud_rates:[u32;7] = [4800,9600,14400,19200,38400,57600,115200];
+        // // For each port, open it in that baud rate, see if you get garbage.
+        // for rate in possible_baud_rates.iter() {
+        //     let port = serialport::available_ports()
+        // }
 
     }
 

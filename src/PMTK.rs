@@ -53,7 +53,7 @@ pub mod send_pmtk {
     use std::time::Duration;
 
     use serialport;
-    use serialport::SerialPort;
+    use serialport::{SerialPort, ClearBuffer};
 
     use crate::gps::{GetGpsData, Gps, is_valid_checksum, open_port};
 
@@ -170,7 +170,7 @@ pub mod send_pmtk {
             let mut settings = serialport::SerialPortSettings::default();
             settings.baud_rate = *rate;
             let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
-            port.clear();
+            port.clear(ClearBuffer::Input);
             // Read 100 characters, see if it can be parsed.
             let mut buffer: Vec<u8> = vec![0; 100];
             let mut output = Vec::new();

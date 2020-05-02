@@ -52,7 +52,10 @@ pub mod send_pmtk {
     use std::thread::sleep;
     use std::time::Duration;
 
+    use serialport;
+
     use crate::gps::{GetGpsData, Gps, is_valid_checksum, open_port};
+    use serialport::SerialPort;
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -152,41 +155,14 @@ pub mod send_pmtk {
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
-        let baud_rates:[u32;7] = [4800,9600,14400,19200,38400,57600,115200];
-        for rate in baud_rates.iter() {
-            let port = open_port(port_name, rate.to_owned());
-            let mut gps = Gps{port, naviagtion_data: false, satellite_data: false};
-            let mut line = gps.read_line();
-            while line.len() < 6 {
-                line = gps.read_line();
-            }
-            dbg!(&line);
-            if line != "Invalid bytes given".to_string() {
-                println!("{:?}", gps.port.baud_rate());
-                // this is not working.
-                gps.send_command(format!("PMTK251,{}", baud_rate).as_str());
-                println!("Current rate: {}", rate);
-                println!("Changing to: {}", baud_rate);
-                break
-            }
-        }
+        // Possible states are port and gps are in sync or out of sync.
+        // Assume they are in sync first of all.
 
-        sleep(Duration::from_secs(1));
+        // Get current baud rate
+        let port = serialport::open(port_name).unwrap();
+        dbg!(port.baud_rate());
 
-        // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
 
-        let c = Command::new("stty")
-            .arg("-F")
-            .arg(port_name)
-            .arg(baud_rate)
-            .arg("clocal")
-            .arg("cread")
-            .arg("-cstopb")
-            .arg("-parenb")
-            .output().unwrap();
-        println!("{:?}", c);
-
-        sleep(Duration::from_secs(1));
     }
 
     pub trait SendPmtk {

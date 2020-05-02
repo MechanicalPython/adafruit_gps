@@ -166,6 +166,7 @@ pub mod send_pmtk {
         let possible_baud_rates: [u32; 7] = [4800, 9600, 14400, 19200, 38400, 57600, 115200];
         // For each port, open it in that baud rate, see if you get garbage.
         for rate in possible_baud_rates.iter() {
+            println!("rate: {}",rate);
             let mut settings = serialport::SerialPortSettings::default();
             settings.baud_rate = *rate;
             let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();

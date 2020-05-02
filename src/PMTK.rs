@@ -171,6 +171,7 @@ pub mod send_pmtk {
             settings.baud_rate = *rate;
             let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
             port.clear(ClearBuffer::Input);
+            println!("{}", port.bytes_to_read());
             // Read 100 characters, see if it can be parsed.
             let mut buffer: Vec<u8> = vec![0; 100];
             let mut output = Vec::new();

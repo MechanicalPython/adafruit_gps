@@ -181,6 +181,7 @@ pub mod send_pmtk {
             }
 
             let string: String = str::from_utf8(&output[100..]).unwrap_or("Invalid bytes given").to_string();
+            println!("{:?}", &output[100..]);
             if string != "Invalid bytes given".to_string() {
                 // Set the gps to a new baud rate.
                 let cmd = add_checksum(format!("PMTK251,{}", baud_rate));

@@ -43,4 +43,9 @@ fn main() {
     // For me, 9600 and 57600 are the only valid rates.
     // If you are at a high baud rate and high frequency and you try to go to a lower baud rate
     // but don't lower the frequency, it will fail.
+
+    // Some useful commands for debugging:
+    // cat /dev/port -> prints out what that port is getting
+    // stty -F /dev/port baud_rate clocal cread cs8 -cstopb -parenb -> sets the port baud rate
+    // stty -F /dev/port -> prints out the port's current baud rate.
 }

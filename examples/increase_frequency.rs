@@ -25,8 +25,6 @@ fn main() {
         panic!("Baud rate not valid")
     }
 
-    println!("{}", line);
-
     let r = gps.init(update_rate);
     println!("{:?}", r.get("Update rate").unwrap());
 
@@ -34,11 +32,7 @@ fn main() {
         let values = gps.update();
         println!("{}", values.utc);
     }
-    gps.send_command(format!("PMTK251,9600").as_str());
-    for _ in 0..10 {
-        let values = gps.update();
-        println!("{}", values.utc);
-    }
+
     // Important note:
     // Valid baud rates are 4800,9600,14400,19200,38400,57600,115200.
     // However, not all baud rates will work, so some trial and error will be needed.

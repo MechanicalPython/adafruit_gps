@@ -53,9 +53,9 @@ pub mod send_pmtk {
     use std::time::Duration;
 
     use serialport;
+    use serialport::SerialPort;
 
     use crate::gps::{GetGpsData, Gps, is_valid_checksum, open_port};
-    use serialport::SerialPort;
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -161,15 +161,31 @@ pub mod send_pmtk {
 
         // Possible states are port and gps are in sync or out of sync.
         // Assume they are in sync first of all.
-        let p = serialport::available_ports().unwrap();
-        dbg!(p);
 
         // Get current baud rate
-        // let possible_baud_rates:[u32;7] = [4800,9600,14400,19200,38400,57600,115200];
-        // // For each port, open it in that baud rate, see if you get garbage.
-        // for rate in possible_baud_rates.iter() {
-        //     let port = serialport::available_ports()
-        // }
+        let possible_baud_rates: [u32; 7] = [4800, 9600, 14400, 19200, 38400, 57600, 115200];
+        // For each port, open it in that baud rate, see if you get garbage.
+        for rate in possible_baud_rates.iter() {
+            let mut settings = serialport::SerialPortSettings::default();
+            settings.baud_rate = *rate;
+            let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
+            // Read 100 characters, see if it can be parsed.
+            let mut buffer: Vec<u8> = vec![0; 100];
+            let mut output = Vec::new();
+            while output.len() < 100 {
+                match port.read(buffer.as_mut_slice()) {
+                    Ok(buffer_size) => {
+                        output.extend_from_slice(&buffer[..buffer_size]);
+                    }
+                    Err(_e) => (),
+                }
+            }
+            let string: String = str::from_utf8(&output).unwrap_or("Invalid bytes given").to_string();
+            if string != "Invalid bytes given".to_string() {
+                println!("{}", port.baud_rate());
+                break
+            }
+        }
 
     }
 
@@ -837,6 +853,7 @@ mod pmtktests {
         sleep(Duration::from_secs(1));
         return gps;
     }
+
     #[test]
     fn reset_baud_rate() {
         set_baud_rate("9600", "/dev/serial0")

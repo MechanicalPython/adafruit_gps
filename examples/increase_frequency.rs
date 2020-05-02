@@ -20,9 +20,9 @@ fn main() {
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
     let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
-    let line = gps.read_line();
-    if line == "Invalid bytes given".to_string() {
-        panic!("Baud rate not valid")
+    for l in 0..10 {
+        let line = gps.read_line();
+        println!("{}", line);
     }
 
     let r = gps.init(update_rate);

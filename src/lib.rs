@@ -276,7 +276,7 @@ pub mod gps {
                     Err(_e) => (),
                 }
             }
-            // Panics if there is a byte number that is too high.
+
             let string: String = str::from_utf8(&output).unwrap_or("Invalid bytes given").to_string();
             return string;
         }

@@ -12,7 +12,8 @@ fn main() {
     let update_rate = args.get(2).unwrap();
 
     // First, set the baud rate.
-    set_baud_rate(baud_rate, "/dev/serial0");
+    let r = set_baud_rate(baud_rate, "/dev/serial0");
+    println!("{:?}", r);
 
     // // Then open the port to the gps and you're good.
     // let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());

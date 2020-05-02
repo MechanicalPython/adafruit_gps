@@ -47,15 +47,11 @@
 // Tests for setting baudrate and getting EPO data still fail, unsure why.
 
 pub mod send_pmtk {
-    use std::process::Command;
     use std::str;
-    use std::thread::sleep;
-    use std::time::Duration;
 
-    use serialport;
-    use serialport::{SerialPort, ClearBuffer};
+    use serialport::{self, ClearBuffer};
 
-    use crate::gps::{GetGpsData, Gps, is_valid_checksum, open_port};
+    use crate::gps::{GetGpsData, Gps, is_valid_checksum};
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -150,11 +146,10 @@ pub mod send_pmtk {
         return checksumed_sentence;
     }
 
-    pub fn set_baud_rate(baud_rate: &str, port_name: &str) {
+    pub fn set_baud_rate(baud_rate: &str, port_name: &str) -> Result<u32, String>{
         // stty -F /dev/serial0 9600 clocal cread cs8 -cstopb -parenb
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
-
 
         // Overall, open port in baud rate the same of gps, change the gps baud rate, open the port
         // in the new baud rate.
@@ -165,12 +160,13 @@ pub mod send_pmtk {
         // Get current baud rate
         let possible_baud_rates: [u32; 7] = [4800, 9600, 14400, 19200, 38400, 57600, 115200];
         // For each port, open it in that baud rate, see if you get garbage.
+        // Sometimes this works.
         for rate in possible_baud_rates.iter() {
             println!("rate: {}",rate);
             let mut settings = serialport::SerialPortSettings::default();
             settings.baud_rate = *rate;
             let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
-            port.clear(ClearBuffer::Input);
+            let _ = port.clear(ClearBuffer::Input);
             println!("{:?}", port.bytes_to_read());
             // Read 100 characters, see if it can be parsed.
             let mut buffer: Vec<u8> = vec![0; 100];
@@ -183,15 +179,19 @@ pub mod send_pmtk {
                     Err(_e) => (),
                 }
             }
-            println!("{:?}", port.baud_rate());
+            // println!("{:?}", port.baud_rate());
             let string: String = str::from_utf8(&output).unwrap_or("Invalid bytes given").to_string();
             println!("{}", string);
             if string != "Invalid bytes given".to_string() {
-                println!("{:?}", port.baud_rate());
-                break
+                // Set the gps to a new baud rate.
+                let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
+                let cmd = cmd.as_bytes();
+                let _ = port.clear(ClearBuffer::Output);
+                let _ = port.write(cmd);
+                return Ok(*rate)
             }
         }
-
+        return Err("Baud rate not found, try again".to_string())
     }
 
     pub trait SendPmtk {
@@ -324,7 +324,7 @@ pub mod send_pmtk {
             //! Input: no $ and no *checksum.
             let cmd = add_checksum(cmd.to_string());
             let byte_cmd = cmd.as_bytes();
-            self.port.clear(serialport::ClearBuffer::Input);
+            self.port.clear(serialport::ClearBuffer::Output);
             self.port.write(byte_cmd);
         }
 
@@ -861,7 +861,7 @@ mod pmtktests {
 
     #[test]
     fn reset_baud_rate() {
-        set_baud_rate("9600", "/dev/serial0")
+        let _r = set_baud_rate("9600", "/dev/serial0");
     }
 
     #[test]

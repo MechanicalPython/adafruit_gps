@@ -179,7 +179,7 @@ pub mod send_pmtk {
                     Err(_e) => (),
                 }
             }
-            // println!("{:?}", port.baud_rate());
+            println!("{:?}", output);
             let string: String = str::from_utf8(&output).unwrap_or("Invalid bytes given").to_string();
             println!("{}", string);
             if string != "Invalid bytes given".to_string() {

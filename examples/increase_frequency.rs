@@ -20,11 +20,14 @@ fn main() {
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
     let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
-    for l in 0..10 {
-        let line = gps.read_line();
-        println!("{}", line);
+    let mut line = String::new();
+    // Sometimes the first line read is invalid.
+    for _ in 0..5 {
+        line = gps.read_line();
     }
-
+    if line == "Invalid bytes given".to_string() {
+        panic!("invalid baud")
+    }
     let r = gps.init(update_rate);
     println!("{:?}", r.get("Update rate").unwrap());
 

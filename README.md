@@ -33,7 +33,11 @@ For the 3.0 update, I've tried to get the gps to increase it's update frequency 
 
 To increase the frequency, the baud rate of the gps AND the port need to be changed to allow for more data to be outputted. 
 To do this, at the beginning of the file, before opening the port, the baud rate must be set (unless the default 9600 is 
-what you want). 
+what you want). See increase_frequency.rs for an example.
+
+set_baud_rate takes a while and is error prone, so ideally set the baud rate and frequency and use a battery/keep power
+so that the settings are retained. If power is lost (and there is no battery), settings are reset to 9600 baud rate and 
+1000 mili frequency. 
  
 # Notes on the code and contributing
 This crate library has mostly been made as a personal challenge and to fill a narrow gap so all contributions are welcome.

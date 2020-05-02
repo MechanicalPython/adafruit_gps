@@ -146,6 +146,11 @@ pub mod send_pmtk {
         return checksumed_sentence;
     }
 
+    ///Sets baud rate for the gps
+    /// If the baud rate you are trying to set is not compatible with the current frequency,
+    /// change the frequency first (probably to 1000 miliseconds) and then change the baud rate.
+    ///
+    /// Use a battery to maintain settings as this method takes a while to run and is error prone.
     pub fn set_baud_rate(baud_rate: &str, port_name: &str) -> Result<u32, String>{
         // stty -F /dev/serial0 9600 clocal cread cs8 -cstopb -parenb
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0

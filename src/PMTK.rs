@@ -160,14 +160,13 @@ pub mod send_pmtk {
         // Get current baud rate
         let possible_baud_rates: [u32; 7] = [4800, 9600, 14400, 19200, 38400, 57600, 115200];
         // For each port, open it in that baud rate, see if you get garbage.
-        // Sometimes there is nonsense in front of what should be the correct
+        // For some reason there are invalid bytes in front of what should be the correct baud rate.
         for rate in possible_baud_rates.iter() {
             println!("rate: {}",rate);
             let mut settings = serialport::SerialPortSettings::default();
             settings.baud_rate = *rate;
             let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
             let _ = port.clear(ClearBuffer::Input);
-            println!("{:?}", port.bytes_to_read());
             // Read 100 characters, see if it can be parsed.
             let mut buffer: Vec<u8> = vec![0; 100];
             let mut output = Vec::new();
@@ -180,7 +179,6 @@ pub mod send_pmtk {
                 }
             }
 
-            println!("{:?}", output);
             let string: String = str::from_utf8(&output[100..]).unwrap_or("Invalid bytes given").to_string();
             println!("{}", string);
             if string != "Invalid bytes given".to_string() {

@@ -14,23 +14,23 @@ fn main() {
     // First, set the baud rate.
     set_baud_rate(baud_rate, "/dev/serial0");
 
-    // Then open the port to the gps and you're good.
-    let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
-    println!("{:?}", port.baud_rate());
-    // Initialise the Gps.
-    let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
-    let r = gps.init(update_rate);
-    println!("{:?}", r.get("Update rate").unwrap());
-
-    for _ in 0..10 {
-        let values = gps.update();
-        println!("{}", values.utc);
-    }
-    gps.send_command(format!("PMTK251,9600").as_str());
-    for _ in 0..10 {
-        let values = gps.update();
-        println!("{}", values.utc);
-    }
+    // // Then open the port to the gps and you're good.
+    // let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
+    // println!("{:?}", port.baud_rate());
+    // // Initialise the Gps.
+    // let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
+    // let r = gps.init(update_rate);
+    // println!("{:?}", r.get("Update rate").unwrap());
+    //
+    // for _ in 0..10 {
+    //     let values = gps.update();
+    //     println!("{}", values.utc);
+    // }
+    // gps.send_command(format!("PMTK251,9600").as_str());
+    // for _ in 0..10 {
+    //     let values = gps.update();
+    //     println!("{}", values.utc);
+    // }
     // Important note:
     // Valid baud rates are 4800,9600,14400,19200,38400,57600,115200.
     // However, not all baud rates will work, so some trial and error will be needed.

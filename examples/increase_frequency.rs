@@ -36,7 +36,11 @@ fn main() {
         println!("{}", values.utc);
     }
 
+    // going from 57600 at 100 to 9600 at 100 does not work.
     // Important note:
     // Valid baud rates are 4800,9600,14400,19200,38400,57600,115200.
     // However, not all baud rates will work, so some trial and error will be needed.
+    // For me, 9600 and 57600 are the only valid rates.
+    // If you are at a high baud rate and high frequency and you try to go to a lower baud rate
+    // but don't lower the frequency, it will fail.
 }

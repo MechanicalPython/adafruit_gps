@@ -159,10 +159,11 @@ pub mod send_pmtk {
 
         // Get current baud rate
         let possible_baud_rates: [u32; 7] = [4800, 9600, 14400, 19200, 38400, 57600, 115200];
+
         // For each port, open it in that baud rate, see if you get garbage.
         // For some reason there are invalid bytes in front of what should be the correct baud rate.
+        // So read 200 bytes, and ditch the first 100.
         for rate in possible_baud_rates.iter() {
-            println!("rate: {}",rate);
             let mut settings = serialport::SerialPortSettings::default();
             settings.baud_rate = *rate;
             let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
@@ -180,7 +181,6 @@ pub mod send_pmtk {
             }
 
             let string: String = str::from_utf8(&output[100..]).unwrap_or("Invalid bytes given").to_string();
-            println!("{}", string);
             if string != "Invalid bytes given".to_string() {
                 // Set the gps to a new baud rate.
                 let cmd = add_checksum(format!("PMTK251,{}", baud_rate));

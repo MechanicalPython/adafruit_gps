@@ -12,7 +12,7 @@ fn main() {
     let baud_rate = args.get(1).unwrap();
     let update_rate = args.get(2).unwrap();
 
-    // First, set the baud rate.
+    // First, set the baud rate. If it returns an error, just try again.
     let r = set_baud_rate(baud_rate, "/dev/serial0");
     println!("{:?}", r);
 
@@ -21,6 +21,10 @@ fn main() {
     // Initialise the Gps.
     let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
     let line = gps.read_line();
+    if line == "Invalid bytes given".to_string() {
+        panic!("Baud rate not valid")
+    }
+
     println!("{}", line);
 
     let r = gps.init(update_rate);

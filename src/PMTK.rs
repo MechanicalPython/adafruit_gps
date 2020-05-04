@@ -171,6 +171,7 @@ pub mod send_pmtk {
             println!("{}", rate);
             for _ in 0..5 {
                 let line = gps.read_line();
+                println!("{:?}", port.baud_rate());
                 match line {
                     PortConnection::Valid(_string) => {
                         let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
@@ -181,7 +182,7 @@ pub mod send_pmtk {
                         return BaudRateResults::Success(*rate);
                     },
                     PortConnection::InvalidBytes(vector) => {
-                        println!("{:?}", vector);
+                        // println!("{:?}", vector);
                     }
                     _ => ()
                 }

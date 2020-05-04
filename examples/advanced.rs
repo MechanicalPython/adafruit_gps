@@ -3,6 +3,7 @@ extern crate adafruit_gps;
 pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::SendPmtk;
 use adafruit_gps::nmea;
+use adafruit_gps::gps::PortConnection;
 
 fn main() {
     let port = open_port("/dev/serial0", 9600);
@@ -20,8 +21,11 @@ fn main() {
     loop {
         // Read the line
         let line = gps.read_line();
-
+        if line.connection != PortConnection::Valid {
+            continue
+        }
         // Convert the String to a Vec<&str>: [$HEADER], [arg 1], etc.
+        let output = line.output.unwrap();
         let line: Vec<&str> = nmea::nmea::parse_sentence(line.as_str()).unwrap();
 
         // Parse the Vec<&str> to parse_gsa and return the GsaData struct.

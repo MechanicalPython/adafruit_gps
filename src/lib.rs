@@ -62,7 +62,7 @@ pub mod gps {
     use std::collections::HashMap;
     use std::io::Read;
     use std::str;
-    use std::time::{SystemTime, Duration};
+    use std::time::{Duration, SystemTime};
 
     use serialport::prelude::*;
 
@@ -71,7 +71,7 @@ pub mod gps {
     use crate::PMTK::send_pmtk::{Pmtk001Ack, SendPmtk};
 
     /// Opens the port to the GPS, probably /dev/serial0
-            /// Default baudrate is 9600
+                /// Default baudrate is 9600
     pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
@@ -118,14 +118,19 @@ pub mod gps {
         }
     }
 
-    enum PortConnection {
+    /// Enum for if the port connection to the gps is valid, gave invalid bytes, or is not connected
+    #[derive(PartialEq)]
+    pub enum PortConnection {
         Valid,
         InvalidBytes,
         NoConnection,
     }
-    struct PortLine {
-        connection: PortConnection,
-        output: Option<String>,
+
+    /// Struct to pass data from port, including the string and the state of the port connection.
+    #[derive(PartialEq)]
+    pub struct PortOutput {
+        pub connection: PortConnection,
+        pub output: Option<String>,
     }
 
     #[derive(Debug)]
@@ -211,10 +216,10 @@ pub mod gps {
             let mut values = GpsData::default();
             while (gga == true) || (vtg == true) || (gsa == true) || (gsv == true) {
                 let line = self.read_line();
-                if line == PortOutput::Valid {
-                    line.into()
+                if line.connection != PortConnection::Valid {
+                    continue;
                 }
-
+                let line = line.output.unwrap();
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
@@ -251,16 +256,19 @@ pub mod gps {
                             let mut gsv_values: Vec<Satellites> = nmea::gsv::parse_gsv(sentence);  // First sentence
                             for _message in 1..number_of_messages {  // Read lines and add it for each message.
                                 let line = self.read_line();
-                                let sentence = nmea::nmea::parse_sentence(line.as_str());
-                                let sentence = sentence.unwrap();
-                                gsv_values.append(nmea::gsv::parse_gsv(sentence).as_mut())
+                                if line.connection == PortConnection::Valid {
+                                    let line = line.output.unwrap();
+                                    let sentence = nmea::nmea::parse_sentence(line.as_str());
+                                    let sentence = sentence.unwrap();
+                                    gsv_values.append(nmea::gsv::parse_gsv(sentence).as_mut())
+                                }
                             }
                             gsv_values
                         };
                         values.satellites = v;
                         gsv = false;
                     }
-                } else {
+                } else { // sentence is not a valid byte string.
                     println!("Invalid byte string returned");
                 }
             }
@@ -268,7 +276,7 @@ pub mod gps {
         }
         /// Reads a full sentence from the serial buffer, returns a String.
         /// "Invalid bytes given" when there are no bytes given.
-        fn read_line(&mut self) -> PortLine {
+        fn read_line(&mut self) -> PortOutput {
             // Maximum port buffer size is 4095.
             // Returns whatever is in the port.
             // Start of a line is $ (36) and end is \n (10).
@@ -299,10 +307,10 @@ pub mod gps {
             println!("Done");
             let output = str::from_utf8(&output);
             return if output.is_ok() {
-                PortLine{ connection: PortConnection::Valid, output: Some(output.unwrap().to_string()),}
-                } else {
-                PortLine{ connection: PortConnection::InvalidBytes, output:None}
-            }
+                PortOutput { connection: PortConnection::Valid, output: Some(output.unwrap().to_string()) }
+            } else {
+                PortOutput { connection: PortConnection::InvalidBytes, output: None }
+            };
 
         }
     }

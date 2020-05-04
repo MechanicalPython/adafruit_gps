@@ -51,7 +51,7 @@ pub mod send_pmtk {
 
     use serialport::{self, ClearBuffer};
 
-    use crate::gps::{GetGpsData, Gps, is_valid_checksum};
+    use crate::gps::{GetGpsData, Gps, is_valid_checksum, PortConnection, PortOutput};
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -151,7 +151,7 @@ pub mod send_pmtk {
     /// change the frequency first (probably to 1000 miliseconds) and then change the baud rate.
     ///
     /// Use a battery to maintain settings as this method takes a while to run and is error prone.
-    pub fn set_baud_rate(baud_rate: &str, port_name: &str) -> Result<u32, String>{
+    pub fn set_baud_rate(baud_rate: &str, port_name: &str) -> Result<u32, String> {
         // stty -F /dev/serial0 9600 clocal cread cs8 -cstopb -parenb
         // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
         // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
@@ -192,10 +192,10 @@ pub mod send_pmtk {
                 let cmd = cmd.as_bytes();
                 let _ = port.clear(ClearBuffer::Output);
                 let _ = port.write(cmd);
-                return Ok(*rate)
+                return Ok(*rate);
             }
         }
-        return Err("Baud rate not found, try again".to_string())
+        return Err("Baud rate not found, try again".to_string());
     }
 
     pub trait SendPmtk {
@@ -336,32 +336,35 @@ pub mod send_pmtk {
             //! Format: $pmtk{cmd},{flag},{value}*{checksum}
             for _i in 0..search_depth {   // Check 10 lines before giving up.
                 let line = self.read_line();
-                if is_valid_checksum(&line) {  // Sometimes the line is incomplete so check here.
-                    if &line[0..8] == "$PMTK001" {
-                        let line = line.trim();
-                        // Remove checksum.
-                        let line: Vec<&str> = line.split("*").collect();
-                        let line: &str = line.get(0).unwrap();
+                if line.connection == PortConnection::Valid {
+                    let line = line.output.unwrap();
+                    if is_valid_checksum((line.as_str())) {
+                        if &line[0..8] == "$PMTK001" {
+                            let line = line.trim();
+                            // Remove checksum.
+                            let line: Vec<&str> = line.split("*").collect();
+                            let line: &str = line.get(0).unwrap();
 
-                        let args: Vec<&str> = line.split(",").collect();
-                        // args: $PMTK001, cmd, flag,
-                        // let cmd: &str = args.get(1).expect("pmtk001 format not correct");
-                        let flag: &str = args.get(2).expect("pmtk001 format not correct");
-                        // let value: &str = args.get(3).unwrap_or(&"");
+                            let args: Vec<&str> = line.split(",").collect();
+                            // args: $PMTK001, cmd, flag,
+                            // let cmd: &str = args.get(1).expect("pmtk001 format not correct");
+                            let flag: &str = args.get(2).expect("pmtk001 format not correct");
+                            // let value: &str = args.get(3).unwrap_or(&"");
 
-                        return if flag == "0" {
-                            Pmtk001Ack::Invalid
-                        } else if flag == "1" {
-                            Pmtk001Ack::Unsupported
-                        } else if flag == "2" {
-                            Pmtk001Ack::Failed
-                        } else if flag == "3" {
-                            Pmtk001Ack::Success
+                            return if flag == "0" {
+                                Pmtk001Ack::Invalid
+                            } else if flag == "1" {
+                                Pmtk001Ack::Unsupported
+                            } else if flag == "2" {
+                                Pmtk001Ack::Failed
+                            } else if flag == "3" {
+                                Pmtk001Ack::Success
+                            } else {
+                                Pmtk001Ack::NoPacket
+                            };
                         } else {
-                            Pmtk001Ack::NoPacket
-                        };
-                    } else {
-                        continue;
+                            continue;
+                        }
                     }
                 } else {
                     continue;
@@ -374,6 +377,10 @@ pub mod send_pmtk {
             //! Return the string without checksum.
             for _i in 0..10 {   // Check 10 lines before giving up.
                 let line = self.read_line();
+                if line.connection != PortConnection::Valid {
+                    continue
+                }
+                let line = line.output.unwrap();
                 if (&line[0..5] == "$PMTK") && (is_valid_checksum(&line)) {
                     let line = line.trim();
                     // Remove checksum.
@@ -388,6 +395,10 @@ pub mod send_pmtk {
         fn pmtk_startup(&mut self) -> bool {
             for _i in 0..10 {
                 let line = self.read_line();
+                if line.connection != PortConnection::Valid {
+                    continue
+                }
+                let line = line.output.unwrap();
                 if (&line[0..8] == "$PMTK011") && (is_valid_checksum(&line)) {
                     return true;
                 }

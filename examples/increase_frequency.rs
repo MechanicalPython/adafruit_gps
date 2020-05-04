@@ -2,7 +2,7 @@ extern crate adafruit_gps;
 use std::env;
 
 
-use adafruit_gps::gps::{self, Gps, open_port, PortConnection};
+use adafruit_gps::gps::{Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::set_baud_rate;
 
 fn main() {
@@ -20,23 +20,12 @@ fn main() {
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
     let mut gps = Gps {port};
-    // Sometimes the first line read is invalid.
-    let mut valid_count: i32 = 0;
-    for _ in 0..5 {
-        let line = gps.read_line();
-        if line.connection == PortConnection::Valid{
-            valid_count += 1;
-        }
-    }
-    if valid_count == 0 {
-        panic!("No valid bytes returned from gps. Try and different baud rate and frequency combination.")
-    }
-    let r = gps.init(update_rate);
-    println!("{:?}", r.get("Update rate").unwrap());
+    let update_rate_return = gps.pmtk_220_set_nmea_updaterate(update_rate);
+    println!("{:?}", update_rate_return);
 
     for _ in 0..10 {
         let values = gps.update();
-        println!("{}", values.utc);
+        println!("{:?}", values);
     }
 
     // going from 57600 at 100 to 9600 at 100 does not work.

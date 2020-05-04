@@ -142,6 +142,7 @@ pub mod send_pmtk {
         return checksumed_sentence;
     }
 
+    #[derive(Debug, PartialEq)]
     pub enum BaudRateResults {
         Success(u32),
         Fail,
@@ -164,19 +165,19 @@ pub mod send_pmtk {
         // For some reason there are invalid bytes in front of what should be the correct baud rate.
         // So read 200 bytes, and ditch the first 100.
         for rate in possible_baud_rates.iter() {
-            let mut port = open_port(port_name, baud_rate.parse().unwrap());
+            let port = open_port(port_name, baud_rate.parse().unwrap());
             let mut gps = Gps { port };
             // Try reading 5 lines.
             for _ in 0..5 {
                 let line = gps.read_line();
                 dbg!(&line);
                 match line {
-                    PortConnection::Valid(string) => {
+                    PortConnection::Valid(_string) => {
                         let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
                         let cmd = cmd.as_bytes();
+                        let mut port = open_port(port_name, *rate);
                         let _ = port.clear(ClearBuffer::Output);
                         let _ = port.write(cmd);
-
                         return BaudRateResults::Success(*rate);
                     }
                     _ => ()
@@ -815,6 +816,7 @@ mod pmtktests {
     use super::send_pmtk::{DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
     use super::send_pmtk::add_checksum;
     use super::super::gps::{Gps, open_port};
+    use crate::PMTK::send_pmtk::set_baud_rate;
 
     #[test]
     fn checksum() {
@@ -829,12 +831,11 @@ mod pmtktests {
     }
 
     fn port_setup() -> Gps {
-        let port = open_port("/dev/serial0", 9600);
-        let mut gps = Gps {
-            port,
-        };
-        let _ = gps.set_baud_rate("9600", "/dev/serial0");
+        let _ = set_baud_rate("9600", "/dev/serial0");
         sleep(Duration::from_secs(1));
+        let port = open_port("/dev/serial0", 9600);
+        let mut gps = Gps {port};
+        gps.pmtk_220_set_nmea_updaterate("1000");
         return gps;
     }
 

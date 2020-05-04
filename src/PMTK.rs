@@ -172,17 +172,19 @@ pub mod send_pmtk {
                 let line = gps.read_line();
                 match line {
                     PortConnection::Valid(string) => {
+                        println!("{}", string.len());
                         if string.len() < 40 {
+                            println!("less than 40");
                             // If it gets only a few valid bytes, then it may be lucky, not a valid string.
                             break
-                        }
+                        };
                         let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
                         let cmd = cmd.as_bytes();
                         let _ = gps.port.clear(ClearBuffer::Output);
                         let _ = gps.port.write(cmd);
                         return BaudRateResults::Success(*rate);
                     },
-                    _ => ()
+                    _ => (),
                 }
             }
         }

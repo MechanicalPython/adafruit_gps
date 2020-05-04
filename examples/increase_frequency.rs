@@ -14,14 +14,14 @@ fn main() {
 
     // First, set the baud rate. If it returns an error, just try again.
     let r = set_baud_rate(baud_rate, "/dev/serial0");
-    println!("{:?}", r);
+    println!("baud {:?}", r);
 
     // Then open the port to the gps and you're good.
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
     let mut gps = Gps {port};
     let update_rate_return = gps.pmtk_220_set_nmea_updaterate(update_rate);
-    println!("{:?}", update_rate_return);
+    println!("update {:?}", update_rate_return);
 
     for _ in 0..10 {
         let values = gps.update();

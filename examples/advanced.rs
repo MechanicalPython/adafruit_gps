@@ -35,7 +35,7 @@ fn main() {
                     let _gsa = nmea::gsa::parse_gsa(line);
                 }
             },
-            PortConnection::InvalidBytes => println!("Invalid bytes"),
+            PortConnection::InvalidBytes(_) => println!("Invalid bytes"),
             PortConnection::NoConnection => println!("No connection to gps"),
         }
     }

@@ -74,7 +74,7 @@ pub mod gps {
     use crate::nmea::vtg::{parse_vtg, VtgData};
 
     /// Opens the port to the GPS, probably /dev/serial0
-        /// Default baud rate is 9600
+                    /// Default baud rate is 9600
     pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
@@ -128,7 +128,7 @@ pub mod gps {
     #[derive(PartialEq, Debug)]
     pub enum PortConnection {
         Valid(String),
-        InvalidBytes,
+        InvalidBytes(Vec<u8>),
         NoConnection,
     }
 
@@ -191,8 +191,7 @@ pub mod gps {
             return if string.is_ok() {
                 PortConnection::Valid(string.unwrap().to_string())
             } else {
-                println!("{:?}", output);
-                PortConnection::InvalidBytes
+                PortConnection::InvalidBytes(output)
             };
         }
 
@@ -201,52 +200,47 @@ pub mod gps {
         pub fn update(&mut self) -> GpsSentence {
             let port_output = self.read_line();
 
-            return if port_output == PortConnection::NoConnection {
-                GpsSentence::NoConnection
-            } else if port_output == PortConnection::InvalidBytes {
-                GpsSentence::InvalidBytes
-            } else {
-                let sentence = match port_output {
-                    PortConnection::Valid(line) => line,
-                    _ => "None".to_string(),
-                };
+            return match port_output {
+                PortConnection::NoConnection => GpsSentence::NoConnection,
+                PortConnection::InvalidBytes(_vector) => GpsSentence::InvalidBytes,
+                PortConnection::Valid(string) => {
+                    let sentence: Option<Vec<&str>> = parse_sentence(string.as_str());
+                    if sentence.is_some() {
+                        let sentence = sentence.unwrap();
+                        let header = sentence.get(0).unwrap();
+                        // At this point sentences needs to be is_valid str.
+                        if &header[3..5] == "GG" {
+                            return GpsSentence::GGA(parse_gga(sentence));
+                        } else if &header[3..6] == "VTG" {
+                            return GpsSentence::VTG(parse_vtg(sentence));
+                        } else if &header[3..6] == "GSA" {
+                            return GpsSentence::GSA(parse_gsa(sentence));
+                        } else if &header[3..6] == "GLL" {
+                            return GpsSentence::GLL(parse_gll(sentence));
+                        } else if &header[3..6] == "RMC" {
+                            return GpsSentence::RMC(parse_rmc(sentence));
+                        } else if &header[3..6] == "GSV" {
+                            // Assumes that each GSV sentence if given in exact sequence, and not out of order.
+                            let number_of_messages: i32 = sentence.get(1).unwrap().parse().unwrap();
 
-                let sentence: Option<Vec<&str>> = parse_sentence(sentence.as_str());
-                if sentence.is_some() {
-                    let sentence = sentence.unwrap();
-                    let header = sentence.get(0).unwrap();
-                    // At this point sentences needs to be is_valid str.
-                    if &header[3..5] == "GG" {
-                        return GpsSentence::GGA(parse_gga(sentence));
-                    } else if &header[3..6] == "VTG" {
-                        return GpsSentence::VTG(parse_vtg(sentence));
-                    } else if &header[3..6] == "GSA" {
-                        return GpsSentence::GSA(parse_gsa(sentence));
-                    } else if &header[3..6] == "GLL" {
-                        return GpsSentence::GLL(parse_gll(sentence));
-                    } else if &header[3..6] == "RMC" {
-                        return GpsSentence::RMC(parse_rmc(sentence));
-                    } else if &header[3..6] == "GSV" {
-                        // Assumes that each GSV sentence if given in exact sequence, and not out of order.
-                        let number_of_messages: i32 = sentence.get(1).unwrap().parse().unwrap();
-
-                        let mut gsv_values: Vec<Satellites> = parse_gsv(sentence); // First sentence
-                        for _message in 1..number_of_messages { // If number of messages is 1, this is all skipped.
-                            // Read lines and add it for each message.
-                            let line = self.read_line();
-                            match line {
-                                PortConnection::Valid(line) => {
-                                    let sentence = parse_sentence(line.as_str());
-                                    let sentence = sentence.unwrap();
-                                    gsv_values.append(parse_gsv(sentence).as_mut())
-                                }
-                                _ => ()
-                            };
+                            let mut gsv_values: Vec<Satellites> = parse_gsv(sentence); // First sentence
+                            for _message in 1..number_of_messages { // If number of messages is 1, this is all skipped.
+                                // Read lines and add it for each message.
+                                let line = self.read_line();
+                                match line {
+                                    PortConnection::Valid(line) => {
+                                        let sentence = parse_sentence(line.as_str());
+                                        let sentence = sentence.unwrap();
+                                        gsv_values.append(parse_gsv(sentence).as_mut())
+                                    }
+                                    _ => ()
+                                };
+                            }
+                            return GpsSentence::GSV(gsv_values);
                         }
-                        return GpsSentence::GSV(gsv_values);
                     }
+                    GpsSentence::InvalidSentence
                 }
-                GpsSentence::InvalidSentence
             };
         }
     }

@@ -288,9 +288,9 @@ pub mod gsv {
     //! multiple sentences.
     //!
 
-    #[derive(Debug, Default, PartialEq)]
     /// This is the individual satellite data given by the GSV sentence. It is used in the
     /// main GpsData struct, as a Vec<Satellites>.
+    #[derive(PartialEq, Debug)]
     pub struct Satellites {
         pub id: Option<i32>,
         pub elevation: Option<f32>,
@@ -351,7 +351,7 @@ pub mod rmc {
     //! Gives UTC, latitude, longitude, Speed, True course, Magnetic course, Date, Magnatic variation
     use super::nmea::*;
 
-    #[derive(PartialEq)]
+    #[derive(PartialEq, Debug)]
     pub struct RmcData {
         pub utc: f64,
         pub fix_status: bool,
@@ -405,7 +405,7 @@ pub mod vtg {
     //!
     //! Gives course headings and speed data.
 
-    #[derive(PartialEq)]
+    #[derive(PartialEq, Debug)]
     pub enum Mode {
         Autonomous,
         Differential,
@@ -413,7 +413,7 @@ pub mod vtg {
         Unknown,
     }
 
-    #[derive(PartialEq)]
+    #[derive(PartialEq, Debug)]
     pub struct VtgData {
         pub true_course: Option<f32>,
         pub magnetic_course: Option<f32>,
@@ -452,6 +452,7 @@ pub mod gll {
     /// This module is basically pointless as all gll data is in the gga data.
     use super::nmea::*;
 
+    #[derive(PartialEq, Debug)]
     pub struct GllData {
         pub latitude: Option<f32>,
         pub longitude: Option<f32>,

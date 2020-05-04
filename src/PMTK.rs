@@ -173,17 +173,17 @@ pub mod send_pmtk {
                 match line {
                     PortConnection::Valid(string) => {
                         println!("{}", string.len());
-                        if string.len() < 40 {
-                            println!("less than 40");
+                        if string.len() < 20 {
+                            println!("less than 20");
                             // If it gets only a few valid bytes, then it may be lucky, not a valid string.
-                            break
+                        } else {
+                            let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
+                            let cmd = cmd.as_bytes();
+                            let _ = gps.port.clear(ClearBuffer::Output);
+                            let _ = gps.port.write(cmd);
+                            return BaudRateResults::Success(*rate);
                         };
-                        let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
-                        let cmd = cmd.as_bytes();
-                        let _ = gps.port.clear(ClearBuffer::Output);
-                        let _ = gps.port.write(cmd);
-                        return BaudRateResults::Success(*rate);
-                    },
+                    }
                     _ => (),
                 }
             }
@@ -817,10 +817,11 @@ mod pmtktests {
     use std::thread::sleep;
     use std::time::Duration;
 
+    use crate::PMTK::send_pmtk::set_baud_rate;
+
     use super::send_pmtk::{DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
     use super::send_pmtk::add_checksum;
     use super::super::gps::{Gps, open_port};
-    use crate::PMTK::send_pmtk::set_baud_rate;
 
     #[test]
     fn checksum() {
@@ -838,7 +839,7 @@ mod pmtktests {
         let _ = set_baud_rate("9600", "/dev/serial0");
         sleep(Duration::from_secs(1));
         let port = open_port("/dev/serial0", 9600);
-        let mut gps = Gps {port};
+        let mut gps = Gps { port };
         gps.pmtk_220_set_nmea_updaterate("1000");
         return gps;
     }

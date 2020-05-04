@@ -1,7 +1,6 @@
 extern crate adafruit_gps;
 
-pub use adafruit_gps::gps::{GetGpsData, Gps, open_port};
-use adafruit_gps::PMTK::send_pmtk::SendPmtk;
+pub use adafruit_gps::gps::{Gps, open_port};
 use adafruit_gps::nmea;
 use adafruit_gps::gps::PortConnection;
 

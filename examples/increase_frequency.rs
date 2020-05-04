@@ -1,6 +1,6 @@
 extern crate adafruit_gps;
 
-pub use adafruit_gps::gps::{self, GetGpsData, Gps, open_port};
+pub use adafruit_gps::gps::{self, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::{set_baud_rate};
 
 use std::env;
@@ -20,7 +20,7 @@ fn main() {
     // Then open the port to the gps and you're good.
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
-    let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
+    let mut gps = Gps {port};
     // Sometimes the first line read is invalid.
     let mut valid_count: i32 = 0;
     for _ in 0..5 {

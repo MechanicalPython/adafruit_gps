@@ -173,7 +173,7 @@ pub mod gps {
             while cont {
                 // If there is no connection, this match statement is looped over with a 1 second time out
                 // as given by the port open.
-                println!("{}", start.duration_since(SystemTime::now()));
+                println!("{:?}", start.duration_since(SystemTime::now()));
                 if start.duration_since(SystemTime::now()).unwrap() > Duration::from_secs(1) {
                     println!("No connection from read line");
                     return PortConnection::NoConnection;

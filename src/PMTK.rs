@@ -175,6 +175,7 @@ pub mod send_pmtk {
                         if string.len() < 20 {
                             // If it gets only a few valid bytes, then it may be lucky, not a valid string.
                         } else {
+                            gps.pmtk_220_set_nmea_updaterate("1000");
                             let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
                             let cmd = cmd.as_bytes();
                             let _ = gps.port.clear(ClearBuffer::Output);

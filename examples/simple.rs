@@ -4,8 +4,6 @@ pub use adafruit_gps::gps::{Gps, open_port, GpsSentence};
 
 fn main() {
 
-    // What info do I need at the start?
-    // Baud rate and update rate.
 
     // Open the port that is connected to the GPS module.
     let port = open_port("/dev/serial0", 57600);

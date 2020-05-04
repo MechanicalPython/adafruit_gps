@@ -2,7 +2,7 @@
 //!
 //! # GPS outputs
 //! ## GPS sentence outputs.
-//! - GGA -> TC, Latitude, longitude, Position fix (GPS, DGPS, No fix), sats used, HDOP, altitude, Geoidal Seperation, Age of diff corr
+//! - GGA -> UTC, Latitude, longitude, Position fix (GPS, DGPS, No fix), sats used, HDOP, altitude, Geoidal Seperation, Age of diff corr
 //! - VTG -> Course (true), Course (magnetic), speed knots, speed kph, mode.
 //! - GSA -> Manual or Automatic mode, 2D or 3D fix, List of satellites used, PDOP, HDOP, VDOP.
 //! - GSV -> Satellites in view data: sat id, elevation, azimuth and SNR for each sat seen.

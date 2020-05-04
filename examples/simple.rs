@@ -21,7 +21,9 @@ fn main() {
     // If setting the update_rate consistently fails for faster updates, see exmaples/increase_frequency.rs
 
     // Give settings here.
-    gps.pmtk_220_set_nmea_updaterate("1000");
+    gps.pmtk_314_api_set_nmea_output(0, 0, 0, 1, 0, 0, 1);
+    let r = gps.pmtk_220_set_nmea_updaterate("100");
+    println!("{:?}", r);
 
     // In a loop, constantly update the gps. The update trait will give you all the data you
     // want from the gps module.
@@ -43,7 +45,7 @@ fn main() {
                 println!("{:?}", sentence.speed)
             }
             _ => {
-                println!("Dont care about other sentence outputs")
+                ()
             }
         }
     }

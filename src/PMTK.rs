@@ -171,7 +171,11 @@ pub mod send_pmtk {
             for _ in 0..5 {
                 let line = gps.read_line();
                 match line {
-                    PortConnection::Valid(_string) => {
+                    PortConnection::Valid(string) => {
+                        if string.len() < 40 {
+                            // If it gets only a few valid bytes, then it may be lucky, not a valid string.
+                            break
+                        }
                         let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
                         let cmd = cmd.as_bytes();
                         let _ = gps.port.clear(ClearBuffer::Output);

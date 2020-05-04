@@ -174,6 +174,7 @@ pub mod gps {
                 // If there is no connection, this match statement is looped over with a 1 second time out
                 // as given by the port open.
                 if start.duration_since(start).unwrap() > Duration::from_secs(1) {
+                    println!("No connection from read line");
                     return PortConnection::NoConnection;
                 }
                 match p.read(buffer.as_mut_slice()) {

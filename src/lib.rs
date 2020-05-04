@@ -187,10 +187,11 @@ pub mod gps {
                     Err(_e) => (),
                 }
             }
-            let output = str::from_utf8(&output);
-            return if output.is_ok() {
-                PortConnection::Valid(output.unwrap().to_string())
+            let string = str::from_utf8(&output);
+            return if string.is_ok() {
+                PortConnection::Valid(string.unwrap().to_string())
             } else {
+                println!("{:?}", output);
                 PortConnection::InvalidBytes
             };
         }

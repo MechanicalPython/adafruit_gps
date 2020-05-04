@@ -241,7 +241,12 @@ pub mod send_pmtk {
                             }
                         }
                     }
-                    _ => ()
+                    PortConnection::NoConnection => {
+                        return Pmtk001Ack::NoPacket;
+                    }
+                    PortConnection::InvalidBytes(_) => {
+                        return Pmtk001Ack::NoPacket;
+                    }
                 };
             }
             return Pmtk001Ack::NoPacket;
@@ -263,7 +268,12 @@ pub mod send_pmtk {
                             return Some(line.to_string());
                         }
                     }
-                    _ => ()
+                    PortConnection::NoConnection => {
+                        return None;
+                    }
+                    PortConnection::InvalidBytes(_) => {
+                        return None;
+                    }
                 }
             }
             return None;
@@ -279,7 +289,12 @@ pub mod send_pmtk {
                             return true;
                         }
                     }
-                    _ => ()
+                    PortConnection::NoConnection => {
+                        return false;
+                    }
+                    PortConnection::InvalidBytes(_) => {
+                        return false;
+                    }
                 }
             }
             false

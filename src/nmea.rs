@@ -109,7 +109,7 @@ pub mod gga {
         }
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Default)]
     pub struct GgaData {
         pub utc: f64,
         pub lat: Option<f32>,
@@ -178,6 +178,9 @@ pub mod gsa {
         Manual,
         Automatic,
     }
+    impl Default for Mode {
+        fn default() -> Mode {Mode::Manual}
+    }
 
     #[derive(PartialEq, Debug)]
     pub enum DimentionFix {
@@ -185,8 +188,11 @@ pub mod gsa {
         Dimention2d,
         Dimention3d,
     }
+    impl Default for DimentionFix {
+        fn default() -> DimentionFix {DimentionFix::NotAvaliable}
+    }
 
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Default)]
     pub struct GsaData {
         pub mode: Mode,
         pub dimention_fix: DimentionFix,
@@ -290,7 +296,7 @@ pub mod gsv {
 
     /// This is the individual satellite data given by the GSV sentence. It is used in the
     /// main GpsData struct, as a Vec<Satellites>.
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Default)]
     pub struct Satellites {
         pub id: Option<i32>,
         pub elevation: Option<f32>,
@@ -351,7 +357,7 @@ pub mod rmc {
     //! Gives UTC, latitude, longitude, Speed, True course, Magnetic course, Date, Magnatic variation
     use super::nmea::*;
 
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Default)]
     pub struct RmcData {
         pub utc: f64,
         pub fix_status: bool,
@@ -412,8 +418,11 @@ pub mod vtg {
         Estimated,
         Unknown,
     }
+    impl Default for Mode {
+        fn default() -> Mode {Mode::Unknown}
+    }
 
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Default)]
     pub struct VtgData {
         pub true_course: Option<f32>,
         pub magnetic_course: Option<f32>,
@@ -452,7 +461,7 @@ pub mod gll {
     /// This module is basically pointless as all gll data is in the gga data.
     use super::nmea::*;
 
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Default)]
     pub struct GllData {
         pub latitude: Option<f32>,
         pub longitude: Option<f32>,

@@ -156,6 +156,8 @@ pub mod send_pmtk {
     ///
     /// Use a battery to maintain settings as this method takes a while to run and is error prone.
     pub fn set_baud_rate(baud_rate: &str, port_name: &str) -> BaudRateResults {
+        // todo add loading bar.
+        // todo, timeout when taking too long to give results.
         // stty -F /dev/serial0 9600 clocal cread cs8 -cstopb -parenb
 
         // Get current baud rate

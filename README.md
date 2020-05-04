@@ -36,18 +36,17 @@ To do this, at the beginning of the file, before opening the port, the baud rate
 what you want). See increase_frequency.rs for an example.
 
 set_baud_rate takes a while and is error prone, so ideally set the baud rate and frequency and use a battery/keep power
-so that the settings are retained. If power is lost (and there is no battery), settings are reset to 9600 baud rate and 
-1000 mili frequency. 
+so that the settings are retained. If power is lost (and there is no battery), settings are reset to 9600 baud rate and 1000 mili frequency. 
 
 1000 baud = 1000 symbols per second. 
-baud_rate calculations. Gps max sentence length is 255 (or close enough). 9600 -> allows a minimum of 37.64 sentences per second. 
+baud_rate calculations. Gps max sentence length is 255 (or close enough). 9600 -> allows a minimum of 37.64 sentences per second or 3.7 sentences per second at 10Hz. 
 GGA -> 1/iter
 VTG -> 1/iter
 GSA -> 1/iter
 RMC -> 1/iter
 GLL -> 1/iter
 GSV -> up to 4/iter
- 
+
 # Notes on the code and contributing
 This crate library has mostly been made as a personal challenge and to fill a narrow gap so all contributions are welcome.
 That said, this code is likely to need improvement, all of which is welcome. 

@@ -35,12 +35,12 @@ fn main() {
             GpsSentence::InvalidBytes => println!("Invalid bytes given, try again"),
             GpsSentence::NoConnection => println!("No connection with gps"),
             GpsSentence::GGA(sentence) => {
-                println!("{}",sentence.utc);
-                println!("{}",sentence.long);
-                println!("{}",sentence.lat);
+                println!("{:?}",sentence.utc);
+                println!("{:?}",sentence.long);
+                println!("{:?}",sentence.lat);
             }
             GpsSentence::RMC(sentence) => {
-                println!("{}", sentence.speed)
+                println!("{:?}", sentence.speed)
             }
             _ => {
                 println!("Dont care about other sentence outputs")

@@ -88,7 +88,6 @@ pub mod nmea {
     }
 }
 
-#[allow(dead_code)]
 pub mod gga {
     //! Parse GGA sentences
     //!
@@ -169,7 +168,6 @@ pub mod gga {
     }
 }
 
-#[allow(dead_code)]
 pub mod gsa {
     //! Parse GSA sentences.
     //!
@@ -283,7 +281,6 @@ pub mod gsa {
     }
 }
 
-#[allow(dead_code)]
 pub mod gsv {
     //! Parse GSV sentence
     //!
@@ -348,7 +345,6 @@ pub mod gsv {
     }
 }
 
-#[allow(dead_code)]
 pub mod rmc {
     //! Parse RMC sentences.
     //!
@@ -404,7 +400,6 @@ pub mod rmc {
     }
 }
 
-#[allow(dead_code)]
 pub mod vtg {
     //! Parse VTG sentences
     //!
@@ -453,7 +448,6 @@ pub mod vtg {
     }
 }
 
-#[allow(dead_code)]
 pub mod gll {
     /// This module is basically pointless as all gll data is in the gga data.
     use super::nmea::*;

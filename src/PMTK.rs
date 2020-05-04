@@ -844,7 +844,7 @@ mod pmtktests {
         let mut gps = Gps {
             port,
         };
-        gps.set_baud_rate("9600", "/dev/serial0");
+        let _ = gps.set_baud_rate("9600", "/dev/serial0");
         sleep(Duration::from_secs(1));
         return gps;
     }

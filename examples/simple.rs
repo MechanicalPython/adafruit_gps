@@ -20,7 +20,7 @@ fn main() {
     // If the update_rate is not successful, the gps will run but at whatever the previous setting was.
     // If setting the update_rate consistently fails for faster updates, see exmaples/increase_frequency.rs
 
-    /// Give settings here.
+    // Give settings here.
     gps.pmtk_220_set_nmea_updaterate("1000");
 
     // In a loop, constantly update the gps. The update trait will give you all the data you

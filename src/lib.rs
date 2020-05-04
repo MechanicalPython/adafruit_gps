@@ -74,7 +74,7 @@ pub mod gps {
     use crate::nmea::vtg::{parse_vtg, VtgData};
 
     /// Opens the port to the GPS, probably /dev/serial0
-                                            /// Default baud rate is 9600
+    /// Default baud rate is 9600
     pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
@@ -209,7 +209,7 @@ pub mod gps {
                     _ => "None".to_string(),
                 };
 
-                let sentence : Option<Vec<&str>> = parse_sentence(sentence.as_str());
+                let sentence: Option<Vec<&str>> = parse_sentence(sentence.as_str());
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
                     let header = sentence.get(0).unwrap();
@@ -245,7 +245,7 @@ pub mod gps {
                     }
                 }
                 GpsSentence::InvalidSentence
-            }
+            };
         }
     }
 }

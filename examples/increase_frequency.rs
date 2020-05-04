@@ -1,10 +1,9 @@
 extern crate adafruit_gps;
-
-pub use adafruit_gps::gps::{self, Gps, open_port};
-use adafruit_gps::PMTK::send_pmtk::{set_baud_rate};
-
 use std::env;
-use adafruit_gps::gps::PortConnection;
+
+
+use adafruit_gps::gps::{self, Gps, open_port, PortConnection};
+use adafruit_gps::PMTK::send_pmtk::set_baud_rate;
 
 fn main() {
     // These args are just for easy testing for what baud rate and what update rate you want work.

@@ -142,6 +142,58 @@ pub mod send_pmtk {
         return checksumed_sentence;
     }
 
+    pub enum BaudRateResults {
+        Success(u32),
+        Fail,
+    }
+    /// Sets baud rate for the gps
+    /// If the baud rate you are trying to set is not compatible with the current frequency,
+    /// change the frequency first (probably to 1000 miliseconds) and then change the baud rate.
+    ///
+    /// Returns BaudRateResults enum: Success(baud rate), Fail.
+    ///
+    /// Use a battery to maintain settings as this method takes a while to run and is error prone.
+    pub fn set_baud_rate(baud_rate: &str, port_name: &str) -> BaudRateResults {
+        // stty -F /dev/serial0 9600 clocal cread cs8 -cstopb -parenb
+
+        // Get current baud rate
+        let possible_baud_rates: [u32; 7] = [4800, 9600, 14400, 19200, 38400, 57600, 115200];
+
+        // For each port, open it in that baud rate, see if you get garbage.
+        // For some reason there are invalid bytes in front of what should be the correct baud rate.
+        // So read 200 bytes, and ditch the first 100.
+        for rate in possible_baud_rates.iter() {
+            let mut settings = serialport::SerialPortSettings::default();
+            settings.baud_rate = *rate;
+            let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
+            let _ = port.clear(ClearBuffer::Input);
+            // Read 100 characters, see if it can be parsed.
+            let mut buffer: Vec<u8> = vec![0; 100];
+            let mut output = Vec::new();
+            while output.len() < 200 {
+                match port.read(buffer.as_mut_slice()) {
+                    Ok(buffer_size) => {
+                        output.extend_from_slice(&buffer[..buffer_size]);
+                    }
+                    Err(_e) => (),
+                }
+            }
+
+            let string: String = str::from_utf8(&output[100..])
+                .unwrap_or("Invalid bytes given")
+                .to_string();
+            if string != "Invalid bytes given".to_string() {
+                // Set the gps to a new baud rate.
+                let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
+                let cmd = cmd.as_bytes();
+                let _ = port.clear(ClearBuffer::Output);
+                let _ = port.write(cmd);
+
+                return BaudRateResults::Success(*rate);
+            }
+        }
+        return BaudRateResults::Fail;
+    }
 
     /// This implies all the traits to do with sending commands to the gps.
     impl Gps {
@@ -220,60 +272,6 @@ pub mod send_pmtk {
             return None;
         }
 
-        ///Sets baud rate for the gps
-/// If the baud rate you are trying to set is not compatible with the current frequency,
-/// change the frequency first (probably to 1000 miliseconds) and then change the baud rate.
-///
-/// Use a battery to maintain settings as this method takes a while to run and is error prone.
-        pub fn set_baud_rate(&mut self, baud_rate: &str, port_name: &str) -> Result<u32, String> {
-            // stty -F /dev/serial0 9600 clocal cread cs8 -cstopb -parenb
-            // echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
-            // stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
-
-            // Overall, open port in baud rate the same of gps, change the gps baud rate, open the port
-            // in the new baud rate.
-
-            // Possible states are port and gps are in sync or out of sync.
-            // Assume they are in sync first of all.
-
-            // Get current baud rate
-            let possible_baud_rates: [u32; 7] = [4800, 9600, 14400, 19200, 38400, 57600, 115200];
-
-            // For each port, open it in that baud rate, see if you get garbage.
-            // For some reason there are invalid bytes in front of what should be the correct baud rate.
-            // So read 200 bytes, and ditch the first 100.
-            for rate in possible_baud_rates.iter() {
-                let mut settings = serialport::SerialPortSettings::default();
-                settings.baud_rate = *rate;
-                let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
-                let _ = port.clear(ClearBuffer::Input);
-                // Read 100 characters, see if it can be parsed.
-                let mut buffer: Vec<u8> = vec![0; 100];
-                let mut output = Vec::new();
-                while output.len() < 200 {
-                    match port.read(buffer.as_mut_slice()) {
-                        Ok(buffer_size) => {
-                            output.extend_from_slice(&buffer[..buffer_size]);
-                        }
-                        Err(_e) => (),
-                    }
-                }
-
-                let string: String = str::from_utf8(&output[100..])
-                    .unwrap_or("Invalid bytes given")
-                    .to_string();
-                if string != "Invalid bytes given".to_string() {
-                    // Set the gps to a new baud rate.
-                    let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
-                    let cmd = cmd.as_bytes();
-                    let _ = port.clear(ClearBuffer::Output);
-                    let _ = port.write(cmd);
-                    return Ok(*rate);
-                }
-            }
-            return Err("Baud rate not found, try again".to_string());
-        }
-
         /// Checks if the GPS rebooted.
         pub fn pmtk_startup(&mut self) -> bool {
             for _i in 0..10 {
@@ -281,8 +279,8 @@ pub mod send_pmtk {
                 match line {
                     PortConnection::Valid(line) => {
                         if (&line[0..8] == "$PMTK011") && (is_valid_checksum(&line)) {
-                    return true;
-                }
+                            return true;
+                        }
                     }
                     _ => ()
                 }

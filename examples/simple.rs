@@ -15,7 +15,7 @@ fn main() {
     // you will need to try gps.init() again until it is successful.
     // If the update_rate is not successful, the gps will run but at whatever the previous setting was.
     // If setting the update_rate consistently fails for faster updates, see exmaples/increase_frequency.rs
-    let _values = gps.init("1000");
+    let values = gps.init("1000");
 
     // In a loop, constantly update the gps. The update trait will give you all the data you
     // want from the gps module.

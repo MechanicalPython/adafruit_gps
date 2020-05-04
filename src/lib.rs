@@ -71,7 +71,7 @@ pub mod gps {
     use crate::PMTK::send_pmtk::{Pmtk001Ack, SendPmtk};
 
     /// Opens the port to the GPS, probably /dev/serial0
-                /// Default baudrate is 9600
+    /// Default baudrate is 9600
     pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
@@ -205,7 +205,6 @@ pub mod gps {
         }
 
         /// Keeps reading sentences until all the required sentences are read.
-        ///
         /// Returns GpsData.
         fn update(&mut self) -> GpsData {
             let mut gga = self.naviagtion_data;
@@ -214,15 +213,21 @@ pub mod gps {
             let mut gsv = self.satellite_data;
 
             let mut values = GpsData::default();
+
             while (gga == true) || (vtg == true) || (gsa == true) || (gsv == true) {
-                let line = self.read_line();
-                if line.connection != PortConnection::Valid {
-                    continue;
+                let port_output = self.read_line();
+                if port_output.connection == PortConnection::NoConnection {
+                    println!("No connection");
+                    return GpsData::default();
                 }
-                let line = line.output.unwrap();
+                if port_output.connection == PortConnection::InvalidBytes {
+                    continue
+                }
+                let line = port_output.output.unwrap();
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
+                    // At this point sentences needs to be is_valid str.
                     if &sentence.get(0).unwrap()[3..5] == "GG" {
                         let gga_values = nmea::gga::parse_gga(sentence);
                         values.utc = gga_values.utc;
@@ -234,14 +239,16 @@ pub mod gps {
                         values.age_diff_corr = gga_values.age_diff_corr;
                         values.fix_quality = gga_values.sat_fix;
                         gga = false;
-                    } else if &sentence.get(0).unwrap()[3..6] == "VTG" {
+                    }
+                    else if &sentence.get(0).unwrap()[3..6] == "VTG" {
                         let vtg_values = nmea::vtg::parse_vtg(sentence);
                         values.true_course = vtg_values.true_course;
                         values.mag_course = vtg_values.magnetic_course;
                         values.speed_knots = vtg_values.speed_knots;
                         values.speed_kph = vtg_values.speed_kph;
                         vtg = false;
-                    } else if &sentence.get(0).unwrap()[3..6] == "GSA" {
+                    }
+                    else if &sentence.get(0).unwrap()[3..6] == "GSA" {
                         let gsa_values = nmea::gsa::parse_gsa(sentence);
                         values.hdop = gsa_values.hdop;
                         values.vdop = gsa_values.vdop;

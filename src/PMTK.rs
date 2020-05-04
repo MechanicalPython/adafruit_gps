@@ -51,7 +51,7 @@ pub mod send_pmtk {
 
     use serialport::{self, ClearBuffer};
 
-    use crate::gps::{Gps, is_valid_checksum, PortConnection};
+    use crate::gps::{Gps, is_valid_checksum, open_port, PortConnection};
 
     #[derive(Debug, PartialEq)]
     /// PMTK001 return types:
@@ -146,6 +146,7 @@ pub mod send_pmtk {
         Success(u32),
         Fail,
     }
+
     /// Sets baud rate for the gps
     /// If the baud rate you are trying to set is not compatible with the current frequency,
     /// change the frequency first (probably to 1000 miliseconds) and then change the baud rate.
@@ -163,33 +164,23 @@ pub mod send_pmtk {
         // For some reason there are invalid bytes in front of what should be the correct baud rate.
         // So read 200 bytes, and ditch the first 100.
         for rate in possible_baud_rates.iter() {
-            let mut settings = serialport::SerialPortSettings::default();
-            settings.baud_rate = *rate;
-            let mut port = serialport::open_with_settings(&port_name, &settings).unwrap();
-            let _ = port.clear(ClearBuffer::Input);
-            // Read 100 characters, see if it can be parsed.
-            let mut buffer: Vec<u8> = vec![0; 100];
-            let mut output = Vec::new();
-            while output.len() < 200 {
-                match port.read(buffer.as_mut_slice()) {
-                    Ok(buffer_size) => {
-                        output.extend_from_slice(&buffer[..buffer_size]);
+            let mut port = open_port(port_name, baud_rate.parse().unwrap());
+            let mut gps = Gps { port };
+            // Try reading 5 lines.
+            for _ in 0..5 {
+                let line = gps.read_line();
+                dbg!(&line);
+                match line {
+                    PortConnection::Valid(string) => {
+                        let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
+                        let cmd = cmd.as_bytes();
+                        let _ = port.clear(ClearBuffer::Output);
+                        let _ = port.write(cmd);
+
+                        return BaudRateResults::Success(*rate);
                     }
-                    Err(_e) => (),
+                    _ => ()
                 }
-            }
-
-            let string: String = str::from_utf8(&output[100..])
-                .unwrap_or("Invalid bytes given")
-                .to_string();
-            if string != "Invalid bytes given".to_string() {
-                // Set the gps to a new baud rate.
-                let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
-                let cmd = cmd.as_bytes();
-                let _ = port.clear(ClearBuffer::Output);
-                let _ = port.write(cmd);
-
-                return BaudRateResults::Success(*rate);
             }
         }
         return BaudRateResults::Fail;

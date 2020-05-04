@@ -289,12 +289,14 @@ pub mod gps {
             let p = &mut self.port;
             let mut cont = true;
             let start = SystemTime::now();
-            println!("About to read line");
             while cont {
-                println!("ready to match");
+                // If there is no connection, this match statement is looped over with a 1 second time out
+                // as given by the port open.
+                if start.duration_since(start).unwrap() > Duration::from_secs(1) {
+                    return PortOutput{ connection: PortConnection::NoConnection, output: None}
+                }
                 match p.read(buffer.as_mut_slice()) {
                     Ok(buffer_size) => {
-                        println!("Ok buffer");
                         output.extend_from_slice(&buffer[..buffer_size]);
 
                         if output.get(output.len() - 1).unwrap() == &10u8 || output.len() > 255 {
@@ -304,14 +306,12 @@ pub mod gps {
                     Err(_e) => (),
                 }
             }
-            println!("Done");
             let output = str::from_utf8(&output);
             return if output.is_ok() {
                 PortOutput { connection: PortConnection::Valid, output: Some(output.unwrap().to_string()) }
             } else {
                 PortOutput { connection: PortConnection::InvalidBytes, output: None }
             };
-
         }
     }
 }

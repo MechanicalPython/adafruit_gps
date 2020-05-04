@@ -51,7 +51,7 @@ pub mod send_pmtk {
 
     use serialport::{self, ClearBuffer};
 
-    use crate::gps::{GetGpsData, Gps, is_valid_checksum, PortConnection, PortOutput};
+    use crate::gps::{GetGpsData, Gps, is_valid_checksum, PortConnection};
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -338,7 +338,7 @@ pub mod send_pmtk {
                 let line = self.read_line();
                 if line.connection == PortConnection::Valid {
                     let line = line.output.unwrap();
-                    if is_valid_checksum((line.as_str())) {
+                    if is_valid_checksum(line.as_str()) {
                         if &line[0..8] == "$PMTK001" {
                             let line = line.trim();
                             // Remove checksum.

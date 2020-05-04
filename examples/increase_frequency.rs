@@ -4,6 +4,7 @@ pub use adafruit_gps::gps::{self, GetGpsData, Gps, open_port};
 use adafruit_gps::PMTK::send_pmtk::{set_baud_rate};
 
 use std::env;
+use adafruit_gps::gps::PortConnection;
 
 fn main() {
     // These args are just for easy testing for what baud rate and what update rate you want work.
@@ -20,13 +21,16 @@ fn main() {
     let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
     let mut gps = Gps {port, satellite_data: true, naviagtion_data: true };
-    let mut line = String::new();
     // Sometimes the first line read is invalid.
+    let mut valid_count: i32 = 0;
     for _ in 0..5 {
-        line = gps.read_line();
+        let line = gps.read_line();
+        if line.connection == PortConnection::Valid{
+            valid_count += 1;
+        }
     }
-    if line == "Invalid bytes given".to_string() {
-        panic!("invalid baud")
+    if valid_count == 0 {
+        panic!("No valid bytes returned from gps. Try and different baud rate and frequency combination.")
     }
     let r = gps.init(update_rate);
     println!("{:?}", r.get("Update rate").unwrap());

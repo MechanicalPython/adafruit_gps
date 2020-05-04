@@ -26,7 +26,7 @@ fn main() {
         }
         // Convert the String to a Vec<&str>: [$HEADER], [arg 1], etc.
         let output = line.output.unwrap();
-        let line: Vec<&str> = nmea::nmea::parse_sentence(line.as_str()).unwrap();
+        let line: Vec<&str> = nmea::nmea::parse_sentence(output.as_str()).unwrap();
 
         // Parse the Vec<&str> to parse_gsa and return the GsaData struct.
 

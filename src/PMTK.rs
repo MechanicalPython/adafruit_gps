@@ -165,7 +165,7 @@ pub mod send_pmtk {
         // For some reason there are invalid bytes in front of what should be the correct baud rate.
         // So read 200 bytes, and ditch the first 100.
         for rate in possible_baud_rates.iter() {
-            let port = open_port(port_name, baud_rate.parse().unwrap());
+            let port = open_port(port_name, *rate);
             let mut gps = Gps { port };
             // Try reading 5 lines.
             println!("{}", rate);

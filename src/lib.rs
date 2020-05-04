@@ -132,7 +132,7 @@ pub mod gps {
         NoConnection,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub enum GpsSentence {
         GGA(GgaData),
         VTG(VtgData),

@@ -59,19 +59,19 @@ pub mod nmea;
 pub mod gps {
     //! This is the main module around which all other modules interact.
     //! It contains the Gps structure, open port and GpsData that are central to using this module.
+    use std::collections::HashMap;
     use std::io::Read;
     use std::str;
-    use std::time::Duration;
+    use std::time::{SystemTime, Duration};
 
     use serialport::prelude::*;
 
     use crate::nmea;
     use crate::nmea::gsv::Satellites;
-    use crate::PMTK::send_pmtk::{SendPmtk, Pmtk001Ack};
-    use std::collections::HashMap;
+    use crate::PMTK::send_pmtk::{Pmtk001Ack, SendPmtk};
 
     /// Opens the port to the GPS, probably /dev/serial0
-        /// Default baudrate is 9600
+            /// Default baudrate is 9600
     pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
@@ -118,6 +118,16 @@ pub mod gps {
         }
     }
 
+    enum PortConnection {
+        Valid,
+        InvalidBytes,
+        NoConnection,
+    }
+    struct PortLine {
+        connection: PortConnection,
+        output: Option<String>,
+    }
+
     #[derive(Debug)]
     #[derive(Default)]
     /// GpsData is the easy to use, out of the box data set that the update trait will give you.
@@ -158,10 +168,11 @@ pub mod gps {
         /// Returns the GpsData struct
         fn update(&mut self) -> GpsData;
         /// Reads a whole sentence given by the serial buffer
-        fn read_line(&mut self) -> String;
+        fn read_line(&mut self) -> PortOutput;
     }
 
     impl GetGpsData for Gps {
+        /// Not necessary if all the settings are already there.
         /// Return hashmap values:
         /// Update rate: pmtk001 enum
         /// Return type: pmtk001 enum
@@ -185,7 +196,7 @@ pub mod gps {
             let update_rate = self.pmtk_220_set_nmea_updaterate(update_rate);
             hash.insert(String::from("Update rate"), update_rate);
 
-            return hash
+            return hash;
         }
 
         /// Keeps reading sentences until all the required sentences are read.
@@ -200,6 +211,10 @@ pub mod gps {
             let mut values = GpsData::default();
             while (gga == true) || (vtg == true) || (gsa == true) || (gsv == true) {
                 let line = self.read_line();
+                if line == PortOutput::Valid {
+                    line.into()
+                }
+
                 let sentence = nmea::nmea::parse_sentence(line.as_str());
                 if sentence.is_some() {
                     let sentence = sentence.unwrap();
@@ -252,7 +267,8 @@ pub mod gps {
             values
         }
         /// Reads a full sentence from the serial buffer, returns a String.
-        fn read_line(&mut self) -> String {
+        /// "Invalid bytes given" when there are no bytes given.
+        fn read_line(&mut self) -> PortLine {
             // Maximum port buffer size is 4095.
             // Returns whatever is in the port.
             // Start of a line is $ (36) and end is \n (10).
@@ -264,9 +280,13 @@ pub mod gps {
             let mut output: Vec<u8> = Vec::new();
             let p = &mut self.port;
             let mut cont = true;
+            let start = SystemTime::now();
+            println!("About to read line");
             while cont {
+                println!("ready to match");
                 match p.read(buffer.as_mut_slice()) {
                     Ok(buffer_size) => {
+                        println!("Ok buffer");
                         output.extend_from_slice(&buffer[..buffer_size]);
 
                         if output.get(output.len() - 1).unwrap() == &10u8 || output.len() > 255 {
@@ -276,9 +296,14 @@ pub mod gps {
                     Err(_e) => (),
                 }
             }
+            println!("Done");
+            let output = str::from_utf8(&output);
+            return if output.is_ok() {
+                PortLine{ connection: PortConnection::Valid, output: Some(output.unwrap().to_string()),}
+                } else {
+                PortLine{ connection: PortConnection::InvalidBytes, output:None}
+            }
 
-            let string: String = str::from_utf8(&output).unwrap_or("Invalid bytes given").to_string();
-            return string;
         }
     }
 }

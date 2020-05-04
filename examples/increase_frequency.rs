@@ -21,7 +21,7 @@ fn main() {
     // Initialise the Gps.
     let mut gps = Gps {port};
     let update_rate_return = gps.pmtk_220_set_nmea_updaterate(update_rate);
-    println!("update {:?}", update_rate_return);
+    println!("update rate {:?}", update_rate_return);
 
     for _ in 0..10 {
         let values = gps.update();

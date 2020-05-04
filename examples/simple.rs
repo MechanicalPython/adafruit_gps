@@ -8,7 +8,7 @@ fn main() {
     // Baud rate and update rate.
 
     // Open the port that is connected to the GPS module.
-    let port = open_port("/dev/serial0", 9600);
+    let port = open_port("/dev/serial0", 57600);
     // Initialise the Gps.
     let mut gps = Gps {port};
 

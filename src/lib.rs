@@ -125,13 +125,14 @@ pub mod gps {
     }
 
     /// Enum for if the port connection to the gps is valid, gave invalid bytes, or is not connected
-    #[derive(PartialEq)]
+    #[derive(PartialEq, Debug)]
     pub enum PortConnection {
         Valid(String),
         InvalidBytes,
         NoConnection,
     }
 
+    #[derive(Debug)]
     pub enum GpsSentence {
         GGA(GgaData),
         VTG(VtgData),

@@ -1,10 +1,17 @@
 extern crate adafruit_gps;
 
+use std::env;
+
 pub use adafruit_gps::gps::{Gps, open_port, GpsSentence};
 
 fn main() {
+    // Args are baud_rate, port.
+    let args: Vec<String> = env::args().collect();
+    let baud_rate = args.get(1).unwrap();
+    let port = args.get(2).unwrap();
+
     // Open the port that is connected to the GPS module.
-    let port = open_port("/dev/serial0", 9600);
+    let port = open_port(port.as_str(), baud_rate.parse().unwrap());
     // Initialise the Gps.
     let mut gps = Gps {port};
 

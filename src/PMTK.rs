@@ -7,46 +7,20 @@
 //! the gps after sending it a command.
 //!
 //! ## Important commands
-//! pmtk_220_set_nmea_updaterate -> Hz for the gps update rate.
+//! - pmtk_220_set_nmea_updaterate -> Hz for the gps update rate.
+//! - pmtk_314_api_set_nmea_output  -> Sets 6 modes, GLL is not included in any other docs.
 //!
-//! //! pmtk_314_api_set_nmea_output  -> Sets 6 modes, GLL is not included in any other docs.
+//! See [gps impl for all the commands.](../gps/struct.Gps.html)
 //!
 //! ## Changing the baudrate
-//! Given it's a special function, it's a stand alone methon in the send_pmtk module.
-//!
-//! The port baud rate needs to be changed and the gps baudrate needs to be changed. To do so,
-//! a specific set of commands need to be given (changing to 57600, for example):
-//! - stty -F /dev/serial0 raw 9600 cs8 clocal -cstopb
-//! - echo -e "\$PMTK251,57600*2C\r\n" > /dev/serial0
-//! - stty -F /dev/serial0 57600 clocal cread cs8 -cstopb -parenb
-//!
-//! Then open the port at the new baudrate and you're good.
-//!
-//! To remove sources of error, changing the baud rate here will do a full restart, so all saved
-//! options will be removed.
-//!
+//! Given it's a special function, it's a stand alone method in the send_pmtk module.
 //!
 //! ## PMTK return formats
-//! ### PMTK001
-//! The PMTK001 command is the response given when there is a valid command given.
+//! Depending on the command given, the return values change.
 //!
-//! Commands are Invalid, Unsupported, Failed, Successful, or No packet received.
-//!
-//! ### PMTK500
-//! 5** pmtk standards are all reply formats. Each is individual and unique.
-//!
-//! ### Reboot commands
-//! Upon any kind of restart the following is printed:
-//! $CDACK,7,0*49\r\n  -> Unknown what this is.
-//! This is what is given upon wake up.
-//! $PMTK011,MTKGPS*08\r\n -> Output sys message.
-//! $PMTK010,001*2E\r\n -> Sys message, 001 Startup.
-//! $PMTK011,MTKGPS*08\r\n -> 001 txt message, output system message.
-//! $PMTK010,002*2D\r\n -> Sys msg, 002 = Notification, aiding EPO.
-//!
-// Tests for setting baudrate and getting EPO data still fail, unsure why.
 
 pub mod send_pmtk {
+    //! Contains all the pmtk commands that can be sent.
     use std::str;
 
     use serialport::{self, ClearBuffer};
@@ -54,7 +28,7 @@ pub mod send_pmtk {
     use crate::gps::{Gps, is_valid_checksum, open_port, PortConnection};
 
     #[derive(Debug, PartialEq)]
-    /// PMTK001 return types:
+    /// # PMTK001 return values
     ///
     /// - Invalid (No such command)
     /// - Unsupported (Chip type does not support this command)
@@ -65,16 +39,12 @@ pub mod send_pmtk {
         // format: $PMTK001,cmd,flag*checksum\r\n
         //flag: 0
         Invalid,
-
         //flag: 1
         Unsupported,
-
         //flag: 2
         Failed,
-
         //flag: 3
         Success,
-
         NoPacket,
     }
 
@@ -130,6 +100,7 @@ pub mod send_pmtk {
         pub lcwn_lctow_tow: i8,
     }
 
+    /// Adds a $ and a checksum to a given string.
     pub fn add_checksum(sentence: String) -> String {
         let mut checksum = 0;
         for char in sentence.as_bytes() {
@@ -142,6 +113,7 @@ pub mod send_pmtk {
         return checksumed_sentence;
     }
 
+    /// Success (new baud rate) or fail.
     #[derive(Debug, PartialEq)]
     pub enum BaudRateResults {
         Success(u32),
@@ -149,8 +121,9 @@ pub mod send_pmtk {
     }
 
     /// Sets baud rate for the gps
-    /// If the baud rate you are trying to set is not compatible with the current frequency,
-    /// change the frequency first (probably to 1000 miliseconds) and then change the baud rate.
+    /// If the baud rate you are trying to set is not compatible with the current frequency the
+    /// update will fail. Therefore change the frequency first (probably to 1000 miliseconds)
+    /// and then change the baud rate.
     ///
     /// Returns BaudRateResults enum: Success(baud rate), Fail.
     ///

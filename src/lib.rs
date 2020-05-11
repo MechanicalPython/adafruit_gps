@@ -1,11 +1,11 @@
 //! # Adafruit_gps
 //! This is a port from the adafruit python code that reads the output from their GPS systems.
+//! This crate has been tested on a MTK3339 chip on a raspberry pi zero.
+//!
 //! ## Links
-//! Python code: https://github.com/adafruit/Adafruit_CircuitPython_GPS
-//!
-//! GPS module docs: https://learn.adafruit.com/adafruit-ultimate-gps/
-//!
-//! PMTK commands https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf
+//! - Python code: https://github.com/adafruit/Adafruit_CircuitPython_GPS
+//! - GPS module docs: https://learn.adafruit.com/adafruit-ultimate-gps/
+//! - PMTK commands https://cdn-shop.adafruit.com/datasheets/PMTK_A11.pdf
 //!
 //! ## Modules
 //! The PMTK module is a way of easily sending command to the GPS, changing it's settings.
@@ -15,39 +15,53 @@
 //!
 //! ## Hardware specs
 //! Please read the docs for the specific GPS module you are using.
-//! Update rate: 1Hz or 10Hz outputs.
 //!
-//! # Gps struct
-//! port is the open_port option
-//! satellite_data -> the individual satellite data from GSA and GSV
-//! navigation_data -> the naviagtion data from GGA and VTG
+//! Update rate is likely 1Hz to 10Hz.
+//! If increasing the update rate, the baud rate may also need to be increased.
+//! A rule of thumb is, one sentence is 256 bytes -> at 9600 baud rate, 37.5 sentences per second.
 //!
 //! # Module Outputs
-//! gps.update() gives the following outputs in the GpsData struct
+//! gps.update() outputs a GpsSentence enum which mostly gives other structs for different sentence types
 //!
-//! - UTC - The UTC time as a f64
-//! - Latitude - As degrees
-//! - Longitude - As degrees
-//! - Altitude - Altitude above Mean Sea Level in metres.
-//! - True Course - Measured heading, degrees
-//! - Magnetic Course - Measured heading by magnatic north, degrees
-//! - Speed (knots)
-//! - Speed (kph)
-//! - Geoidal Separation - Difference between WGS-84 earth ellipsoid and mean sea level, basically altitude.
-//! - Age Diff Corr - Age in seconds since last update from reference station.
-//! - PDOP - Position DOP
-//! - HDOP - Horizontal DOP
-//! - VDOP - Vertical DOP
-//! - Satellites - As a Vec<Satellites>
-//!     - ID - Satellite id number, 1-32 and 193-195 for QZSS.
-//!     - Elevation - Elevation of the satellite in degrees
-//!     - Azimuth - The degrees from north the satellite is, if it was on the ground.
-//!     - SNR - Signal to Noise ratio: Signal / Noise , 0-99, null if not tracking.
+//! - GGA(GgaData) -> [GgaData](nmea/gga/struct.GgaData.html)
+//! - VTG(VtgData) -> [VtgData](nmea/vtg/struct.VtgData.html)
+//! - GSA(GsaData) -> [GsaData](nmea/gsa/struct.GsaData.html)
+//! - GSV(Vec<Satellites>) -> [Satellites](nmea/gsv/struct.Satellites.html)
+//! - GLL(GllData) -> [GllData](nmea/gll/struct.GllData.html)
+//! - RMC(RmcData) -> [RmcData](nmea/rmc/struct.RmcData.html)
+//! - NoConnection -> The gps is not connected, no bytes are being received
+//! - InvalidBytes -> Bytes being received are not valid, probably port baud rate and gps baud rate mismatch
+//! - InvalidSentence -> Sentence outputted has incorrect checksum, the sentence was probably incomplete.
 //!
-//! Note: DOP is dilution of precision, a measure of error based on the position of the satellites.
+//! # Some technical information
+//! ## Dilution of precision
+//! DOP is dilution of precision, a measure of error based on the position of the satellites.
+//! The smaller the number the better (1 is excellent).
+//!
+//! The DOP is determined by the arrangement of the satellites being tracked.
+//! The DOP can be either vertical or horizontal as different satellite arrangements affect the
+//! vertical and horizontal DOP differently.
+//!
+//! See [This wikipeia page](https://en.wikipedia.org/wiki/Dilution_of_precision_(navigation)) for details
+//!
+//! ## Geoid and Mean sea level
+//! Measuring height is difficult because where 0m is exactly is hard to establish.
+//!
+//! The geoid is the shape that the ocean would take under the influence of gravity and the earth's
+//! rotation alone, ignoring tides and wind.
+//!
+//! The WGS84 ellipsoid is the ideal smooth surface shape of the earth, with no mountains or trenches.
+//!
+//! The height of the geoid given by GgaData geoidal_sep is the difference between the geoid and the
+//! WGS84 ellipsoid. It ranges from +85 m to -106 m.
+//!
+//! A reading of +47 for geoidal_sep means the geoid is 47 metres above the WGS84 ellipsoid.
+//!
+//! Mean sea level is locally defined and changes depending on location. Therefore, altitude given
+//! by the gps is, in my opinion, not overly useful for precise elevation, but rather is useful in
+//! measuring the difference in height between objects.
 //!
 //!
-//! More info on the GPS module at
 //!
 
 extern crate serialport;
@@ -74,7 +88,7 @@ pub mod gps {
     use crate::nmea::vtg::{parse_vtg, VtgData};
 
     /// Opens the port to the GPS, probably /dev/serial0
-                    /// Default baud rate is 9600
+    /// Default baud rate is 9600
     pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
@@ -132,6 +146,7 @@ pub mod gps {
         NoConnection,
     }
 
+    /// Enum for the gps.update() method.
     #[derive(Debug, PartialEq)]
     pub enum GpsSentence {
         GGA(GgaData),

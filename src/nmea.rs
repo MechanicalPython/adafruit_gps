@@ -2,18 +2,14 @@
 //!
 //! # GPS outputs
 //! ## GPS sentence outputs.
-//! - GGA -> UTC, Latitude, longitude, Position fix (GPS, DGPS, No fix), sats used, HDOP, altitude, Geoidal Seperation, Age of diff corr
+//! - GGA -> UTC, Latitude, Longitude, Position fix (GPS, DGPS, No fix), sats used, HDOP, altitude, Geoidal Seperation, Age of diff corr
 //! - VTG -> Course (true), Course (magnetic), speed knots, speed kph, mode.
 //! - GSA -> Manual or Automatic mode, 2D or 3D fix, List of satellites used, PDOP, HDOP, VDOP.
 //! - GSV -> Satellites in view data: sat id, elevation, azimuth and SNR for each sat seen.
+//! - RMC -> UTC, Latitude, Longitude, speed, course, date, magnetic variation.
+//! - GLL -> Latitude, Longitude.
 //!
-//! These two are pointless.
-//! - RMC -> UTC, lat, long, speed, course, date, magnetic variation.
-//! - GLL -> Lat, Long. Pretty pointless sentence.
-//!
-//! On each iteration, all the data is the same. So why not output all the data and gather it all?
-//!
-//! ### Sentence prefix: ${GP, GL, GA, GN}{GGA, GSA, GSV, RMC, VTG}
+//! ## Sentence prefix: ${GP, GL, GA, GN}{GGA, GSA, GSV, RMC, VTG}
 //! GP is short for GPS (American)
 //!
 //! GL is short for GLONASS (Russian)
@@ -96,6 +92,10 @@ pub mod gga {
 
     use super::nmea::*;
 
+    /// Satellite fix type
+    /// - NoFix -> No satellites being received. Default.
+    /// - GpsFix -> Just has a fix using satellites.
+    /// - DgpsFix -> Differential GPS. Uses readings from ground stations to reduce error.
     #[derive(Debug, PartialEq)]
     pub enum SatFix {
         NoFix,
@@ -109,6 +109,16 @@ pub mod gga {
         }
     }
 
+    /// GGA data struct.
+    /// - utc -> UTC
+    /// - lat -> Latitude
+    /// - long -> Longitude
+    /// - sat_fix -> Satellite fix type -> [SatFix](nmea/gga/enum.SatFix.html)
+    /// - satellites_used -> Number of satellites seen by the gps module
+    /// - hdop -> Horizontal Dilution of Precision.
+    /// - msl_alt -> Altitude against Mean Sea Level in metres.
+    /// - geoidal_sep -> Difference between WGS-84 earth ellipsoid and mean sea level in metres.
+    /// - age_diff_corr -> Age in seconds since last update from reference station.
     #[derive(Debug, PartialEq, Default)]
     pub struct GgaData {
         pub utc: f64,
@@ -169,10 +179,11 @@ pub mod gga {
 }
 
 pub mod gsa {
-    //! Parse GSA sentences.
+    //! # Overall Satellite data.
     //!
     //! Gives All the satellites that are being tracked and the HDOP, VDOP, PDOP.
 
+    /// Manual or automatic selection mode for 3d or 2d fix.
     #[derive(PartialEq, Debug)]
     pub enum Mode {
         Manual,
@@ -182,20 +193,33 @@ pub mod gsa {
         fn default() -> Mode {Mode::Manual}
     }
 
+    /// # Dimension fix
+    /// - NotAvailable -> No satellite fix.
+    /// - Dimension2d -> fewer than 4 satellites.
+    /// - Dimension3d -> more than 4 satellites.
     #[derive(PartialEq, Debug)]
-    pub enum DimentionFix {
-        NotAvaliable,
-        Dimention2d,
-        Dimention3d,
+    pub enum DimensionFix {
+        NotAvailable,
+        Dimension2d,
+        Dimension3d,
     }
-    impl Default for DimentionFix {
-        fn default() -> DimentionFix {DimentionFix::NotAvaliable}
+    impl Default for DimensionFix {
+        fn default() -> DimensionFix {DimensionFix::NotAvailable}
     }
 
+    /// # GSA data struct
+    /// - mode -> [Mode](nmea/gsa/enum.Mode.html)
+    /// - dimension_fix -> [DimensionFix](nmea/gsa/enum.DimensionFix.html)
+    /// - sat1 -> Satellite 1 id number
+    /// - sat2 -> Satellite 2 id number
+    /// - ... -> up to 12 satellites.
+    /// - pdop -> Positional Dilution of Precisions
+    /// - hdop -> Horizontal Dilution of Precisions
+    /// - vdop -> Vertical Dilution of Precisions
     #[derive(PartialEq, Debug, Default)]
     pub struct GsaData {
         pub mode: Mode,
-        pub dimention_fix: DimentionFix,
+        pub dimension_fix: DimensionFix,
         pub sat1: Option<i32>,
         pub sat2: Option<i32>,
         pub sat3: Option<i32>,
@@ -243,10 +267,10 @@ pub mod gsa {
             _ => Mode::Manual, // Default.
         };
         let dimention_fix = match args.get(2).unwrap() {
-            &"1" => DimentionFix::NotAvaliable,
-            &"2" => DimentionFix::Dimention2d,
-            &"3" => DimentionFix::Dimention3d,
-            _ => DimentionFix::NotAvaliable,
+            &"1" => DimensionFix::NotAvailable,
+            &"2" => DimensionFix::Dimension2d,
+            &"3" => DimensionFix::Dimension3d,
+            _ => DimensionFix::NotAvailable,
         };
         let sat1: Option<i32> = args.get(3).unwrap().parse::<i32>().ok();
         let sat2: Option<i32> = args.get(4).unwrap().parse::<i32>().ok();
@@ -267,7 +291,7 @@ pub mod gsa {
 
         return GsaData {
             mode,
-            dimention_fix,
+            dimension_fix: dimention_fix,
             sat1,
             sat2,
             sat3,
@@ -294,8 +318,11 @@ pub mod gsv {
     //! multiple sentences.
     //!
 
-    /// This is the individual satellite data given by the GSV sentence. It is used in the
-    /// main GpsData struct, as a Vec<Satellites>.
+    /// The struct for a single satellite. To be accessed as a vector.
+    /// - id -> The satellite id number. 1-32 normally, 193-195 for QZSS (japanese).
+    /// - elevation -> Elevation of the satellite in degrees
+    /// - azimuth -> The degrees from north the satellite is, if it was on the ground.
+    /// - snr -> Signal to Noise ratio: Signal / Noise , 0-99, null if not tracking.
     #[derive(PartialEq, Debug, Default)]
     pub struct Satellites {
         pub id: Option<i32>,
@@ -352,11 +379,20 @@ pub mod gsv {
 }
 
 pub mod rmc {
-    //! Parse RMC sentences.
+    //! # Recommended Minimum data
     //!
     //! Gives UTC, latitude, longitude, Speed, True course, Magnetic course, Date, Magnatic variation
     use super::nmea::*;
 
+    /// # RmcData
+    /// - utc: UTC
+    /// - fix_status: Is there a fix with some satellites? True/False
+    /// - latitude
+    /// - longitude
+    /// - speed: in Knots
+    /// - course: Track angle in degrees against true north.
+    /// - data: the date as a string. ddmmyy.
+    /// - mag_var: Magnetic variation between true north and magnetic north.
     #[derive(PartialEq, Debug, Default)]
     pub struct RmcData {
         pub utc: f64,
@@ -407,7 +443,7 @@ pub mod rmc {
 }
 
 pub mod vtg {
-    //! Parse VTG sentences
+    //! # Vector track an Speed over the Ground
     //!
     //! Gives course headings and speed data.
 
@@ -422,6 +458,12 @@ pub mod vtg {
         fn default() -> Mode {Mode::Unknown}
     }
 
+    /// # VtgData
+    /// - true_course: Course in degrees against true north.
+    /// - magnetic_course: Course in degrees against magnetic north
+    /// - speed_knots
+    /// - speed_kpg
+    /// - mode: [Mode (enum)](nmea/vtg/enum.Mode.html)
     #[derive(PartialEq, Debug, Default)]
     pub struct VtgData {
         pub true_course: Option<f32>,
@@ -458,9 +500,14 @@ pub mod vtg {
 }
 
 pub mod gll {
-    /// This module is basically pointless as all gll data is in the gga data.
+    //! # Longitude and Latitude data only
     use super::nmea::*;
 
+    /// # GllData
+    /// - latitude
+    /// - longitude
+    /// - utc
+    /// - is_valid: Is there a satellite signal? True / false
     #[derive(PartialEq, Debug, Default)]
     pub struct GllData {
         pub latitude: Option<f32>,
@@ -572,7 +619,7 @@ mod nmea_tests {
                 ]),
                 gsa::GsaData {
                     mode: gsa::Mode::Manual,
-                    dimention_fix: gsa::DimentionFix::Dimention2d,
+                    dimension_fix: gsa::DimensionFix::Dimension2d,
                     sat1: Some(1),
                     sat2: Some(2),
                     sat3: Some(3),

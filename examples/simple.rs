@@ -24,8 +24,8 @@ fn main() {
     // If setting the update_rate consistently fails for faster updates, see exmaples/increase_frequency.rs
 
     // Give settings here.
-    gps.pmtk_314_api_set_nmea_output(0, 0, 0, 1, 0, 0, 1);
-    let r = gps.pmtk_220_set_nmea_updaterate("100");
+    gps.pmtk_314_api_set_nmea_output(1, 1, 1, 1, 1, 1, 1);
+    let r = gps.pmtk_220_set_nmea_updaterate("1000");
     println!("{:?}", r);
 
     // In a loop, constantly update the gps. The update trait will give you all the data you
@@ -40,12 +40,13 @@ fn main() {
             GpsSentence::InvalidBytes => println!("Invalid bytes given, try again"),
             GpsSentence::NoConnection => println!("No connection with gps"),
             GpsSentence::GGA(sentence) => {
-                println!("{:?}",sentence.utc);
-                println!("{:?}",sentence.long);
-                println!("{:?}",sentence.lat);
+                println!("UTC: {}\nLat:{}, Long:{}, Sats:{}, MSL Alt:{}",
+                         sentence.utc, sentence.lat, sentence.long, sentence.satellites_used,
+                sentence.msl_alt);
             }
-            GpsSentence::RMC(sentence) => {
-                println!("{:?}", sentence.speed)
+            GpsSentence::GSA(sentence) => {
+                println!("PDOP:{}, VDOP:{}, HDOP:{}",
+                         sentence.pdop, sentence.vdop, sentence.hdop)
             }
             _ => {
                 ()

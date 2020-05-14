@@ -3,7 +3,7 @@ use std::env;
 
 
 use adafruit_gps::gps::{Gps, open_port};
-use adafruit_gps::PMTK::send_pmtk::set_baud_rate;
+use adafruit_gps::send_pmtk::set_baud_rate;
 
 fn main() {
     // These args are just for easy testing for what baud rate and what update rate you want work.

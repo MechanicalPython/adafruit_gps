@@ -28,10 +28,10 @@
 //! In the GP+GL and GP+GL+GA modes, all satellites from those systems are used for the best fix.
 //!
 
-pub mod nmea {
+pub mod parse_nmea {
     //! Main moduel for parsing any NMEA sentence and exporting NMEA parsing to lib.rs
 
-    use crate::gps;
+    use crate::open_gps;
 
     pub fn _parse_degrees(degrees: &str, compass_direction: &str) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
@@ -75,7 +75,7 @@ pub mod nmea {
         if sentence.len() < 6 {
             return None;
         }
-        return if gps::is_valid_checksum(sentence) {
+        return if open_gps::gps::is_valid_checksum(sentence) {
             let sentence: &str = &sentence[0..sentence.len() - 3]; // Remove checksum.
             Some(sentence.split(",").collect())
         } else {
@@ -90,7 +90,7 @@ pub mod gga {
     //! UTC, Latitude, Longitude, Fix quality, Satellites used, HDOP, MSL altitude, Geoidal separation
     //! , Age of difference correction.
 
-    use super::nmea::*;
+    use super::parse_nmea::*;
 
     /// Satellite fix type
     /// - NoFix -> No satellites being received. Default.
@@ -382,7 +382,7 @@ pub mod rmc {
     //! # Recommended Minimum data
     //!
     //! Gives UTC, latitude, longitude, Speed, True course, Magnetic course, Date, Magnatic variation
-    use super::nmea::*;
+    use super::parse_nmea::*;
 
     /// # RmcData
     /// - utc: UTC
@@ -501,7 +501,7 @@ pub mod vtg {
 
 pub mod gll {
     //! # Longitude and Latitude data only
-    use super::nmea::*;
+    use super::parse_nmea::*;
 
     /// # GllData
     /// - latitude

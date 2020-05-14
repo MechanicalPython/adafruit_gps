@@ -806,11 +806,11 @@ mod pmtktests {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use crate::PMTK::send_pmtk::set_baud_rate;
+    use crate::pmtk::send_pmtk::set_baud_rate;
 
     use super::send_pmtk::{DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
     use super::send_pmtk::add_checksum;
-    use super::super::gps::{Gps, open_port};
+    use super::super::open_gps::gps::{Gps, open_port};
 
     #[test]
     fn checksum() {

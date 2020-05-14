@@ -1,8 +1,6 @@
-extern crate adafruit_gps;
 
-pub use adafruit_gps::gps::{Gps, open_port};
-use adafruit_gps::gps::PortConnection;
-use adafruit_gps::nmea;
+
+use adafruit_gps::gps::{Gps, open_port, PortConnection};
 
 fn main() {
     let port = open_port("/dev/serial0", 9600);
@@ -24,7 +22,7 @@ fn main() {
         match line {
             PortConnection::Valid(output) => {
                 // Convert the String to a Vec<&str>: [$HEADER], [arg 1], etc.
-                let line: Vec<&str> = nmea::nmea::parse_sentence(output.as_str()).unwrap();
+                let line: Vec<&str> = nmea::parse_nmea::parse_sentence(output.as_str()).unwrap();
 
                 // Parse the Vec<&str> to parse_gsa and return the GsaData struct.
 

@@ -15,7 +15,7 @@ pub mod gps {
     use crate::nmea::gll::{GllData, parse_gll};
     use crate::nmea::gsa::{GsaData, parse_gsa};
     use crate::nmea::gsv::{parse_gsv, Satellites};
-    use crate::nmea::nmea::parse_sentence;
+    use crate::nmea::parse_nmea::parse_sentence;
     use crate::nmea::rmc::{parse_rmc, RmcData};
     use crate::nmea::vtg::{parse_vtg, VtgData};
 

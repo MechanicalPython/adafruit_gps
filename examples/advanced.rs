@@ -1,6 +1,8 @@
 
 
 use adafruit_gps::gps::{Gps, open_port, PortConnection};
+use adafruit_gps::parse_nmea::parse_sentence;
+use adafruit_gps::{gsa};
 
 fn main() {
     let port = open_port("/dev/serial0", 9600);
@@ -22,7 +24,7 @@ fn main() {
         match line {
             PortConnection::Valid(output) => {
                 // Convert the String to a Vec<&str>: [$HEADER], [arg 1], etc.
-                let line: Vec<&str> = nmea::parse_nmea::parse_sentence(output.as_str()).unwrap();
+                let line: Vec<&str> = parse_sentence(output.as_str()).unwrap();
 
                 // Parse the Vec<&str> to parse_gsa and return the GsaData struct.
 
@@ -30,7 +32,7 @@ fn main() {
                     println!("Not a gsa line")
                 } else {
                     // This line will panic if the sentence isn't a valid GSA.
-                    let _gsa = nmea::gsa::parse_gsa(line);
+                    let _gsa = gsa::parse_gsa(line);
                 }
             },
             PortConnection::InvalidBytes(_) => println!("Invalid bytes"),

@@ -26,6 +26,7 @@ pub mod send_pmtk {
     use serialport::{self, ClearBuffer};
 
     use crate::gps::{Gps, is_valid_checksum, open_port, PortConnection};
+    use crate::open_gps::gps::GpsSentence;
 
     #[derive(Debug, PartialEq)]
     /// # PMTK001 return values
@@ -144,21 +145,19 @@ pub mod send_pmtk {
             let mut gps = Gps { port };
             // Try reading 5 lines.
             for _ in 0..5 {
-                let line = gps.read_line();
+                let line = gps.update();
                 match line {
-                    PortConnection::Valid(string) => {
-                        if string.len() < 20 {
-                            // If it gets only a few valid bytes, then it may be lucky, not a valid string.
-                        } else {
-                            gps.pmtk_220_set_nmea_updaterate("1000");
+                    GpsSentence::InvalidSentence => {},
+                    GpsSentence::NoConnection => {},
+                    GpsSentence::InvalidBytes => {},
+                    _ => {
+                        gps.pmtk_220_set_nmea_updaterate("1000");
                             let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
                             let cmd = cmd.as_bytes();
                             let _ = gps.port.clear(ClearBuffer::Output);
                             let _ = gps.port.write(cmd);
                             return BaudRateResults::Success(*rate);
-                        };
-                    }
-                    _ => (),
+                    },
                 }
             }
         }
@@ -385,16 +384,7 @@ pub mod send_pmtk {
         /// - 2 -> Every second output
         /// ...
         /// - 5 -> Every 5th output
-        pub fn pmtk_314_api_set_nmea_output(
-            &mut self,
-            gll: i8,
-            rmc: i8,
-            vtg: i8,
-            gga: i8,
-            gsa: i8,
-            gsv: i8,
-            pmtkchn_interval: i8,
-        ) -> Pmtk001Ack {
+        pub fn pmtk_314_api_set_nmea_output(&mut self, output: NmeaOutput) -> Pmtk001Ack {
             //! 19 fields can be parsed to this one.
             //!
             //! $PMTK314,{GPGLL},{GPRMC},{GPTVG},{GPGGA},{GPGAS},{GPGSV},{R}..6-17,{PMTKCHN interval}
@@ -407,7 +397,7 @@ pub mod send_pmtk {
             self.send_command(
                 format!(
                     "PMTK314,{},{},{},{},{},{},0,0,0,0,0,0,0,{}",
-                    gll, rmc, vtg, gga, gsa, gsv, pmtkchn_interval
+                    output.gll, output.rmc, output.vtg, output.gga, output.gsa, output.gsv, output.pmtkchn_interval
                 )
                     .as_str(),
             );

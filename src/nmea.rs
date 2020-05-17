@@ -85,10 +85,10 @@ pub mod parse_nmea {
 }
 
 pub mod gga {
-    //! Parse GGA sentences
+    //! GGA: UTC, Latitude, Longitude, Fix quality, Satellites used, HDOP, MSL altitude, Geoidal separation
+    //! Age of difference correction.
     //!
-    //! UTC, Latitude, Longitude, Fix quality, Satellites used, HDOP, MSL altitude, Geoidal separation
-    //! , Age of difference correction.
+    //!
 
     use super::parse_nmea::*;
 

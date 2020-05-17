@@ -3,6 +3,7 @@
 use adafruit_gps::gps::{Gps, open_port, PortConnection};
 use adafruit_gps::parse_nmea::parse_sentence;
 use adafruit_gps::{gsa};
+use adafruit_gps::send_pmtk::NmeaOutput;
 
 fn main() {
     let port = open_port("/dev/serial0", 9600);
@@ -12,7 +13,7 @@ fn main() {
     let mut gps = Gps { port };
 
     // Set what sentences you want to be outputted
-    gps.pmtk_314_api_set_nmea_output(0, 0, 0, 0, 0, 1, 1);
+    gps.pmtk_314_api_set_nmea_output(NmeaOutput{gga: 1, gsa: 1, gsv: 0,  gll: 0, rmc: 0, vtg: 0, pmtkchn_interval: 0 });
 
     // Here you can read your own line and parse it how you like.
     // Note, that once a line is read it is gone. If you don't parse it and then drop the variable

@@ -23,12 +23,12 @@
 //! # Module Outputs
 //! gps.update() outputs a GpsSentence enum which mostly gives other structs for different sentence types
 //!
-//! - GGA(GgaData) -> [GgaData](nmea/gga/struct.GgaData.html)
-//! - VTG(VtgData) -> [VtgData](nmea/vtg/struct.VtgData.html)
-//! - GSA(GsaData) -> [GsaData](nmea/gsa/struct.GsaData.html)
-//! - GSV(Vec<Satellites>) -> [Satellites](nmea/gsv/struct.Satellites.html)
-//! - GLL(GllData) -> [GllData](nmea/gll/struct.GllData.html)
-//! - RMC(RmcData) -> [RmcData](nmea/rmc/struct.RmcData.html)
+//! - GGA(GgaData) -> [GgaData](nmea/gga/struct.GgaData.html): Latitude, Longitude, Position fix, Satellites seen, HDOP, altitude, Geoidal Seperation, Age of difference correction.
+//! - VTG(VtgData) -> [VtgData](nmea/vtg/struct.VtgData.html): Course (true), Course (magnetic), speed knots, speed kph.
+//! - GSA(GsaData) -> [GsaData](nmea/gsa/struct.GsaData.html): List of satellites used, PDOP, HDOP, VDOP.
+//! - GSV(Vec<Satellites>) -> [Satellites](nmea/gsv/struct.Satellites.html): Satellites in view data: sat id, elevation, azimuth and SNR for each sat seen.
+//! - GLL(GllData) -> [GllData](nmea/gll/struct.GllData.html): Latitude, Longitude only.
+//! - RMC(RmcData) -> [RmcData](nmea/rmc/struct.RmcData.html): UTC, Latitude, Longitude, speed, course, date, magnetic variation.
 //! - NoConnection -> The gps is not connected, no bytes are being received
 //! - InvalidBytes -> Bytes being received are not valid, probably port baud rate and gps baud rate mismatch
 //! - InvalidSentence -> Sentence outputted has incorrect checksum, the sentence was probably incomplete.
@@ -70,8 +70,15 @@ mod nmea;
 mod pmtk;
 mod open_gps;
 
-
 pub use crate::open_gps::gps;
 pub use crate::pmtk::send_pmtk;
 pub use crate::nmea::parse_nmea;
 pub use crate::nmea::{gga, gll, gsa, rmc, vtg, gsv};
+
+pub use geodesy;
+pub use geodesy::Coordinate as Coordinate;
+
+pub fn save_gps_coordinates(file_path: &str, coord: Coordinate) {
+
+
+}

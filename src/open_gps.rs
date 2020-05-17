@@ -2,6 +2,9 @@
 /// This module controls the opening and reading of the port to the gps.
 ///
 
+// todo - clean up this code.
+// impl more traits that are useful for Gps, maybe to auto find basic information?
+
 pub mod gps {
     //! This is the main module around which all other modules interact.
     //! It contains the Gps structure, open port and GpsData that are central to using this module.
@@ -190,6 +193,8 @@ pub mod gps {
                 }
             };
         }
+
+        pub fn
     }
 }
 

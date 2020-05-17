@@ -3,6 +3,7 @@ extern crate adafruit_gps;
 use std::env;
 
 use adafruit_gps::gps::{Gps, open_port, GpsSentence};
+use adafruit_gps::send_pmtk::NmeaOutput;
 
 fn main() {
     // Args are baud_rate, port.
@@ -24,7 +25,7 @@ fn main() {
     // If setting the update_rate consistently fails for faster updates, see exmaples/increase_frequency.rs
 
     // Give settings here.
-    gps.pmtk_314_api_set_nmea_output(1, 1, 1, 1, 1, 1, 1);
+    gps.pmtk_314_api_set_nmea_output(NmeaOutput{gga: 1, gsa: 1, gsv: 1,  gll: 1, rmc: 1, vtg: 1, pmtkchn_interval: 1 });
     let r = gps.pmtk_220_set_nmea_updaterate("1000");
     println!("{:?}", r);
 

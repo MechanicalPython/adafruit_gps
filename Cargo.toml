@@ -1,11 +1,11 @@
 [package]
 name = "adafruit_gps"
-version = "0.3.5"
+version = "0.4.0"
 authors = ["Matt Barson <matt.barson@gmail.com>"]
 edition = "2018"
 licence = "MIT OR Apache-2.0"
 license-file = "LICENSE"
-description = "Port of the adafruit python libary for their Ultimate GPS or Adafruit Mini GPS PA1010D."
+description = "GPS parser and reader for the adafruit Ultimate GPS or Adafruit Mini GPS PA1010D."
 readme = "README.md"
 repository = "https://github.com/MechanicalPython/adafruit_gps"
 keywords = ["GPS", "adafruit"]
@@ -19,3 +19,5 @@ path = "src/lib.rs"
 
 [dependencies]
 serialport = "3.3.0"
+geodesy = {path = "geodesy"}
+

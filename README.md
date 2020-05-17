@@ -53,3 +53,12 @@ That said, this code is likely to need improvement, all of which is welcome.
 
 RMC and GGA are both documented but the source code includes GPGLL and GNGGL, neither of which have been tested but have 
 been included in the lib. 
+
+# In case of emergency
+If your gps isn't behaving for some reason the following commands, entered into the terminal, may help. /dev/serial0 
+is the port being used here so change that depending on your situation. 
+
+- echo -e "\$PMTK104*37\r\n" > /dev/serial0 -> cold restart the gps
+- stty -F /dev/serial0 raw 9600 cs8 clocal -cstopb -> change the port baud rate (not the gps baud rate)
+- stty -F /dev/serial0 -> gives the baud rate of the port
+- cat /dev/serial0 -> prints output of the gps. 

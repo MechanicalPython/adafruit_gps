@@ -1,6 +1,5 @@
 extern crate adafruit_gps;
 
-use adafruit_gps::save_gps_coordinates;
 use adafruit_gps::geodesy::Location;
 use adafruit_gps::gps::{Gps, open_port, GpsSentence};
 

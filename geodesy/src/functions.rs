@@ -8,7 +8,7 @@
 /// Work out the distance between two points on the sphere. Then, with pythagoras, work out the
 /// absolute distance.
 
-use super::Coordinate;
+use crate::Coordinate;
 
 pub fn inverse_vincenty(start: &Coordinate, end: &Coordinate) -> f64 {
     #![allow(non_snake_case, non_upper_case_globals)]
@@ -80,13 +80,13 @@ pub fn inverse_vincenty(start: &Coordinate, end: &Coordinate) -> f64 {
 
 pub fn average_long_lat(locations: &Vec<Coordinate>) -> Coordinate {
     //! # Latitude and Longitude variation
-    //! https://stackoverflow.com/questions/6671183/calculate-the-center-point-of-multiple-latitude-longitude-coordinate-pairs
-    //! # Altitude variation
-    //! Simple mean of the altitudes.
-    //!
-    //! Returns a Location structure with each long, lat and altitude being the average. UTC is 0.
-    //!
-    //! Assume that all points in the Vec<Location> are valid.
+//! https://stackoverflow.com/questions/6671183/calculate-the-center-point-of-multiple-latitude-longitude-coordinate-pairs
+//! # Altitude variation
+//! Simple mean of the altitudes.
+//!
+//! Returns a Location structure with each long, lat and altitude being the average. UTC is 0.
+//!
+//! Assume that all points in the Vec<Location> are valid.
     let mut x: f64 = 0.0;
     let mut y: f64 = 0.0;
     let mut z: f64 = 0.0;
@@ -118,9 +118,11 @@ pub fn average_long_lat(locations: &Vec<Coordinate>) -> Coordinate {
     };
 }
 
+
 #[cfg(test)]
 mod test_inverse_vincenty {
-    use super::{inverse_vincenty, Coordinate};
+    use super::super::Coordinate;
+    use crate::functions::inverse_vincenty;
 
     #[test]
     fn test1() {

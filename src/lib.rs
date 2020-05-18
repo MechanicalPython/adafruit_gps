@@ -65,6 +65,8 @@
 //!
 
 //todo https://en.wikipedia.org/wiki/List_of_GPS_satellites
+//todo find the order of all sentences as they are produced.
+
 
 mod nmea;
 mod pmtk;
@@ -76,9 +78,4 @@ pub use crate::nmea::parse_nmea;
 pub use crate::nmea::{gga, gll, gsa, rmc, vtg, gsv};
 
 pub use geodesy;
-pub use geodesy::Coordinate as Coordinate;
 
-pub fn save_gps_coordinates(file_path: &str, coord: Coordinate) {
-
-
-}

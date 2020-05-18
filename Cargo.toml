@@ -15,6 +15,8 @@ keywords = ["GPS", "adafruit"]
 name = "adafruit_gps"
 path = "src/lib.rs"
 
+[workspace]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

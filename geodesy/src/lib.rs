@@ -7,9 +7,11 @@ use std::io::prelude::*;
 /// Make a structure of a series of points and implement.
 /// At any point you are doing stuff to a series of points.
 
-mod functions;
 
 /// This is the basic coordinate data for a single point in space.
+
+mod functions;
+
 #[derive(Default, PartialEq, Debug)]
 pub struct Coordinate {
     pub utc: f64,

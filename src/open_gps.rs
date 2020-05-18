@@ -194,7 +194,6 @@ pub mod gps {
             };
         }
 
-        pub fn
     }
 }
 

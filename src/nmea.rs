@@ -27,6 +27,9 @@
 //!
 //! In the GP+GL and GP+GL+GA modes, all satellites from those systems are used for the best fix.
 //!
+//! ## Notes
+//! For GSA sentences, there is a sentence for each family of satellites seen (GPS, GLONASS and Galileo)
+//!, probably all in that order. It seems that the DOPs are all the same between them.
 
 pub mod parse_nmea {
     //! Main moduel for parsing any NMEA sentence and exporting NMEA parsing to lib.rs

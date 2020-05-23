@@ -21,5 +21,4 @@ path = "src/lib.rs"
 
 [dependencies]
 serialport = "3.3.0"
-geodesy = {path = "geodesy"}
 

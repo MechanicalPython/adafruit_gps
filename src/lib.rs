@@ -77,5 +77,3 @@ pub use crate::pmtk::send_pmtk;
 pub use crate::nmea::parse_nmea;
 pub use crate::nmea::{gga, gll, gsa, rmc, vtg, gsv};
 
-pub use geodesy;
-

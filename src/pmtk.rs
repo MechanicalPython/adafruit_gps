@@ -147,17 +147,17 @@ pub mod send_pmtk {
             for _ in 0..5 {
                 let line = gps.update();
                 match line {
-                    GpsSentence::InvalidSentence => {},
-                    GpsSentence::NoConnection => {},
-                    GpsSentence::InvalidBytes => {},
+                    GpsSentence::InvalidSentence => {}
+                    GpsSentence::NoConnection => {}
+                    GpsSentence::InvalidBytes => {}
                     _ => {
                         gps.pmtk_220_set_nmea_updaterate("1000");
-                            let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
-                            let cmd = cmd.as_bytes();
-                            let _ = gps.port.clear(ClearBuffer::Output);
-                            let _ = gps.port.write(cmd);
-                            return BaudRateResults::Success(*rate);
-                    },
+                        let cmd = add_checksum(format!("PMTK251,{}", baud_rate));
+                        let cmd = cmd.as_bytes();
+                        let _ = gps.port.clear(ClearBuffer::Output);
+                        let _ = gps.port.write(cmd);
+                        return BaudRateResults::Success(*rate);
+                    }
                 }
             }
         }
@@ -791,16 +791,10 @@ pub mod send_pmtk {
     }
 }
 
+
 #[cfg(test)]
-mod pmtktests {
-    use std::thread::sleep;
-    use std::time::Duration;
-
-    use crate::pmtk::send_pmtk::set_baud_rate;
-
-    use super::send_pmtk::{DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
-    use super::send_pmtk::add_checksum;
-    use super::super::open_gps::gps::{Gps, open_port};
+mod checksum_test {
+    use crate::pmtk::send_pmtk::add_checksum;
 
     #[test]
     fn checksum() {
@@ -813,6 +807,17 @@ mod pmtktests {
         );
         assert_eq!(add_checksum("PMTK103".to_string()), "$PMTK103*30\r\n")
     }
+}
+
+#[cfg(test)]
+mod pmtktests {
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    use crate::pmtk::send_pmtk::set_baud_rate;
+
+    use super::send_pmtk::{DgpsMode, EpoData, NmeaOutput, Pmtk001Ack, Sbas, SbasMode};
+    use super::super::open_gps::gps::{Gps, open_port};
 
     fn port_setup() -> Gps {
         let _ = set_baud_rate("9600", "/dev/serial0");
@@ -823,27 +828,32 @@ mod pmtktests {
         return gps;
     }
 
+    #[ignore]
     #[test]
     fn test_pmtk_101_cmd_hot_start() {
         assert_eq!(port_setup().pmtk_101_cmd_hot_start(), true);
     }
 
+    #[ignore]
     #[test]
     fn test_pmtk_102_cmd_warm_start() {
         assert_eq!(port_setup().pmtk_102_cmd_warm_start(), true);
     }
 
+    #[ignore]
     #[test]
     fn test_pmtk_103_cmd_cold_start() {
         assert_eq!(port_setup().pmtk_103_cmd_cold_start(), true);
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_104_cmd_full_cold_start() {
         assert_eq!(port_setup().pmtk_104_cmd_full_cold_start(), true);
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_220_set_nmea_updaterate() {
         assert_eq!(
             port_setup().pmtk_220_set_nmea_updaterate("1000"),
@@ -856,6 +866,7 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_301_api_set_dgps_mode() {
         assert_eq!(
             port_setup().pmtk_301_api_set_dgps_mode(DgpsMode::NoDgps),
@@ -864,11 +875,13 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_401_api_q_dgps_mode() {
         assert_eq!(port_setup().pmtk_401_api_q_dgps_mode(), DgpsMode::WAAS);
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_313_api_set_sbas_enabled() {
         assert_eq!(
             port_setup().pmtk_313_api_set_sbas_enabled(Sbas::Enabled),
@@ -877,13 +890,16 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_413_api_q_sbas_enabled() {
         assert_eq!(port_setup().pmtk_413_api_q_sbas_enabled(), Sbas::Enabled);
     }
 
-    #[test]
+    // #[test]
+    // #[ignore]
     // fn test_ () {assert_eq!(port_setup().pmtk_314_api_set_nm(gll: i8, rmc: i8, vtg: i8, gga: i8, gsa: i8, gsv: i8, pmtkchn_interval: i8), Pmtk001Ack::Success);}
     #[test]
+    #[ignore]
     fn test_pmtk_414_api_q_nmea_output() {
         assert_eq!(
             port_setup().pmtk_414_api_q_nmea_output(),
@@ -900,6 +916,7 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_319_api_set_sbas_mode() {
         assert_eq!(
             port_setup().pmtk_319_api_set_sbas_mode(SbasMode::Integrity),
@@ -908,11 +925,13 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_419_api_q_sbas_mode() {
         assert_eq!(port_setup().pmtk_419_api_q_sbas_mode(), SbasMode::Integrity);
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_605_q_release() {
         assert_eq!(
             port_setup().pmtk_605_q_release(),
@@ -921,11 +940,13 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_127_cmd_clear_epo() {
         assert_eq!(port_setup().pmtk_127_cmd_clear_epo(), Pmtk001Ack::Success);
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_607_q_epo_info() {
         assert_eq!(
             port_setup().pmtk_607_q_epo_info(),
@@ -944,6 +965,7 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_397_set_nav_speed_threshold() {
         assert_eq!(
             port_setup().pmtk_397_set_nav_speed_threshold(0.2),
@@ -960,6 +982,7 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_386_set_nav_speed_threshold() {
         assert_eq!(
             port_setup().pmtk_386_set_nav_speed_threshold(0.2),
@@ -968,12 +991,14 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_447_q_nav_threshold() {
         assert_eq!(port_setup().pmtk_447_q_nav_threshold(), 0.0);
     }
 
     // fn test_ () {assert_eq!(port_setup().pmtk_161_cmd_standby_mode(), Pmtk001Ack::Success);}
     #[test]
+    #[ignore]
     fn test_pmtk_223_set_al_dee_cfg() {
         assert_eq!(
             port_setup().pmtk_223_set_al_dee_cfg(1, 30, 180000, 60000),
@@ -984,6 +1009,7 @@ mod pmtktests {
     // fn test_ () {assert_eq!(port_setup().pmtk_225_cmd_periodic_mode(run_type: u8, run_time: u32, sleep_time: u32,}
     //                                  second_run_time: u32, second_sleep_time: u32), Pmtk001Ack::Success);
     #[test]
+    #[ignore]
     fn test_pmtk_286_cmd_aic_mode() {
         assert_eq!(
             port_setup().pmtk_286_cmd_aic_mode(true),
@@ -992,6 +1018,7 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_869_cmd_easy_enable() {
         assert_eq!(
             port_setup().pmtk_869_cmd_easy_enable(true),
@@ -1000,22 +1027,26 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_869_cmd_easy_query() {
         assert_eq!(port_setup().pmtk_869_cmd_easy_query(), true);
     }
 
     // fn test_ () {assert_eq!(port_setup().pmtk_187_locus_config(locus_interval: i8), Pmtk001Ack::Success);}
     #[test]
+    #[ignore]
     fn test_pmtk_330_api_set_datum() {
         assert_eq!(port_setup().pmtk_330_api_set_datum(0), Pmtk001Ack::Success);
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_430_api_q_datum() {
         assert_eq!(port_setup().pmtk_430_api_q_datum(), 0);
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_351_api_set_support_qzss_nmea() {
         assert_eq!(
             port_setup().pmtk_351_api_set_support_qzss_nmea(false),
@@ -1024,6 +1055,7 @@ mod pmtktests {
     }
 
     #[test]
+    #[ignore]
     fn test_pmtk_352_api_set_stop_qzss() {
         assert_eq!(
             port_setup().pmtk_352_api_set_stop_qzss(true),

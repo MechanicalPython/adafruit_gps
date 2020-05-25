@@ -32,9 +32,10 @@
 //!, probably all in that order. It seems that the DOPs are all the same between them.
 
 pub mod parse_nmea {
-    //! Main moduel for parsing any NMEA sentence and exporting NMEA parsing to lib.rs
+    //! Main module for parsing any NMEA sentence and exporting NMEA parsing to lib.rs
 
     use crate::open_gps;
+    use serde::{Serialize, Deserialize};
 
     pub fn _parse_degrees(degrees: &str, compass_direction: &str) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
@@ -94,12 +95,13 @@ pub mod gga {
     //!
 
     use super::parse_nmea::*;
+    use serde::{Serialize, Deserialize};
 
     /// Satellite fix type
     /// - NoFix -> No satellites being received. Default.
     /// - GpsFix -> Just has a fix using satellites.
     /// - DgpsFix -> Differential GPS. Uses readings from ground stations to reduce error.
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
     pub enum SatFix {
         NoFix,
         GpsFix,
@@ -122,7 +124,7 @@ pub mod gga {
     /// - msl_alt -> Altitude against Mean Sea Level in metres.
     /// - geoidal_sep -> Difference between WGS-84 earth ellipsoid and mean sea level in metres.
     /// - age_diff_corr -> Age in seconds since last update from reference station.
-    #[derive(Debug, PartialEq, Default)]
+    #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
     pub struct GgaData {
         pub utc: f64,
         pub lat: Option<f32>,
@@ -186,8 +188,10 @@ pub mod gsa {
     //!
     //! Gives All the satellites that are being tracked and the HDOP, VDOP, PDOP.
 
+    use serde::{Serialize, Deserialize};
+
     /// Manual or automatic selection mode for 3d or 2d fix.
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Serialize, Deserialize)]
     pub enum Mode {
         Manual,
         Automatic,
@@ -200,7 +204,7 @@ pub mod gsa {
     /// - NotAvailable -> No satellite fix.
     /// - Dimension2d -> fewer than 4 satellites.
     /// - Dimension3d -> more than 4 satellites.
-    #[derive(PartialEq, Debug)]
+    #[derive(PartialEq, Debug, Serialize, Deserialize)]
     pub enum DimensionFix {
         NotAvailable,
         Dimension2d,
@@ -219,7 +223,7 @@ pub mod gsa {
     /// - pdop -> Positional Dilution of Precisions
     /// - hdop -> Horizontal Dilution of Precisions
     /// - vdop -> Vertical Dilution of Precisions
-    #[derive(PartialEq, Debug, Default)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
     pub struct GsaData {
         pub mode: Mode,
         pub dimension_fix: DimensionFix,
@@ -321,12 +325,14 @@ pub mod gsv {
     //! multiple sentences.
     //!
 
+    use serde::{Serialize, Deserialize};
+
     /// The struct for a single satellite. To be accessed as a vector.
     /// - id -> The satellite id number. 1-32 normally, 193-195 for QZSS (japanese).
     /// - elevation -> Elevation of the satellite in degrees
     /// - azimuth -> The degrees from north the satellite is, if it was on the ground.
     /// - snr -> Signal to Noise ratio: Signal / Noise , 0-99, null if not tracking.
-    #[derive(PartialEq, Debug, Default)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
     pub struct Satellites {
         pub id: Option<i32>,
         pub elevation: Option<f32>,
@@ -386,6 +392,7 @@ pub mod rmc {
     //!
     //! Gives UTC, latitude, longitude, Speed, True course, Magnetic course, Date, Magnatic variation
     use super::parse_nmea::*;
+    use serde::{Serialize, Deserialize};
 
     /// # RmcData
     /// - utc: UTC
@@ -396,7 +403,7 @@ pub mod rmc {
     /// - course: Track angle in degrees against true north.
     /// - data: the date as a string. ddmmyy.
     /// - mag_var: Magnetic variation between true north and magnetic north.
-    #[derive(PartialEq, Debug, Default)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
     pub struct RmcData {
         pub utc: f64,
         pub fix_status: bool,
@@ -450,7 +457,9 @@ pub mod vtg {
     //!
     //! Gives course headings and speed data.
 
-    #[derive(PartialEq, Debug)]
+    use serde::{Serialize, Deserialize};
+
+    #[derive(PartialEq, Debug, Serialize, Deserialize)]
     pub enum Mode {
         Autonomous,
         Differential,
@@ -467,7 +476,7 @@ pub mod vtg {
     /// - speed_knots
     /// - speed_kpg
     /// - mode: [Mode (enum)](nmea/vtg/enum.Mode.html)
-    #[derive(PartialEq, Debug, Default)]
+    #[derive(PartialEq, Debug, Default, Deserialize, Serialize)]
     pub struct VtgData {
         pub true_course: Option<f32>,
         pub magnetic_course: Option<f32>,
@@ -505,13 +514,14 @@ pub mod vtg {
 pub mod gll {
     //! # Longitude and Latitude data only
     use super::parse_nmea::*;
+    use serde::{Serialize, Deserialize};
 
     /// # GllData
     /// - latitude
     /// - longitude
     /// - utc
     /// - is_valid: Is there a satellite signal? True / false
-    #[derive(PartialEq, Debug, Default)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
     pub struct GllData {
         pub latitude: Option<f32>,
         pub longitude: Option<f32>,

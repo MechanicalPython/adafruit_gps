@@ -10,6 +10,7 @@ pub mod gps {
     use std::str;
     use std::time::{Duration, SystemTime};
 
+    use serde::{Serialize, Deserialize};
     use serialport::prelude::*;
 
     use crate::nmea::gga::{GgaData, parse_gga};
@@ -80,7 +81,7 @@ pub mod gps {
     }
 
     /// Enum for the gps.update() method.
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
     pub enum GpsSentence {
         GGA(GgaData),
         VTG(VtgData),

@@ -1,6 +1,6 @@
 [package]
 name = "adafruit_gps"
-version = "0.3.6"
+version = "0.4.0"
 authors = ["Matt Barson <matt.barson@gmail.com>"]
 edition = "2018"
 licence = "MIT OR Apache-2.0"
@@ -16,9 +16,13 @@ name = "adafruit_gps"
 path = "src/lib.rs"
 
 [workspace]
-
+members = [
+    "geodesy",
+]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serialport = "3.3.0"
+serde = {version = "1.0.110", features = ["derive"]}
+geodesy = {path = "./geodesy"}
 

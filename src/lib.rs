@@ -77,3 +77,18 @@ pub use crate::pmtk::send_pmtk;
 pub use crate::nmea::parse_nmea;
 pub use crate::nmea::{gga, gll, gsa, rmc, vtg, gsv};
 
+use std::fs::File;
+use std::io::{BufWriter};
+use bincode::serialize_into;
+
+impl gps::GpsSentence {
+    pub fn save(&self, file: &str) {
+        let mut f = BufWriter::new(File::create(file).unwrap());
+        serialize_into(&mut f, self).unwrap();
+    }
+    pub fn read(file: &str) -> gps::GpsSentence {
+        let f = File::open(file).unwrap();
+        let decodes = bincode::deserialize_from(f).unwrap();
+        return decodes
+    }
+}

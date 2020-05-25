@@ -15,6 +15,10 @@ keywords = ["GPS", "adafruit"]
 name = "adafruit_gps"
 path = "src/lib.rs"
 
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
 [workspace]
 members = [
     "geodesy",
@@ -24,5 +28,6 @@ members = [
 [dependencies]
 serialport = "3.3.0"
 serde = {version = "1.0.110", features = ["derive"]}
+bincode = "1.2.1"
 geodesy = {path = "./geodesy"}
 

@@ -98,12 +98,16 @@ pub mod gps {
     /// with the GPS module via the open port.
     ///
     /// Satellite data: true if you want the individual satellite data
-    /// Navigation data: true if you want the naviagion data (lat, long, etc)
+    /// Navigation data: true if you want the navigation data (lat, long, etc)
     pub struct Gps {
         pub port: Box<dyn SerialPort>,
     }
 
     impl Gps {
+        pub fn new(port: &str, baud_rate: &str) -> Gps {
+            Gps{port: open_port(port, baud_rate.parse().unwrap())}
+        }
+
         /// Reads a full sentence from the serial buffer, returns a String.
         /// "Invalid bytes given" when there are no bytes given.
         pub fn read_line(&mut self) -> PortConnection {

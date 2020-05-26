@@ -32,5 +32,5 @@ bincode = "1.2.1"
 geodesy = {path = "./geodesy"}
 
 [dependencies.font-kit]
-git = "https://github.com/pcwalton/font-kit.git"
+git = "https://github.com/servo/font-kit.git"
 

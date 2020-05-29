@@ -34,6 +34,4 @@ geodesy = {path = "./geodesy"}
 [patch.crates-io]
 font-kit = {git = "https://github.com/servo/font-kit.git"}
 
-#[dependencies.font-kit]
-#git = "https://github.com/servo/font-kit.git"
 

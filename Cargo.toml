@@ -32,6 +32,6 @@ bincode = "1.2.1"
 geodesy = {path = "./geodesy"}
 
 [patch.crates-io]
-font-kit = {git = "https://github.com/servo/font-kit.git"}
+font-kit = "0.7.1"
 
 

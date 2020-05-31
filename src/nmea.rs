@@ -35,7 +35,6 @@ pub mod parse_nmea {
     //! Main module for parsing any NMEA sentence and exporting NMEA parsing to lib.rs
 
     use crate::open_gps;
-    use serde::{Serialize, Deserialize};
 
     pub fn _parse_degrees(degrees: &str, compass_direction: &str) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
@@ -101,7 +100,7 @@ pub mod gga {
     /// - NoFix -> No satellites being received. Default.
     /// - GpsFix -> Just has a fix using satellites.
     /// - DgpsFix -> Differential GPS. Uses readings from ground stations to reduce error.
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
     pub enum SatFix {
         NoFix,
         GpsFix,
@@ -124,7 +123,7 @@ pub mod gga {
     /// - msl_alt -> Altitude against Mean Sea Level in metres.
     /// - geoidal_sep -> Difference between WGS-84 earth ellipsoid and mean sea level in metres.
     /// - age_diff_corr -> Age in seconds since last update from reference station.
-    #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
+    #[derive(Debug, PartialEq, Default, Serialize, Deserialize, Clone)]
     pub struct GgaData {
         pub utc: f64,
         pub lat: Option<f32>,
@@ -191,7 +190,7 @@ pub mod gsa {
     use serde::{Serialize, Deserialize};
 
     /// Manual or automatic selection mode for 3d or 2d fix.
-    #[derive(PartialEq, Debug, Serialize, Deserialize)]
+    #[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
     pub enum Mode {
         Manual,
         Automatic,
@@ -204,7 +203,7 @@ pub mod gsa {
     /// - NotAvailable -> No satellite fix.
     /// - Dimension2d -> fewer than 4 satellites.
     /// - Dimension3d -> more than 4 satellites.
-    #[derive(PartialEq, Debug, Serialize, Deserialize)]
+    #[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
     pub enum DimensionFix {
         NotAvailable,
         Dimension2d,
@@ -223,7 +222,7 @@ pub mod gsa {
     /// - pdop -> Positional Dilution of Precisions
     /// - hdop -> Horizontal Dilution of Precisions
     /// - vdop -> Vertical Dilution of Precisions
-    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize, Clone)]
     pub struct GsaData {
         pub mode: Mode,
         pub dimension_fix: DimensionFix,
@@ -332,7 +331,7 @@ pub mod gsv {
     /// - elevation -> Elevation of the satellite in degrees
     /// - azimuth -> The degrees from north the satellite is, if it was on the ground.
     /// - snr -> Signal to Noise ratio: Signal / Noise , 0-99, null if not tracking.
-    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize, Clone)]
     pub struct Satellites {
         pub id: Option<i32>,
         pub elevation: Option<f32>,
@@ -403,7 +402,7 @@ pub mod rmc {
     /// - course: Track angle in degrees against true north.
     /// - data: the date as a string. ddmmyy.
     /// - mag_var: Magnetic variation between true north and magnetic north.
-    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize, Clone)]
     pub struct RmcData {
         pub utc: f64,
         pub fix_status: bool,
@@ -459,7 +458,7 @@ pub mod vtg {
 
     use serde::{Serialize, Deserialize};
 
-    #[derive(PartialEq, Debug, Serialize, Deserialize)]
+    #[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
     pub enum Mode {
         Autonomous,
         Differential,
@@ -476,7 +475,7 @@ pub mod vtg {
     /// - speed_knots
     /// - speed_kpg
     /// - mode: [Mode (enum)](nmea/vtg/enum.Mode.html)
-    #[derive(PartialEq, Debug, Default, Deserialize, Serialize)]
+    #[derive(PartialEq, Debug, Default, Deserialize, Serialize, Clone)]
     pub struct VtgData {
         pub true_course: Option<f32>,
         pub magnetic_course: Option<f32>,
@@ -521,7 +520,7 @@ pub mod gll {
     /// - longitude
     /// - utc
     /// - is_valid: Is there a satellite signal? True / false
-    #[derive(PartialEq, Debug, Default, Serialize, Deserialize)]
+    #[derive(PartialEq, Debug, Default, Serialize, Deserialize, Clone)]
     pub struct GllData {
         pub latitude: Option<f32>,
         pub longitude: Option<f32>,

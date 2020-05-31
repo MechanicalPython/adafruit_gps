@@ -68,27 +68,123 @@
 //todo find the order of all sentences as they are produced.
 
 
+use std::fs::{File, OpenOptions};
+use std::io::BufWriter;
+
+use bincode::serialize_into;
+
+// todo - re export this in a better way with fewer imports.
+pub use crate::nmea::{gga, gll, gsa, gsv, rmc, vtg};
+pub use crate::nmea::parse_nmea;
+pub use crate::open_gps::gps::{Gps, GpsSentence, is_valid_checksum, open_port, PortConnection};
+pub use crate::pmtk::send_pmtk;
+
 mod nmea;
 mod pmtk;
 mod open_gps;
 
-pub use crate::open_gps::gps;
-pub use crate::pmtk::send_pmtk;
-pub use crate::nmea::parse_nmea;
-pub use crate::nmea::{gga, gll, gsa, rmc, vtg, gsv};
+pub trait GpsIO {
+    fn read_from(file: &str) -> Vec<GpsSentence>;
+    fn write_to(&self, file: &str);
+    fn append_to(self, file: &str);
+}
 
-use std::fs::File;
-use std::io::{BufWriter};
-use bincode::serialize_into;
+impl GpsIO for Vec<GpsSentence> {
+    fn read_from(file: &str) -> Vec<GpsSentence> {
+        let f = File::open(file).unwrap();
+        let decode: Vec<GpsSentence> = bincode::deserialize_from(f).unwrap();
+        return decode;
+    }
 
-impl gps::GpsSentence {
-    pub fn save(&self, file: &str) {
+    fn write_to(&self, file: &str) {
         let mut f = BufWriter::new(File::create(file).unwrap());
         serialize_into(&mut f, self).unwrap();
     }
-    pub fn read(file: &str) -> gps::GpsSentence {
+
+    fn append_to(self, _file: &str) { unimplemented!() }
+}
+
+impl GpsSentence {
+    pub fn read_from(file: &str) -> Vec<GpsSentence> {
         let f = File::open(file).unwrap();
-        let decodes = bincode::deserialize_from(f).unwrap();
-        return decodes
+        let decode: Vec<GpsSentence> = bincode::deserialize_from(f).unwrap();
+        return decode;
     }
+
+    /// Write as a vector.
+    pub fn write_to(&self, file: &str) {
+        let value: Vec<&GpsSentence> = vec![self];
+        let mut f = BufWriter::new(File::create(file).unwrap());
+        serialize_into(&mut f, &value).unwrap();
+    }
+
+    /// Append a GpsSentence struct to a Vec<GpsSentence> in a file
+    ///
+    /// Done by reading the file to a vector, pushing the new values and writing the new vector
+    /// to the same file.
+    pub fn append_to(self, file: &str) {
+        let f = OpenOptions::new().read(true).write(true).create(true).open(file).unwrap();
+        // has to open a file if none exist.
+        let decoded = bincode::deserialize_from(f);
+        if decoded.is_ok() {
+            let mut decoded: Vec<GpsSentence> = decoded.unwrap();
+            decoded.push(self);
+            decoded.write_to(file);
+        } else {
+            vec![self].write_to(file);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_read_write {
+    use std::fs::remove_file;
+
+    use crate::GpsIO;
+    use crate::nmea::gga::{GgaData, SatFix};
+
+    use super::GpsSentence;
+
+    const SENTENCE: GpsSentence = GpsSentence::GGA(GgaData {
+        utc: 100.0,
+        lat: Some(51.55465),
+        long: Some(-0.05632),
+        sat_fix: SatFix::DgpsFix,
+        satellites_used: 4,
+        hdop: Some(1.453),
+        msl_alt: Some(42.53),
+        geoidal_sep: Some(47.0),
+        age_diff_corr: None,
+    });
+
+    #[test]
+    fn read_write_single() {
+        SENTENCE.write_to("test");
+        let read = GpsSentence::read_from("test");
+        let _ = remove_file("test");
+        assert_eq!(read, vec![SENTENCE]);
+    }
+
+    #[test]
+    fn read_write_vec() {
+        let s: Vec<GpsSentence> = vec![SENTENCE];
+        s.write_to("vec_test");
+        let read: Vec<GpsSentence> = GpsSentence::read_from("vec_test");
+        assert_eq!(s, read);
+        let _ = remove_file("vec_test");
+    }
+
+    #[test]
+    fn read_and_write_loop() {
+        let mut check_vec = Vec::new();
+        for _ in 0..3 {
+            SENTENCE.append_to("loop_test");
+            check_vec.push(SENTENCE)
+        }
+
+        let read: Vec<GpsSentence> = GpsSentence::read_from("loop_test");
+        assert_eq!(read, check_vec);
+        // let _ = remove_file("loop_test");
+    }
+
 }

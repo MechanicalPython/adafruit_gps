@@ -3,7 +3,7 @@
 
 use super::Coordinate;
 
-use plotters::prelude::*;
+// use plotters::prelude::*;
 
 pub trait Position {
     fn average_long_lat(&self) -> Coordinate;

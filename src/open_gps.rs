@@ -81,7 +81,7 @@ pub mod gps {
     }
 
     /// Enum for the gps.update() method.
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
     pub enum GpsSentence {
         GGA(GgaData),
         VTG(VtgData),

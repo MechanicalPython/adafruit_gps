@@ -25,7 +25,7 @@ pub mod send_pmtk {
 
     use serialport::{self, ClearBuffer};
 
-    use crate::gps::{Gps, is_valid_checksum, open_port, PortConnection};
+    use crate::{Gps, is_valid_checksum, open_port, PortConnection};
     use crate::open_gps::gps::GpsSentence;
 
     #[derive(Debug, PartialEq)]

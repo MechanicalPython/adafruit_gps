@@ -1,6 +1,5 @@
 use geodesy::kinematics::{DeltaCoordinates, Kinematics};
 use geodesy::Coordinate;
-use geodesy::position::Position;
 
 use std::fs::File;
 use std::io::Read;
@@ -35,7 +34,7 @@ fn load_points(file_path: &str) -> Vec<Coordinate> {
 
 
 pub fn main() {
-    let mut locations: Vec<Coordinate> = load_points("feldspar5-4_gps.txt");
+    let locations: Vec<Coordinate> = load_points("feldspar5-4_gps.txt");
 
     let d1 = locations.haversine().speed();
 

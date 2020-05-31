@@ -2,7 +2,7 @@ extern crate adafruit_gps;
 use std::env;
 
 
-use adafruit_gps::gps::{Gps, open_port};
+use adafruit_gps::{Gps, open_port};
 use adafruit_gps::send_pmtk::set_baud_rate;
 
 fn main() {

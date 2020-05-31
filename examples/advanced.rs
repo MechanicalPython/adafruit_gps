@@ -1,6 +1,6 @@
 
 
-use adafruit_gps::gps::{Gps, open_port, PortConnection};
+use adafruit_gps::{Gps, open_port, PortConnection};
 use adafruit_gps::parse_nmea::parse_sentence;
 use adafruit_gps::{gsa};
 use adafruit_gps::send_pmtk::NmeaOutput;

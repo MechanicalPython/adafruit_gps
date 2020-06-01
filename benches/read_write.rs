@@ -24,7 +24,7 @@ const SENTENCE: GpsSentence = GpsSentence::GGA(GgaData {
 #[bench]
 fn bench_write_gps_sentence_at_once(b: &mut Bencher) {
     let mut v = Vec::new();
-    for _ in 0..1000 {
+    for _ in 0..10 {
         v.push(SENTENCE)
     }
 
@@ -37,7 +37,7 @@ fn bench_write_gps_sentence_at_once(b: &mut Bencher) {
 #[bench]
 fn bench_write_gps_sentence(b: &mut Bencher) {
     b.iter(|| {
-        for _ in 0..1000 {
+        for _ in 0..10 {
             SENTENCE.append_to("bench_test2")
         }
         remove_file("bench_test2")
@@ -46,7 +46,7 @@ fn bench_write_gps_sentence(b: &mut Bencher) {
 
 fn predone_setup() -> Vec<GpsSentence> {
     let mut v = Vec::new();
-    for _ in 0..1000 {
+    for _ in 0..10 {
         v.push(SENTENCE)
     }
     return v;
@@ -72,3 +72,9 @@ fn predone_straight(b: &mut Bencher) {
         remove_file("predone2")
     })
 }
+
+//running 4 tests
+// test bench_write_gps_sentence         ... bench: 7,226,068,625 ns/iter (+/- 62,822,335)
+// test bench_write_gps_sentence_at_once ... bench:     627,288 ns/iter (+/- 77,663)
+// test predone_iter                     ... bench: 7,171,678,115 ns/iter (+/- 163,164,323)
+// test predone_straight                 ... bench:     613,634 ns/iter (+/- 52,295)

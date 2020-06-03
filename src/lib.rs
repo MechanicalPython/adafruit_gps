@@ -64,16 +64,15 @@
 //!
 //!
 
-//todo https://en.wikipedia.org/wiki/List_of_GPS_satellites
-//todo find the order of all sentences as they are produced.
-
+// todo https://en.wikipedia.org/wiki/List_of_GPS_satellites
+// todo - re export this in a better way with fewer imports.
+// todo - add docs for new IO features.
 
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
-use bincode::{serialize};
+use bincode::serialize;
 
-// todo - re export this in a better way with fewer imports.
 pub use crate::nmea::{gga, gll, gsa, gsv, rmc, vtg};
 pub use crate::nmea::parse_nmea;
 pub use crate::open_gps::gps::{Gps, GpsSentence, is_valid_checksum, open_port, PortConnection};

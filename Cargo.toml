@@ -19,6 +19,9 @@ path = "src/lib.rs"
 name = "main"
 path = "src/main.rs"
 
+[features]
+unstable = []
+
 [workspace]
 members = [
     "geodesy",

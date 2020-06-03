@@ -1,5 +1,4 @@
 use adafruit_gps::{Gps, GpsSentence};
-use adafruit_gps::gga::GgaData;
 use adafruit_gps::send_pmtk::NmeaOutput;
 
 fn main() {

@@ -6,11 +6,13 @@
 pub mod gps {
     //! This is the main module around which all other modules interact.
     //! It contains the Gps structure, open port and GpsData that are central to using this module.
-    use std::io::Read;
+    use std::fs::{File, OpenOptions};
+    use std::io::{Read, Write};
     use std::str;
     use std::time::{Duration, SystemTime};
 
-    use serde::{Serialize, Deserialize};
+    use bincode::serialize;
+    use serde::{Deserialize, Serialize};
     use serialport::prelude::*;
 
     use crate::nmea::gga::{GgaData, parse_gga};
@@ -22,7 +24,7 @@ pub mod gps {
     use crate::nmea::vtg::{parse_vtg, VtgData};
 
     /// Opens the port to the GPS, probably /dev/serial0
-    /// Default baud rate is 9600
+        /// Default baud rate is 9600
     pub fn open_port(port_name: &str, baud_rate: u32) -> Box<dyn SerialPort> {
         let settings = SerialPortSettings {
             baud_rate,
@@ -105,7 +107,7 @@ pub mod gps {
 
     impl Gps {
         pub fn new(port: &str, baud_rate: &str) -> Gps {
-            Gps{port: open_port(port, baud_rate.parse().unwrap())}
+            Gps { port: open_port(port, baud_rate.parse().unwrap()) }
         }
 
         /// Reads a full sentence from the serial buffer, returns a String.
@@ -196,7 +198,54 @@ pub mod gps {
                 }
             };
         }
+    }
 
+    impl GpsSentence {
+        /// Reads a bytes file of structs to a vector.
+        ///
+        /// Benches at 263,860ns to read a 1,000 long vec.
+        pub fn read_from(file: &str) -> Vec<GpsSentence> {
+            let mut f = File::open(file).unwrap();
+            let mut buffer = Vec::new();
+            let _ = f.read_to_end(&mut buffer);
+            let split = buffer.split(|num| num == &10);
+            let mut struct_vec: Vec<GpsSentence> = Vec::new();
+            for item in split {
+                match bincode::deserialize(item) {
+                    Ok(t) => {
+                        struct_vec.push(t)
+                    }
+                    _ => {}
+                }
+            }
+
+            return struct_vec;
+        }
+
+        /// Append a GpsSentence struct to a file.
+        /// If you wish to write a vector of bytes, run it over an iterator and add each struct
+        /// individually. You must clone the struct that is being iterated over.
+        /// ```
+        /// use adafruit_gps::GpsSentence;
+        /// let v: Vec<GpsSentence> = vec![GpsSenence];
+        /// for s in v.iter() {
+        ///     s.clone().append_to("vector");
+        /// }
+        /// let read: Vec<GpsSentence> = GpsSentence::read_from("vec_test");
+        /// ```
+        ///
+        /// Benches at 55,000,000 ns (0.05 s) for a 1,000 long vector, both as append directly
+        /// or when iterating over a vector.
+        ///
+        /// Append with a \n (10) byte at the end so it can be read back into a vector.
+        pub fn append_to(self, file: &str) {
+            let mut f = OpenOptions::new().append(true).create(true).open(file).unwrap();
+            // has to open a file if none exist.
+
+            let _ = f.write(serialize(&self).unwrap().as_ref());
+            let breakline: [u8; 1] = [10];
+            let _ = f.write(&breakline);
+        }
     }
 }
 
@@ -231,5 +280,58 @@ mod gps_test {
             gps::is_valid_checksum("$GPGSA,A,3,29,02,26,25,31,14,,,,,,,1.42,1.17,0.80*A7\r\n"),
             false
         );
+    }
+}
+
+
+#[cfg(test)]
+mod test_read_write {
+    use std::fs::remove_file;
+
+    use crate::GpsSentence;
+    use crate::nmea::gga::{GgaData, SatFix};
+
+    const SENTENCE: GpsSentence = GpsSentence::GGA(GgaData {
+        utc: 100.0,
+        lat: Some(51.55465),
+        long: Some(-0.05632),
+        sat_fix: SatFix::DgpsFix,
+        satellites_used: 4,
+        hdop: Some(1.453),
+        msl_alt: Some(42.53),
+        geoidal_sep: Some(47.0),
+        age_diff_corr: None,
+    });
+
+    #[test]
+    fn read_write_single() {
+        SENTENCE.append_to("single_test");
+        let read = GpsSentence::read_from("single_test");
+        let _ = remove_file("single_test");
+        assert_eq!(read, vec![SENTENCE]);
+    }
+
+    #[test]
+    fn read_write_vec() {
+        let v: Vec<GpsSentence> = vec![SENTENCE];
+        for s in v.iter() {
+            s.clone().append_to("vec_test");
+        }
+        let read: Vec<GpsSentence> = GpsSentence::read_from("vec_test");
+        let _ = remove_file("vec_test");
+        assert_eq!(v, read);
+    }
+
+    #[test]
+    fn read_and_write_loop() {
+        let mut check_vec = Vec::new();
+        for _ in 0..3 {
+            SENTENCE.append_to("loop_test");
+            check_vec.push(SENTENCE)
+        }
+
+        let read: Vec<GpsSentence> = GpsSentence::read_from("loop_test");
+        let _ = remove_file("loop_test");
+        assert_eq!(read, check_vec);
     }
 }

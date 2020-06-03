@@ -76,9 +76,10 @@
 //!
 //!
 
-// todo https://en.wikipedia.org/wiki/List_of_GPS_satellites
-// todo - re export this in a better way with fewer imports.
-// todo - add docs for new IO features.
+// todo add satellite labels from https://en.wikipedia.org/wiki/List_of_GPS_satellites
+// todo plot long lat
+
+// todo test read write on pi with read data.
 
 
 pub use crate::nmea::{gga, gll, gsa, gsv, rmc, vtg};

@@ -2,19 +2,17 @@ extern crate adafruit_gps;
 
 use std::env;
 
-use adafruit_gps::{Gps, open_port, GpsSentence};
-use adafruit_gps::send_pmtk::NmeaOutput;
+use adafruit_gps::{Gps, GpsSentence};
+use adafruit_gps::NmeaOutput;
 
 fn main() {
-    // Args are baud_rate, port.
+    // Args are baud_rate, port name.
     let args: Vec<String> = env::args().collect();
     let baud_rate = args.get(1).unwrap();
     let port = args.get(2).unwrap();
 
     // Open the port that is connected to the GPS module.
-    let port = open_port(port.as_str(), baud_rate.parse().unwrap());
-    // Initialise the Gps.
-    let mut gps = Gps {port};
+    let mut gps = Gps::new(port, baud_rate);
 
     // gps.init() requires the update rate for the gps (1000 miliseconds (1Hz) is default)
     // It returns a hash map to tell you if setting the update rate was successful and if the

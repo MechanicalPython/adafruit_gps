@@ -2,8 +2,8 @@ extern crate adafruit_gps;
 use std::env;
 
 
-use adafruit_gps::{Gps, open_port};
-use adafruit_gps::send_pmtk::set_baud_rate;
+use adafruit_gps::{Gps};
+use adafruit_gps::set_baud_rate;
 
 fn main() {
     // These args are just for easy testing for what baud rate and what update rate you want work.
@@ -17,9 +17,8 @@ fn main() {
     println!("baud {:?}", r);
 
     // Then open the port to the gps and you're good.
-    let port = open_port("/dev/serial0", baud_rate.parse::<u32>().unwrap());
     // Initialise the Gps.
-    let mut gps = Gps {port};
+    let mut gps = Gps::new("/dev/serial0",  baud_rate);
     let update_rate_return = gps.pmtk_220_set_nmea_updaterate(update_rate);
     println!("update rate {:?}", update_rate_return);
 

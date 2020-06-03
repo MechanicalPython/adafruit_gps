@@ -23,6 +23,7 @@
 //! # Module Outputs
 //! gps.update() outputs a GpsSentence enum which mostly gives other structs for different sentence types
 //!
+//! GpsSentence enum types:
 //! - GGA(GgaData) -> [GgaData](nmea/gga/struct.GgaData.html): Latitude, Longitude, Position fix, Satellites seen, HDOP, altitude, Geoidal Seperation, Age of difference correction.
 //! - VTG(VtgData) -> [VtgData](nmea/vtg/struct.VtgData.html): Course (true), Course (magnetic), speed knots, speed kph.
 //! - GSA(GsaData) -> [GsaData](nmea/gsa/struct.GsaData.html): List of satellites used, PDOP, HDOP, VDOP.
@@ -61,6 +62,17 @@
 //! by the gps is, in my opinion, not overly useful for precise elevation, but rather is useful in
 //! measuring the difference in height between objects.
 //!
+//! ## Saving data
+//! GpsSentence types can be written and read to a bytes file using the the append_to() and read_from()
+//! traits: See examples/example_io.rs for details.
+//! ```
+//! use adafruit_gps::GpsSentence;
+//! use adafruit_gps::gga::GgaData;
+//! let data: Vec<GpsSentence> = GpsSentence::read_from("file"); // Read from file
+//!
+//! GpsSentence::GGA(GgaData::default()).append_to("file"); // Append a single item to a file
+//! ```
+//!
 //!
 //!
 
@@ -74,9 +86,8 @@ use std::io::{Read, Write};
 use bincode::serialize;
 
 pub use crate::nmea::{gga, gll, gsa, gsv, rmc, vtg};
-pub use crate::nmea::parse_nmea;
-pub use crate::open_gps::gps::{Gps, GpsSentence, is_valid_checksum, open_port, PortConnection};
-pub use crate::pmtk::send_pmtk;
+pub use crate::open_gps::gps::{Gps, GpsSentence};
+pub use crate::pmtk::send_pmtk::{set_baud_rate, NmeaOutput};
 
 mod nmea;
 mod pmtk;
@@ -109,6 +120,7 @@ impl GpsSentence {
     /// If you wish to write a vector of bytes, run it over an iterator and add each struct
     /// individually. You must clone the struct that is being iterated over.
     /// ```
+    /// use adafruit_gps::GpsSentence;
     /// let v: Vec<GpsSentence> = vec![GpsSenence];
     /// for s in v.iter() {
     ///     s.clone().append_to("vector");

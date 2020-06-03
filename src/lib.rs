@@ -69,9 +69,9 @@
 
 
 use std::fs::{File, OpenOptions};
-use std::io::BufWriter;
+use std::io::{BufWriter, Read, Write};
 
-use bincode::serialize_into;
+use bincode::{serialize, serialize_into};
 
 // todo - re export this in a better way with fewer imports.
 pub use crate::nmea::{gga, gll, gsa, gsv, rmc, vtg};
@@ -106,9 +106,23 @@ impl GpsIO for Vec<GpsSentence> {
 
 impl GpsSentence {
     pub fn read_from(file: &str) -> Vec<GpsSentence> {
-        let f = File::open(file).unwrap();
-        let decode: Vec<GpsSentence> = bincode::deserialize_from(f).unwrap();
-        return decode;
+        let mut f = File::open(file).unwrap();
+        let mut buffer = Vec::new();
+        let _ = f.read_to_end(&mut buffer);
+        let split = buffer.split(|num| num == &10);
+        let mut struct_vec: Vec<GpsSentence> = Vec::new();
+        for item in split {
+            match bincode::deserialize(item) {
+                Ok(T) => {
+                    struct_vec.push(T)
+                }
+                _ => {}
+            }
+        }
+
+        // let decode: Vec<GpsSentence> = bincode::deserialize_from(f).unwrap();
+        // return decode;
+        return struct_vec;
     }
 
     /// Write as a vector.
@@ -120,19 +134,14 @@ impl GpsSentence {
 
     /// Append a GpsSentence struct to a Vec<GpsSentence> in a file
     ///
-    /// Done by reading the file to a vector, pushing the new values and writing the new vector
-    /// to the same file.
+    /// Append with a \n (10) byte for it to be read back into a vector.
     pub fn append_to(self, file: &str) {
-        let f = OpenOptions::new().read(true).write(true).create(true).open(file).unwrap();
+        let mut f = OpenOptions::new().append(true).create(true).open(file).unwrap();
         // has to open a file if none exist.
-        let decoded = bincode::deserialize_from(f);
-        if decoded.is_ok() {
-            let mut decoded: Vec<GpsSentence> = decoded.unwrap();
-            decoded.push(self);
-            decoded.write_to(file);
-        } else {
-            vec![self].write_to(file);
-        }
+
+        let _ = f.write(serialize(&self).unwrap().as_ref());
+        let breakline: [u8; 1] = [10];
+        let _ = f.write(&breakline);
     }
 }
 
@@ -186,5 +195,4 @@ mod test_read_write {
         assert_eq!(read, check_vec);
         // let _ = remove_file("loop_test");
     }
-
 }

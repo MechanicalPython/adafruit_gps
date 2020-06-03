@@ -1,10 +1,11 @@
-#[cfg(all(feature = "unstable", test))]
-mod benches {
-    #![cfg_attr(feature = "unstable", feature(test))]
+#![cfg_attr(all(feature = "bench", test), feature(test))]
+
+#[cfg(all(feature = "bench", test))]
+mod bench {
     extern crate test;
+    use test::Bencher;
 
     use std::fs::{OpenOptions, remove_file};
-    use test::Bencher;
 
     use adafruit_gps::GpsSentence;
     use adafruit_gps::gga::{GgaData, SatFix};
@@ -79,12 +80,19 @@ mod benches {
     }
 }
 
-// 10 iter in loop.
+// 10 vec size
 //running 4 tests
 // open,append,write,open,append         ... bench: 7,226,068,625 ns/iter (+/- 62,822,335)
 // write a vector at once                ... bench:     627,288 ns/iter (+/- 77,663)
 
-// 10 iter loops
+// 10 vec size
 //test bench_append ... bench:     524,309 ns/iter (+/- 699,760)
 // test bench_read   ... bench:      38,062 ns/iter (+/- 64,274)
 // test bench_vector ... bench:     628,855 ns/iter (+/- 1,559,046)
+
+// 1_000 vec size
+// test bench::bench_append               ... bench:  60,682,417 ns/iter (+/- 20,183,738)
+// test bench::bench_read                 ... bench:     381,251 ns/iter (+/- 408,040)
+// test bench::bench_write_vector         ... bench:  59,685,097 ns/iter (+/- 36,056,185)
+
+// 1_000_000 vec size

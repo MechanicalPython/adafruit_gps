@@ -20,7 +20,7 @@ name = "main"
 path = "src/main.rs"
 
 [features]
-unstable = []
+bench = []
 
 [workspace]
 members = [

@@ -69,9 +69,9 @@
 
 
 use std::fs::{File, OpenOptions};
-use std::io::{BufWriter, Read, Write};
+use std::io::{Read, Write};
 
-use bincode::{serialize, serialize_into};
+use bincode::{serialize};
 
 // todo - re export this in a better way with fewer imports.
 pub use crate::nmea::{gga, gll, gsa, gsv, rmc, vtg};
@@ -83,28 +83,11 @@ mod nmea;
 mod pmtk;
 mod open_gps;
 
-pub trait GpsIO {
-    fn read_from(file: &str) -> Vec<GpsSentence>;
-    fn write_to(&self, file: &str);
-    fn append_to(self, file: &str);
-}
-
-impl GpsIO for Vec<GpsSentence> {
-    fn read_from(file: &str) -> Vec<GpsSentence> {
-        let f = File::open(file).unwrap();
-        let decode: Vec<GpsSentence> = bincode::deserialize_from(f).unwrap();
-        return decode;
-    }
-
-    fn write_to(&self, file: &str) {
-        let mut f = BufWriter::new(File::create(file).unwrap());
-        serialize_into(&mut f, self).unwrap();
-    }
-
-    fn append_to(self, _file: &str) { unimplemented!() }
-}
 
 impl GpsSentence {
+    /// Reads a bytes file of structs to a vector.
+    ///
+    /// Benches at 263,860ns to read a 1,000 long vec.
     pub fn read_from(file: &str) -> Vec<GpsSentence> {
         let mut f = File::open(file).unwrap();
         let mut buffer = Vec::new();
@@ -113,28 +96,31 @@ impl GpsSentence {
         let mut struct_vec: Vec<GpsSentence> = Vec::new();
         for item in split {
             match bincode::deserialize(item) {
-                Ok(T) => {
-                    struct_vec.push(T)
+                Ok(t) => {
+                    struct_vec.push(t)
                 }
                 _ => {}
             }
         }
 
-        // let decode: Vec<GpsSentence> = bincode::deserialize_from(f).unwrap();
-        // return decode;
         return struct_vec;
     }
 
-    /// Write as a vector.
-    pub fn write_to(&self, file: &str) {
-        let value: Vec<&GpsSentence> = vec![self];
-        let mut f = BufWriter::new(File::create(file).unwrap());
-        serialize_into(&mut f, &value).unwrap();
-    }
-
-    /// Append a GpsSentence struct to a Vec<GpsSentence> in a file
+    /// Append a GpsSentence struct to a file.
+    /// If you wish to write a vector of bytes, run it over an iterator and add each struct
+    /// individually. You must clone the struct that is being iterated over.
+    /// ```
+    /// let v: Vec<GpsSentence> = vec![GpsSenence];
+    /// for s in v.iter() {
+    ///     s.clone().append_to("vector");
+    /// }
+    /// let read: Vec<GpsSentence> = GpsSentence::read_from("vec_test");
+    /// ```
     ///
-    /// Append with a \n (10) byte for it to be read back into a vector.
+    /// Benches at 55,000,000 ns (0.05 s) for a 1,000 long vector, both as append directly
+    /// or when iterating over a vector.
+    ///
+    /// Append with a \n (10) byte at the end so it can be read back into a vector.
     pub fn append_to(self, file: &str) {
         let mut f = OpenOptions::new().append(true).create(true).open(file).unwrap();
         // has to open a file if none exist.
@@ -149,7 +135,6 @@ impl GpsSentence {
 mod test_read_write {
     use std::fs::remove_file;
 
-    use crate::GpsIO;
     use crate::nmea::gga::{GgaData, SatFix};
 
     use super::GpsSentence;
@@ -168,19 +153,21 @@ mod test_read_write {
 
     #[test]
     fn read_write_single() {
-        SENTENCE.write_to("test");
-        let read = GpsSentence::read_from("test");
-        let _ = remove_file("test");
+        SENTENCE.append_to("single_test");
+        let read = GpsSentence::read_from("single_test");
+        let _ = remove_file("single_test");
         assert_eq!(read, vec![SENTENCE]);
     }
 
     #[test]
     fn read_write_vec() {
-        let s: Vec<GpsSentence> = vec![SENTENCE];
-        s.write_to("vec_test");
+        let v: Vec<GpsSentence> = vec![SENTENCE];
+        for s in v.iter() {
+            s.clone().append_to("vec_test");
+        }
         let read: Vec<GpsSentence> = GpsSentence::read_from("vec_test");
-        assert_eq!(s, read);
         let _ = remove_file("vec_test");
+        assert_eq!(v, read);
     }
 
     #[test]
@@ -192,7 +179,7 @@ mod test_read_write {
         }
 
         let read: Vec<GpsSentence> = GpsSentence::read_from("loop_test");
+        let _ = remove_file("loop_test");
         assert_eq!(read, check_vec);
-        // let _ = remove_file("loop_test");
     }
 }

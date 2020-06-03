@@ -4,9 +4,9 @@ extern crate test;
 
 use test::Bencher;
 
-use std::fs::remove_file;
+use std::fs::{remove_file, OpenOptions};
 
-use adafruit_gps::{GpsIO, GpsSentence};
+use adafruit_gps::{GpsSentence};
 use adafruit_gps::gga::{GgaData, SatFix};
 
 const SENTENCE: GpsSentence = GpsSentence::GGA(GgaData {
@@ -21,60 +21,73 @@ const SENTENCE: GpsSentence = GpsSentence::GGA(GgaData {
     age_diff_corr: None,
 });
 
+const VECTOR_SIZE: i32 = 1_000;
+
 #[bench]
-fn bench_write_gps_sentence_at_once(b: &mut Bencher) {
+fn bench_write_vector(b: &mut Bencher) {
     let mut v = Vec::new();
-    for _ in 0..10 {
+    for _ in 0..VECTOR_SIZE {
         v.push(SENTENCE)
     }
 
     b.iter(|| {
-        v.write_to("bench_test1");
-        remove_file("bench_test1")
-    })
+        for s in v.iter() {
+            s.clone().append_to("bench_test1")
+        }
+        let _ = remove_file("bench_test1");
+    });
+
 }
 
 #[bench]
-fn bench_write_gps_sentence(b: &mut Bencher) {
+fn bench_append(b: &mut Bencher) {
     b.iter(|| {
-        for _ in 0..10 {
+        for _ in 0..VECTOR_SIZE {
             SENTENCE.append_to("bench_test2")
         }
-        remove_file("bench_test2")
-    })
-}
+        let _ = remove_file("bench_test2");
+    });
 
-fn predone_setup() -> Vec<GpsSentence> {
-    let mut v = Vec::new();
-    for _ in 0..10 {
-        v.push(SENTENCE)
-    }
-    return v;
 }
 
 #[bench]
-fn predone_iter(b: &mut Bencher) {
-    let v = predone_setup();
+fn bench_append_single_struct(b: &mut Bencher) {
     b.iter(|| {
-        for i in v.iter() {
-            let i = i.clone();
-            i.append_to("predone1")
+        for _ in 0..1 {
+            SENTENCE.append_to("bench_test2")
         }
-        remove_file("predone1")
+        let _ = remove_file("bench_test2");
+    });
+}
+
+#[bench]
+fn bench_open_remove_file(b: &mut Bencher) {
+    b.iter(|| {
+        let _f = OpenOptions::new().append(true).create(true).open("test_remove_file").unwrap();
+        let _ = remove_file("test_remove_file");
     })
 }
 
 #[bench]
-fn predone_straight(b: &mut Bencher) {
-    let v = predone_setup();
+fn bench_read(b: &mut Bencher) {
+    for _ in 0..VECTOR_SIZE {
+            SENTENCE.append_to("bench_read")
+    }
+
     b.iter(|| {
-        v.write_to("predone2");
-        remove_file("predone2")
-    })
+        GpsSentence::read_from("bench_read")
+    });
+    let _ = remove_file("bench_read");
 }
 
+
+
+// 10 iter in loop.
 //running 4 tests
-// test bench_write_gps_sentence         ... bench: 7,226,068,625 ns/iter (+/- 62,822,335)
-// test bench_write_gps_sentence_at_once ... bench:     627,288 ns/iter (+/- 77,663)
-// test predone_iter                     ... bench: 7,171,678,115 ns/iter (+/- 163,164,323)
-// test predone_straight                 ... bench:     613,634 ns/iter (+/- 52,295)
+// open,append,write,open,append         ... bench: 7,226,068,625 ns/iter (+/- 62,822,335)
+// write a vector at once                ... bench:     627,288 ns/iter (+/- 77,663)
+
+// 10 iter loops
+//test bench_append ... bench:     524,309 ns/iter (+/- 699,760)
+// test bench_read   ... bench:      38,062 ns/iter (+/- 64,274)
+// test bench_vector ... bench:     628,855 ns/iter (+/- 1,559,046)

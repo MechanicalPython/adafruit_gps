@@ -1,4 +1,4 @@
-use adafruit_gps::{Gps, GpsIO, GpsSentence};
+use adafruit_gps::{Gps, GpsSentence};
 use adafruit_gps::gga::GgaData;
 use adafruit_gps::send_pmtk::NmeaOutput;
 
@@ -11,6 +11,6 @@ fn main() {
         let values = gps.update();
         values.append_to("main_test");
     }
-    let gps = <Vec<GpsSentence> as GpsIO>::read_from("main_test");
+    let gps = GpsSentence::read_from("main_test");
     println!("{:?}", gps);
 }

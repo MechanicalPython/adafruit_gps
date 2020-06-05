@@ -200,8 +200,8 @@ pub mod gps {
         }
     }
 
-    // todo - ensure that appending is done by acident if the same program is run multiple times.
-    // Some kind of init or new()?
+    // todo - ensure that appending is done by accident if the same program is run multiple times.
+    // Some kind of init or new()? Make a new file first and then append?
     impl GpsSentence {
         /// Reads a bytes file of structs to a vector.
         ///

@@ -8,7 +8,7 @@ fn main() {
     loop {
         let values = gps.update();
 
-        match values {
+        match values.clone() {
             GpsSentence::InvalidSentence => println!("Invalid sentence, try again"),
             GpsSentence::InvalidBytes => println!("Invalid bytes given, try again"),
             GpsSentence::NoConnection => println!("No connection with gps"),

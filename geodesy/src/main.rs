@@ -4,11 +4,10 @@
 use std::fs::File;
 use std::io::Read;
 
-use adafruit_gps::{GpsSentence};
-use adafruit_gps::gga::{GgaData};
-use adafruit_gps::gsa::{GsaData};
+use adafruit_gps::GpsSentence;
+use adafruit_gps::gga::GgaData;
+use adafruit_gps::gsa::GsaData;
 use geodesy::position::{GpsSentenceConverter, Position};
-
 
 #[allow(dead_code)]
 fn convert_to_bytes(file_path: &str, bytes_file: &str) {
@@ -21,8 +20,8 @@ fn convert_to_bytes(file_path: &str, bytes_file: &str) {
 
     for line in data {
         let line: Vec<&str> = line.split(",").collect();
-        if line.get(0).unwrap() == & "GGA"{
-            let gga = GpsSentence::GGA(GgaData{
+        if line.get(0).unwrap() == &"GGA" {
+            let gga = GpsSentence::GGA(GgaData {
                 utc: line.get(1).unwrap().parse().unwrap(),
                 lat: Some(line.get(2).unwrap().parse().unwrap()),
                 long: Some(line.get(3).unwrap().parse().unwrap()),
@@ -31,12 +30,11 @@ fn convert_to_bytes(file_path: &str, bytes_file: &str) {
                 hdop: None,
                 msl_alt: Some(line.get(5).unwrap().parse().unwrap()),
                 geoidal_sep: None,
-                age_diff_corr: None
+                age_diff_corr: None,
             });
             gga.append_to(&bytes_file)
-            
         } else if line.get(0).unwrap() == &"GSA" {
-            let gsa = GpsSentence::GSA(GsaData{
+            let gsa = GpsSentence::GSA(GsaData {
                 mode: Default::default(),
                 dimension_fix: Default::default(),
                 sat1: None,
@@ -56,14 +54,15 @@ fn convert_to_bytes(file_path: &str, bytes_file: &str) {
                 vdop: Some(line.get(2).unwrap().parse().unwrap()),
             });
             gsa.append_to(&bytes_file)
-        } else { }
+        } else {}
     }
 }
 
 
 fn main() {
-    let vec = GpsSentence::read_from("./geodesy/feldspar5-4_gps");
-    let coords = vec.to_coords();
-    coords.plot_positions("5-4_test");
+    let flight_num = "2";
+    let vec = GpsSentence::read_from(format!("./feldspar5-{}_gps", flight_num).as_str());
 
+    let coords = vec.to_coords();
+    coords.to_klm(format!("5-{}", flight_num).as_str(), format!("Feldspar 5-{} flight path", flight_num).as_str());
 }

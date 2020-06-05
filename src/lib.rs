@@ -76,10 +76,6 @@
 //!
 //!
 
-// todo plot long lat
-
-// todo test read write on pi with read data.
-
 
 pub use crate::nmea::{gga, gll, gsa, gsv, rmc, vtg};
 pub use crate::open_gps::gps::{Gps, GpsSentence};
@@ -89,3 +85,4 @@ mod nmea;
 mod pmtk;
 mod open_gps;
 
+// todo - Geodesy crate to spit out a KLM package that can then be uploaded to google earth.

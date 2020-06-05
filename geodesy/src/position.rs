@@ -2,11 +2,14 @@ use plotters::prelude::*;
 
 use adafruit_gps::GpsSentence;
 
+use crate::kinematics::{inverse_vincenty};
+
 /// # Position Accuracy
 /// Given a set of coordinates, produce the average longitude and latitude,
 
 use super::Coordinate;
-use crate::kinematics::{haversine, inverse_vincenty};
+use std::fs::File;
+use std::io::Write;
 
 // use adafruit_gps::gga::GgaData;
 // use adafruit_gps::rmc::RmcData;
@@ -57,7 +60,8 @@ impl GpsSentenceConverter for Vec<GpsSentence> {
 pub trait Position {
     fn average_long_lat(&self) -> Coordinate;
     fn pprint(&self);
-    fn plot_positions(&self, name:&str);
+    fn plot_positions(&self, name: &str);
+    fn to_klm(&self, name: &str, description: &str) -> std::io::Result<()>;
 }
 
 impl Position for Vec<Coordinate> {
@@ -121,12 +125,12 @@ impl Position for Vec<Coordinate> {
         let max_lat = latitudes.iter().cloned().fold(0. / 0., f32::max);
 
         // x axis is
-        let x_axis = inverse_vincenty(
-            &Coordinate{utc:0.0, latitude:Some(min_lat), longitude: Some(min_long), altitude:Some(0.0)},
-        &Coordinate{utc:0.0, latitude:Some(min_lat), longitude: Some(max_long), altitude:Some(0.0)});
-        let y_axis = inverse_vincenty(
-            &Coordinate{utc:0.0, latitude:Some(min_lat), longitude: Some(min_long), altitude:Some(0.0)},
-            &Coordinate{utc:0.0, latitude:Some(max_lat), longitude: Some(max_long), altitude:Some(0.0)}
+        let _x_axis = inverse_vincenty(
+            &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(min_long), altitude: Some(0.0) },
+            &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(max_long), altitude: Some(0.0) });
+        let _y_axis = inverse_vincenty(
+            &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(min_long), altitude: Some(0.0) },
+            &Coordinate { utc: 0.0, latitude: Some(max_lat), longitude: Some(max_long), altitude: Some(0.0) },
         );
 
         let file_name = format!("images/{}.png", name);
@@ -147,6 +151,53 @@ impl Position for Vec<Coordinate> {
             LineSeries::new(
                 positions, &BLUE))
             .unwrap();
+    }
+
+
+    fn to_klm(&self, name: &str, description: &str) -> std::io::Result<()>{
+        let mut coordinates = String::new();
+        for c in self.iter() {
+            if c.latitude.is_some() && c.longitude.is_some() && c.altitude.is_some() {
+                coordinates.push_str(format!(
+                    "{},{},{}
+                    ", c.longitude.unwrap(), c.latitude.unwrap(), c.altitude.unwrap()).as_str());
+            }
+        }
+
+        let mut klm_string = String::new();
+        klm_string.push_str(
+            format!(
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<kml xmlns=\"http://www.opengis.net/kml/2.2\">
+  <Document>
+    <name>{}</name>
+    <description>{}</description>
+    <Style id=\"yellowLineGreenPoly\">
+      <LineStyle>
+        <color>7f00ffff</color>
+        <width>4</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>7f00ff00</color>
+      </PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Coordinate path</name>
+      <description>Transparent green wall with yellow outlines</description>
+      <styleUrl>#yellowLineGreenPoly</styleUrl>
+      <LineString>
+        <extrude>1</extrude>
+        <tessellate>1</tessellate>
+        <altitudeMode>absolute</altitudeMode>
+        <coordinates> {} </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>
+            ", name, description, coordinates).as_str());
+        let mut file = File::create(format!("{}.kml", name))?;
+        file.write_all(klm_string.as_bytes())?;
+        Ok(())
     }
 }
 

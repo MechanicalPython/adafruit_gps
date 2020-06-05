@@ -23,9 +23,10 @@ pub fn inverse_vincenty(start: &Coordinate, end: &Coordinate) -> f64 {
     const f: f64 = 1_f64 / 298.257223563;  // flattening of the ellipsoid
     const b: f64 = (1_f64 - f) * a;  // radius at the poles - 6356752.314245 meters in WGS-84
 
-    let U1: f64 = ((1_f64 - f) * start.latitude.to_radians().tan()).atan();  // Reduced latitude (latitude on the auxiliary sphere)
-    let U2: f64 = ((1_f64 - f) * end.latitude.to_radians().tan()).atan();
-    let L: f64 = end.longitude.to_radians() - start.longitude.to_radians();
+
+    let U1: f64 = ((1_f64 - f) * start.latitude.unwrap().to_radians().tan() as f64).atan();  // Reduced latitude (latitude on the auxiliary sphere)
+    let U2: f64 = ((1_f64 - f) * end.latitude.unwrap().to_radians().tan() as f64).atan();
+    let L: f64 = (end.longitude.unwrap().to_radians() - start.longitude.unwrap().to_radians()) as f64;
 
     let sinU1 = U1.sin();
     let cosU1 = U1.cos();
@@ -88,10 +89,10 @@ pub fn inverse_vincenty(start: &Coordinate, end: &Coordinate) -> f64 {
 ///
 /// (Haversine wiki) [https://en.wikipedia.org/wiki/Haversine_formula]
 pub fn haversine(start: &Coordinate, end: &Coordinate) -> f64 {
-    let lat1 = start.latitude.to_radians();
-    let lat2 = end.latitude.to_radians();
-    let long1 = start.longitude.to_radians();
-    let long2 = end.longitude.to_radians();
+    let lat1 = start.latitude.unwrap().to_radians() as f64;
+    let lat2 = end.latitude.unwrap().to_radians() as f64;
+    let long1 = start.longitude.unwrap().to_radians() as f64;
+    let long2 = end.longitude.unwrap().to_radians() as f64;
     let mean_earth_radius = 6371008.8; // https://en.wikipedia.org/wiki/Earth_radius#Global_average_radii
     let havlat = ((lat2 - lat1) / 2_f64).sin().powi(2);
     let havlong = ((long2 - long1) / 2_f64).sin().powi(2);
@@ -110,7 +111,7 @@ impl DeltaCoordinates for Vec<Coordinate> {
         for t in 0..self.len() - 1 {
             let time_diff = self.get(t+1).unwrap().utc - self.get(t).unwrap().utc;
             let mut d = inverse_vincenty(self.get(t).unwrap(), self.get(t + 1).unwrap());
-            d = (d.powi(2) + (self.get(t).unwrap().altitude - self.get(t + 1).unwrap().altitude).powi(2)).sqrt();
+            d = (d.powi(2) + (self.get(t).unwrap().altitude.unwrap() - self.get(t + 1).unwrap().altitude.unwrap()).powi(2) as f64).sqrt();
             return_vec.push((time_diff, d))
         }
         return return_vec;
@@ -120,7 +121,7 @@ impl DeltaCoordinates for Vec<Coordinate> {
         for t in 0..self.len() - 1 {
             let time_diff = self.get(t+1).unwrap().utc - self.get(t).unwrap().utc;
             let mut d = haversine(self.get(t).unwrap(), self.get(t + 1).unwrap());
-            d = (d.powi(2) + (self.get(t).unwrap().altitude - self.get(t + 1).unwrap().altitude).powi(2)).sqrt();
+            d = (d.powi(2) + (self.get(t).unwrap().altitude.unwrap() - self.get(t + 1).unwrap().altitude.unwrap()).powi(2) as f64).sqrt();
             return_vec.push((time_diff, d))
         }
         return return_vec;
@@ -155,13 +156,13 @@ impl Kinematics for Vec<(f64, f64)> {
 mod test_distances {
     use super::{haversine, inverse_vincenty, Coordinate, DeltaCoordinates, Kinematics};
 
-    const SMALL1: Coordinate = Coordinate { utc: 0.0, latitude: 51.55814, longitude: 0.02955, altitude: 0.0 };
-    const SMALL2: Coordinate = Coordinate { utc: 0.0, latitude: 51.55795, longitude: 0.03014, altitude: 100.0 };
-    const SMALL3: Coordinate = Coordinate { utc: 0.0, latitude: 51.55795, longitude: 0.03014, altitude: 0.0 };
+    const SMALL1: Coordinate = Coordinate { utc: (0.0), latitude: Some(51.55814), longitude: Some(0.02955), altitude: Some(0.0) };
+    const SMALL2: Coordinate = Coordinate { utc: (0.0), latitude: Some(51.55795), longitude: Some(0.03014), altitude: Some(100.0) };
+    const SMALL3: Coordinate = Coordinate { utc: (0.0), latitude: Some(51.55795), longitude: Some(0.03014), altitude: Some(0.0) };
 
-    const LONDON: Coordinate = Coordinate { utc: 0.0, latitude: 51.500821, longitude: -0.126670, altitude: 0.0 };
-    const PARIS: Coordinate = Coordinate { utc: 0.0, latitude: 48.858788, longitude: 2.293746, altitude: 0.0 };
-    const SYDNEY: Coordinate = Coordinate { utc: 0.0, latitude: -33.852239, longitude: 151.210675, altitude: 0.0 };
+    const LONDON: Coordinate = Coordinate { utc: (0.0), latitude: Some(51.500821), longitude: Some(-0.126670), altitude: Some(0.0) };
+    const PARIS: Coordinate = Coordinate { utc: (0.0), latitude: Some(48.858788), longitude: Some(2.293746), altitude: Some(0.0) };
+    const SYDNEY: Coordinate = Coordinate { utc: (0.0), latitude: Some(-33.852239), longitude: Some(151.210675), altitude: Some(0.0) };
 
     #[test]
     fn vincenty_same_point() {

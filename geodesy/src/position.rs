@@ -1,13 +1,63 @@
+use plotters::prelude::*;
+
+use adafruit_gps::GpsSentence;
+
 /// # Position Accuracy
 /// Given a set of coordinates, produce the average longitude and latitude,
 
 use super::Coordinate;
+use crate::kinematics::{haversine, inverse_vincenty};
 
-// use plotters::prelude::*;
+// use adafruit_gps::gga::GgaData;
+// use adafruit_gps::rmc::RmcData;
+// use adafruit_gps::gll::GllData;
+
+pub trait GpsSentenceConverter {
+    fn to_coords(&self) -> Vec<Coordinate>;
+}
+
+impl GpsSentenceConverter for Vec<GpsSentence> {
+    /// Converts Vec<GpsSentence> to Vec<Coordinate>. Ignores GpsSentence types that have no long
+    /// lat data in it. Adds all data it has.
+    fn to_coords(&self) -> Vec<Coordinate> {
+        let mut vec_coord = Vec::new();
+        for s in self.iter() {
+            match s {
+                GpsSentence::GGA(sentence) => {
+                    vec_coord.push(Coordinate {
+                        utc: sentence.utc,
+                        latitude: sentence.lat,
+                        longitude: sentence.long,
+                        altitude: sentence.msl_alt,
+                    });
+                }
+                GpsSentence::GLL(sentence) => {
+                    vec_coord.push(Coordinate {
+                        utc: sentence.utc.unwrap_or(0.0),
+                        latitude: sentence.latitude,
+                        longitude: sentence.longitude,
+                        altitude: None,
+                    });
+                }
+                GpsSentence::RMC(sentence) => {
+                    vec_coord.push(Coordinate {
+                        utc: sentence.utc,
+                        latitude: sentence.latitude,
+                        longitude: sentence.longitude,
+                        altitude: None,
+                    });
+                }
+                _ => {}
+            };
+        }
+        vec_coord
+    }
+}
 
 pub trait Position {
     fn average_long_lat(&self) -> Coordinate;
-    fn plot_positions(&self);
+    fn pprint(&self);
+    fn plot_positions(&self, name:&str);
 }
 
 impl Position for Vec<Coordinate> {
@@ -26,10 +76,10 @@ impl Position for Vec<Coordinate> {
         let mut altitude: f64 = 0.0;
 
         for location in self.iter() {
-            x += location.latitude.cos() * location.longitude.cos();
-            y += location.latitude.cos() * location.longitude.sin();
-            z += location.latitude.sin();
-            altitude += location.altitude;
+            x += (location.latitude.unwrap().cos() * location.longitude.unwrap().cos()) as f64;
+            y += (location.latitude.unwrap().cos() * location.longitude.unwrap().sin()) as f64;
+            z += location.latitude.unwrap().sin() as f64;
+            altitude += location.altitude.unwrap() as f64;
         }
         x = x / self.len() as f64;
         y = y / self.len() as f64;
@@ -44,30 +94,59 @@ impl Position for Vec<Coordinate> {
         let average_alt: f64 = altitude / self.len() as f64;
 
         return Coordinate {
-            latitude: average_lat,
-            longitude: average_long,
-            altitude: average_alt,
+            latitude: Some(average_lat as f32),
+            longitude: Some(average_long as f32),
+            altitude: Some(average_alt as f32),
             utc: 0.0,
         };
     }
 
-    fn plot_positions(&self) {
-        // let mut lats  = Vec::new();
-        // let mut longs = Vec::new();
-        // for coord in self.iter() {
-        //     lats.push(coord.latitude);
-        //     longs.push(coord.longitude);
-        // }
-        //
-        // let root = BitMapBackend::gif("location.gif", (800, 800), 1000).unwrap().into_drawing_area();
-        // for i in coords.iter() {
-        //     root.fill(&WHITE).unwrap();
-        //     let mut chart = ChartBuilder::on(&root)
-        //         .caption("Positions", ("sans-serif", 50))
-        //         .build_ranged(lats.max()..lats.min(), longs.max()..longs.min()).unwrap();
-        //     chart.draw()
-        //
-        // }
+    fn pprint(&self) {
+        for item in self.iter() {
+            println!("({:?}, {:?})", item.latitude.unwrap_or_default(), item.longitude.unwrap_or_default())
+        }
+    }
+
+    /// Lat, Long. But to plot it you want long, lat as longitudes should be along the x axis.
+    fn plot_positions(&self, name: &str) {
+        let mut positions: Vec<(f32, f32)> = self.into_iter()
+            .map(|x| (x.longitude.unwrap(), x.latitude.unwrap())).collect();
+        positions.retain(|x| *x != (0.0, 0.0));  // Remove all (0,0) coords.
+
+        let latitudes: Vec<f32> = positions.clone().into_iter().map(|x| x.0).collect();
+        let longitudes: Vec<f32> = positions.clone().into_iter().map(|x| x.1).collect();
+        let min_long = longitudes.iter().cloned().fold(0. / 0., f32::min);
+        let max_long = longitudes.iter().cloned().fold(0. / 0., f32::max);
+        let min_lat = latitudes.iter().cloned().fold(0. / 0., f32::min);
+        let max_lat = latitudes.iter().cloned().fold(0. / 0., f32::max);
+
+        // x axis is
+        let x_axis = inverse_vincenty(
+            &Coordinate{utc:0.0, latitude:Some(min_lat), longitude: Some(min_long), altitude:Some(0.0)},
+        &Coordinate{utc:0.0, latitude:Some(min_lat), longitude: Some(max_long), altitude:Some(0.0)});
+        let y_axis = inverse_vincenty(
+            &Coordinate{utc:0.0, latitude:Some(min_lat), longitude: Some(min_long), altitude:Some(0.0)},
+            &Coordinate{utc:0.0, latitude:Some(max_lat), longitude: Some(max_long), altitude:Some(0.0)}
+        );
+
+        let file_name = format!("images/{}.png", name);
+        let root_area = BitMapBackend::new(file_name.as_str(), (600, 600))
+            .into_drawing_area();
+        root_area.fill(&WHITE).unwrap();
+
+        let mut ctx = ChartBuilder::on(&root_area)
+            .set_label_area_size(LabelAreaPosition::Left, 40)
+            .set_label_area_size(LabelAreaPosition::Bottom, 40)
+            .caption(name, ("Arial", 40))
+            .build_ranged(min_lat..max_lat, min_long..max_long)
+            .unwrap();
+
+        ctx.configure_mesh().draw().unwrap();
+
+        ctx.draw_series(
+            LineSeries::new(
+                positions, &BLUE))
+            .unwrap();
     }
 }
 

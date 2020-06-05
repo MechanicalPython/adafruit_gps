@@ -17,9 +17,9 @@ pub mod position;
 #[derive(Default, PartialEq, Debug)]
 pub struct Coordinate {
     pub utc: f64,
-    pub latitude: f64,
-    pub longitude: f64,
-    pub altitude: f64,
+    pub latitude: Option<f32>,
+    pub longitude: Option<f32>,
+    pub altitude: Option<f32>,
 }
 
 

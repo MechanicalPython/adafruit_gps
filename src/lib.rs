@@ -76,7 +76,6 @@
 //!
 //!
 
-// todo add satellite labels from https://en.wikipedia.org/wiki/List_of_GPS_satellites
 // todo plot long lat
 
 // todo test read write on pi with read data.

@@ -200,12 +200,14 @@ pub mod gps {
         }
     }
 
+    // todo - ensure that appending is done by acident if the same program is run multiple times.
+    // Some kind of init or new()?
     impl GpsSentence {
         /// Reads a bytes file of structs to a vector.
         ///
         /// Benches at 263,860ns to read a 1,000 long vec.
         pub fn read_from(file: &str) -> Vec<GpsSentence> {
-            let mut f = File::open(file).unwrap();
+            let mut f = File::open(file).expect("No file found");
             let mut buffer = Vec::new();
             let _ = f.read_to_end(&mut buffer);
             let split = buffer.split(|num| num == &10);

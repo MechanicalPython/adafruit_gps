@@ -3,8 +3,7 @@ name = "adafruit_gps"
 version = "0.4.0"
 authors = ["Matt Barson <matt.barson@gmail.com>"]
 edition = "2018"
-licence = "MIT"
-license-file = "LICENSE"
+license = "MIT"
 description = "GPS parser and reader for the adafruit Ultimate GPS or Adafruit Mini GPS PA1010D."
 readme = "README.md"
 repository = "https://github.com/MechanicalPython/adafruit_gps"
@@ -32,5 +31,4 @@ members = [
 serialport = "3.3.0"
 serde = {version = "1.0.110", features = ["derive"]}
 bincode = "1.2.1"
-geodesy = {path = "./geodesy"}
 

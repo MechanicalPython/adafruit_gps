@@ -11,28 +11,29 @@ use super::Coordinate;
 use std::fs::File;
 use std::io::Write;
 
-// use adafruit_gps::gga::GgaData;
-// use adafruit_gps::rmc::RmcData;
-// use adafruit_gps::gll::GllData;
 
 pub trait GpsSentenceConverter {
-    fn to_coords(&self) -> Vec<Coordinate>;
+    fn to_coords(&self, include_geoidal_separation: bool) -> Vec<Coordinate>;
 }
 
 impl GpsSentenceConverter for Vec<GpsSentence> {
     /// Converts Vec<GpsSentence> to Vec<Coordinate>. Ignores GpsSentence types that have no long
     /// lat data in it. Adds all data it has.
-    fn to_coords(&self) -> Vec<Coordinate> {
+    fn to_coords(&self, include_geoidal_separation: bool) -> Vec<Coordinate> {
         let mut vec_coord = Vec::new();
         for s in self.iter() {
             match s {
                 GpsSentence::GGA(sentence) => {
-                    vec_coord.push(Coordinate {
+                    let mut gga = Coordinate {
                         utc: sentence.utc,
                         latitude: sentence.lat,
                         longitude: sentence.long,
                         altitude: sentence.msl_alt,
-                    });
+                    };
+                    if include_geoidal_separation {
+                        gga.altitude = gga.altitude + sentence.geoidal_sep;
+                    }
+                    vec_coord.push(gga);
                 }
                 GpsSentence::GLL(sentence) => {
                     vec_coord.push(Coordinate {

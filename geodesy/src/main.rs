@@ -63,6 +63,6 @@ fn main() {
     let flight_num = "2";
     let vec = GpsSentence::read_from(format!("./feldspar5-{}_gps", flight_num).as_str());
 
-    let coords = vec.to_coords();
+    let coords = vec.to_coords(true);
     let _ = coords.to_klm(format!("5-{}", flight_num).as_str(), format!("Feldspar 5-{} flight path", flight_num).as_str());
 }

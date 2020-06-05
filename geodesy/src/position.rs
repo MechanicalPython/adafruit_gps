@@ -31,7 +31,7 @@ impl GpsSentenceConverter for Vec<GpsSentence> {
                         altitude: sentence.msl_alt,
                     };
                     if include_geoidal_separation {
-                        gga.altitude = gga.altitude + sentence.geoidal_sep;
+                        gga.altitude = Some(gga.altitude.unwrap() + sentence.geoidal_sep.unwrap());
                     }
                     vec_coord.push(gga);
                 }

@@ -15,7 +15,7 @@ fn main() {
             GpsSentence::GGA(sentence) => {
                 println!("UTC: {}\nLat:{}, Long:{}, Sats:{}, MSL Alt:{}",
                          sentence.utc, sentence.lat.unwrap_or(0.0), sentence.long.unwrap_or(0.0), sentence.satellites_used,
-                         sentence.msl_alt.unwrap_or(0.0));
+                         sentence.msl_alt.unwrap_or(0.0) + sentence.geoidal_sep.unwrap_or(0.0));
             }
             GpsSentence::GSA(sentence) => {
                 println!("PDOP:{}, VDOP:{}, HDOP:{}",

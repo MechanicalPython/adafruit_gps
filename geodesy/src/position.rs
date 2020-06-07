@@ -19,6 +19,10 @@ pub trait GpsSentenceConverter {
 impl GpsSentenceConverter for Vec<GpsSentence> {
     /// Converts Vec<GpsSentence> to Vec<Coordinate>. Ignores GpsSentence types that have no long
     /// lat data in it. Adds all data it has.
+    ///
+    /// include_geoidal_separation argument allows for altitude to equal mean sea level alt + geoidal
+    /// separation for height above the ground. If there is no geoidal separation data available
+    /// then nothing is added.
     fn to_coords(&self, include_geoidal_separation: bool) -> Vec<Coordinate> {
         let mut vec_coord = Vec::new();
         for s in self.iter() {

@@ -5,6 +5,7 @@
 /// At any point you are doing stuff to a series of points.
 
 //todo - size of error for a long lat: 51.0, 1.0 is x m^2 area.
+// todo - expected distance error for a given pdop.
 
 pub mod kinematics;
 pub mod position;
@@ -21,7 +22,5 @@ pub struct Coordinate {
     pub longitude: Option<f32>,
     pub altitude: Option<f32>,
 }
-
-
 
 

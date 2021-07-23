@@ -39,13 +39,22 @@ pub mod parse_nmea {
     pub fn _parse_degrees(degrees: &str, compass_direction: &str) -> Option<f32> {
         // Parse NMEA lat/long data pair dddmm.mmmm into pure degrees value.
         // ddd is degrees, mm.mmmm is minutes
-        // Formula is->
+        // NMEA format is either ddmm.mmmmm or dddmm.mmmmm
+        // Formula is ->
         if degrees.is_empty() {
             return None;
         }
-        let deg: f32 = (&degrees[0..2]).parse::<f32>().unwrap();
+        let deg: f32;
+        let minutes: f32;
+        let first_half: Vec<&str> = degrees.split('.').collect();
 
-        let minutes: f32 = ((&degrees[2..]).parse::<f32>().unwrap()) / 60.0;
+        if first_half[0].len() == 4 {
+            deg = (&degrees[0..2]).parse::<f32>().unwrap();
+            minutes = ((&degrees[2..]).parse::<f32>().unwrap()) / 60.0;
+        } else {
+            deg = (&degrees[0..3]).parse::<f32>().unwrap();
+            minutes = ((&degrees[3..]).parse::<f32>().unwrap()) / 60.0;
+        }
 
         let r: f32 = deg + minutes;
         let r: f32 = format!("{:.6}", r).parse().unwrap(); // Round to 6 decimal places.
@@ -144,10 +153,10 @@ pub mod gga {
         //! Time, sat fix and sats used always given.
         let header = args.get(0).unwrap();
         if &header[3..5] != "GG" {
-            panic!(format!(
+            panic!(
                 "Sentence is not a GGA format, it's {} format",
                 header
-            ))
+            )
         }
 
         // Parse time
@@ -261,10 +270,10 @@ pub mod gsa {
 
         let header = args.get(0).unwrap();
         if &header[3..6] != "GSA" {
-            panic!(format!(
+            panic!(
                 "Incorrect sentence header. Should be GSA, it is {}",
                 header
-            ))
+            )
         }
 
         let mode = match args.get(1).unwrap() {
@@ -357,10 +366,10 @@ pub mod gsv {
 
         let header = args.get(0).unwrap();
         if &header[3..6] != "GSV" {
-            panic!(format!(
+            panic!(
                 "Incorrect sentence header. Should be GSV, it is {}",
                 header
-            ))
+            )
         }
         let mut values = Vec::new();
         let _meta = &args.get(0..4);
@@ -560,6 +569,19 @@ pub mod gll {
 
 #[cfg(test)]
 mod nmea_tests {
+
+    mod parse_nmea {
+        use crate::nmea::parse_nmea;
+
+        #[test]
+        fn parse_degrees() {
+            assert_eq!(parse_nmea::_parse_degrees("1020.12345", "N").unwrap(),
+                       10.335391);
+            assert_eq!(parse_nmea::_parse_degrees("11020.12345", "N").unwrap(),
+                       110.335391);
+        }
+    }
+
     mod gga {
         use crate::nmea::gga;
 

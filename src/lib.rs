@@ -85,4 +85,3 @@ mod nmea;
 mod pmtk;
 mod open_gps;
 
-// todo - Geodesy crate to spit out a KLM package that can then be uploaded to google earth.

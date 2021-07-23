@@ -1,6 +1,6 @@
 [package]
 name = "adafruit_gps"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Matt Barson <matt.barson@gmail.com>"]
 edition = "2018"
 license = "MIT"

@@ -64,7 +64,6 @@ impl GpsSentenceConverter for Vec<GpsSentence> {
 
 pub trait Position {
     fn average_long_lat(&self) -> Coordinate;
-    fn pprint(&self);
     fn plot_positions(&self, name: &str);
     fn to_klm(&self, name: &str, description: &str) -> std::io::Result<()>;
 }
@@ -110,13 +109,8 @@ impl Position for Vec<Coordinate> {
         };
     }
 
-    fn pprint(&self) {
-        for item in self.iter() {
-            println!("({:?}, {:?})", item.latitude.unwrap_or_default(), item.longitude.unwrap_or_default())
-        }
-    }
 
-    /// Lat, Long. But to plot it you want long, lat as longitudes should be along the x axis.
+    /// Plots the longitude and latitiude coordinates on a 2d graph using plotters.
     fn plot_positions(&self, name: &str) {
         let mut positions: Vec<(f32, f32)> = self.into_iter()
             .map(|x| (x.longitude.unwrap(), x.latitude.unwrap())).collect();
@@ -129,14 +123,14 @@ impl Position for Vec<Coordinate> {
         let min_lat = latitudes.iter().cloned().fold(0. / 0., f32::min);
         let max_lat = latitudes.iter().cloned().fold(0. / 0., f32::max);
 
-        // x axis is
-        let _x_axis = inverse_vincenty(
-            &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(min_long), altitude: Some(0.0) },
-            &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(max_long), altitude: Some(0.0) });
-        let _y_axis = inverse_vincenty(
-            &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(min_long), altitude: Some(0.0) },
-            &Coordinate { utc: 0.0, latitude: Some(max_lat), longitude: Some(max_long), altitude: Some(0.0) },
-        );
+        // // x axis is
+        // let _x_axis = inverse_vincenty(
+        //     &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(min_long), altitude: Some(0.0) },
+        //     &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(max_long), altitude: Some(0.0) });
+        // let _y_axis = inverse_vincenty(
+        //     &Coordinate { utc: 0.0, latitude: Some(min_lat), longitude: Some(min_long), altitude: Some(0.0) },
+        //     &Coordinate { utc: 0.0, latitude: Some(max_lat), longitude: Some(max_long), altitude: Some(0.0) },
+        // );
 
         let file_name = format!("images/{}.png", name);
         let root_area = BitMapBackend::new(file_name.as_str(), (600, 600))

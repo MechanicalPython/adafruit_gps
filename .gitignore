@@ -2,3 +2,12 @@
 **/*.rs.bk
 Cargo.lock
 .idea
+/5-1.kml
+/5-2.kml
+/5-3.kml
+/5-4.kml
+/feldspar5-1_gps
+/feldspar5-4_gps
+/feldspar5-3_gps
+/feldspar5-2_gps
+/images/
